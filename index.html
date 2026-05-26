@@ -1,0 +1,2574 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rio Saúde • Calendário de Eventos 2026</title>
+
+<style>
+:root {
+--dark:#07110d;
+--green:#69bd8d;
+--green2:#a8e0be;
+--white:#ffffff;
+--muted:#d6e6dd;
+--line:rgba(255,255,255,.12);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+
+body {
+font-family: Helvetica, Arial, sans-serif;
+background:linear-gradient(180deg,#07110d 0%, #13251d 55%, #07110d 100%);
+color:var(--white);
+line-height:1.45;
+}
+
+input[type="radio"] {
+position:absolute;
+opacity:0;
+pointer-events:none;
+}
+
+.hero {
+min-height:52vh;
+display:flex;
+align-items:center;
+background:linear-gradient(135deg,#07110d,#173528);
+padding:60px 24px 48px;
+}
+
+.hero-inner {
+max-width:1100px;
+margin:auto;
+width:100%;
+}
+
+.brand {
+font-size:13px;
+letter-spacing:.18em;
+font-weight:700;
+color:#9ec7b4;
+margin-bottom:34px;
+}
+
+h1 {
+font-size:clamp(42px,7vw,82px);
+line-height:.92;
+letter-spacing:-.06em;
+max-width:900px;
+margin-bottom:20px;
+}
+
+.subtitle {
+max-width:720px;
+font-size:18px;
+color:var(--muted);
+}
+
+.container {
+max-width:1100px;
+margin:auto;
+padding:36px 24px 72px;
+}
+
+.home-choices {
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:18px;
+margin-bottom:34px;
+}
+
+.choice-card,
+.filter-card,
+.back-button {
+display:block;
+cursor:pointer;
+}
+
+.choice-card {
+background:#0b1712;
+color:white;
+border:1px solid var(--line);
+border-radius:30px;
+padding:34px;
+box-shadow:0 18px 40px rgba(0,0,0,.20);
+transition:.22s ease;
+}
+
+.choice-card:hover {
+transform:translateY(-4px);
+background:#173528;
+border-color:rgba(168,224,190,.35);
+}
+
+.choice-card small {
+display:block;
+color:#9ec7b4;
+font-weight:800;
+letter-spacing:.10em;
+text-transform:uppercase;
+margin-bottom:14px;
+}
+
+.choice-card strong {
+display:block;
+font-size:clamp(30px,4vw,46px);
+letter-spacing:-.05em;
+margin-bottom:12px;
+}
+
+.choice-card p {
+color:var(--muted);
+max-width:460px;
+font-size:16px;
+}
+
+.home-area,
+.official-area,
+.special-area {
+display:none;
+}
+
+#view-home:checked ~ .container .home-area {
+display:block;
+}
+
+#view-official:checked ~ .container .official-area {
+display:block;
+}
+
+#view-special:checked ~ .container .special-area {
+display:block;
+}
+
+.back-button {
+margin-bottom:24px;
+color:#a8e0be;
+font-weight:800;
+font-size:15px;
+}
+
+.selector {
+display:grid;
+grid-template-columns:repeat(4,1fr);
+gap:14px;
+margin:0 0 34px;
+}
+
+.filter-card {
+border:1px solid var(--line);
+background:#0b1712;
+color:white;
+padding:24px 18px;
+border-radius:24px;
+text-align:left;
+transition:.2s ease;
+box-shadow:0 14px 28px rgba(0,0,0,.14);
+}
+
+.filter-card:hover {
+transform:translateY(-3px);
+background:#214b37;
+border-color:rgba(168,224,190,.35);
+}
+
+.filter-card small {
+display:block;
+color:#9ec7b4;
+font-weight:700;
+letter-spacing:.08em;
+text-transform:uppercase;
+margin-bottom:12px;
+}
+
+.filter-card strong {
+display:block;
+font-size:26px;
+letter-spacing:-.04em;
+}
+
+#tab-all:checked ~ .container .official-area .selector label[for="tab-all"],
+#tab-trail:checked ~ .container .official-area .selector label[for="tab-trail"],
+#tab-run:checked ~ .container .official-area .selector label[for="tab-run"],
+#tab-tri:checked ~ .container .official-area .selector label[for="tab-tri"] {
+transform:translateY(-3px);
+background:#214b37;
+border-color:rgba(168,224,190,.35);
+}
+
+.panel {
+display:none;
+}
+
+#tab-all:checked ~ .container .official-area .panel-all,
+#tab-trail:checked ~ .container .official-area .panel-trail,
+#tab-run:checked ~ .container .official-area .panel-run,
+#tab-tri:checked ~ .container .official-area .panel-tri {
+display:block;
+}
+
+.section-head {
+display:flex;
+justify-content:space-between;
+align-items:center;
+background:#07110d;
+border:1px solid var(--line);
+border-radius:26px;
+padding:22px;
+margin-bottom:28px;
+box-shadow:0 14px 34px rgba(0,0,0,.16);
+}
+
+.section-head h2 {
+font-size:clamp(32px,5vw,58px);
+letter-spacing:-.05em;
+}
+
+.section-head span {
+color:#dbe7df;
+font-weight:700;
+background:rgba(255,255,255,.08);
+border:1px solid rgba(255,255,255,.10);
+padding:9px 13px;
+border-radius:999px;
+font-size:13px;
+}
+
+.panel-highlight {
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:16px;
+margin-bottom:30px;
+}
+
+.panel-info {
+background:rgba(255,255,255,.08);
+border:1px solid var(--line);
+border-radius:22px;
+padding:22px;
+}
+
+.panel-info strong {
+display:block;
+font-size:23px;
+margin-bottom:8px;
+color:#a8e0be;
+}
+
+.panel-info p {
+color:#dbe8df;
+}
+
+.month-block {
+margin-bottom:34px;
+}
+
+.month-title {
+display:inline-block;
+background:rgba(255,255,255,.11);
+border:1px solid var(--line);
+color:#a8e0be;
+padding:10px 18px;
+border-radius:14px;
+font-size:22px;
+font-weight:800;
+margin-bottom:18px;
+}
+
+.cards {
+display:grid;
+grid-template-columns:repeat(2,1fr);
+gap:16px;
+}
+
+.card {
+display:block;
+text-decoration:none;
+background:rgba(255,255,255,.09);
+border:1px solid var(--line);
+border-radius:22px;
+padding:22px;
+transition:.22s ease;
+color:white;
+}
+
+.card:hover {
+transform:translateY(-4px);
+background:rgba(255,255,255,.14);
+border-color:#69bd8d;
+box-shadow:0 16px 34px rgba(0,0,0,.16);
+}
+
+.top {
+display:flex;
+justify-content:space-between;
+align-items:center;
+gap:12px;
+margin-bottom:18px;
+}
+
+.date {
+background:rgba(255,255,255,.11);
+border:1px solid var(--line);
+color:#a8e0be;
+padding:9px 13px;
+border-radius:12px;
+font-weight:800;
+font-size:18px;
+}
+
+.note {
+background:rgba(255,255,255,.10);
+color:#a8e0be;
+padding:6px 10px;
+border-radius:999px;
+font-size:11px;
+font-weight:700;
+}
+
+.card h4 {
+font-size:27px;
+letter-spacing:-.03em;
+margin-bottom:20px;
+}
+
+.open {
+color:#a8e0be;
+font-weight:800;
+font-size:14px;
+}
+
+.special-placeholder {
+background:#0b1712;
+border:1px solid var(--line);
+border-radius:30px;
+padding:34px;
+box-shadow:0 18px 40px rgba(0,0,0,.18);
+}
+
+.special-placeholder h2 {
+font-size:clamp(34px,5vw,58px);
+letter-spacing:-.05em;
+margin-bottom:14px;
+}
+
+.special-placeholder p {
+color:var(--muted);
+max-width:760px;
+font-size:18px;
+}
+
+.footer {
+padding:44px 24px;
+text-align:center;
+color:#b8c8bf;
+}
+
+@media(max-width:850px) {
+.home-choices, .selector, .panel-highlight, .cards {
+grid-template-columns:1fr;
+}
+}
+
+@media(max-width:580px) {
+.section-head {
+flex-direction:column;
+align-items:flex-start;
+gap:12px;
+}
+.top {
+flex-direction:column;
+align-items:flex-start;
+}
+.choice-card {
+padding:28px;
+}
+}
+
+.special-grid {
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:18px;
+margin:28px 0 34px;
+}
+
+.special-event-card {
+display:grid;
+grid-template-columns:auto 1fr;
+gap:22px;
+align-items:center;
+background:#0b1712;
+border:1px solid var(--line);
+border-radius:30px;
+padding:30px;
+box-shadow:0 18px 40px rgba(0,0,0,.18);
+transition:.22s ease;
+cursor:pointer;
+}
+
+.special-event-card:hover {
+transform:translateY(-4px);
+background:#173528;
+border-color:rgba(168,224,190,.35);
+}
+
+.special-event-card.featured {
+border-color:rgba(248,198,68,.55);
+}
+
+.special-icon {
+font-size:42px;
+}
+
+.special-event-card small {
+display:block;
+color:#a8e0be;
+font-weight:800;
+letter-spacing:.10em;
+text-transform:uppercase;
+margin-bottom:10px;
+}
+
+.special-event-card h3 {
+font-size:clamp(30px,4vw,46px);
+letter-spacing:-.05em;
+margin-bottom:8px;
+}
+
+.special-event-card p {
+color:var(--muted);
+font-size:16px;
+margin-bottom:14px;
+}
+
+.special-event-card span {
+color:#a8e0be;
+font-weight:800;
+}
+
+.special-detail {
+display:none;
+margin-top:34px;
+}
+
+#special-itatiaia:checked ~ .special-detail {
+display:block;
+animation:fadeIn .22s ease;
+}
+
+.chips {
+display:flex;
+flex-wrap:wrap;
+gap:10px;
+margin-top:18px;
+}
+
+.chips span {
+background:rgba(255,255,255,.10);
+border:1px solid var(--line);
+border-radius:14px;
+padding:9px 12px;
+color:#fff;
+}
+
+.alert-box {
+border-color:rgba(248,198,68,.55);
+}
+
+.static-card {
+cursor:default;
+}
+
+.static-card:hover {
+transform:none;
+}
+
+.static-card p {
+color:var(--muted);
+font-size:17px;
+}
+
+.price-card h4 {
+font-size:44px;
+color:#f8c644;
+}
+
+.helper-text {
+color:var(--muted);
+font-size:18px;
+margin-top:12px;
+}
+
+.reservation-box {
+background:#12351f;
+border:1px solid rgba(168,224,190,.28);
+border-radius:30px;
+padding:34px;
+text-align:center;
+box-shadow:0 18px 40px rgba(0,0,0,.18);
+}
+
+.reservation-box small {
+display:block;
+color:#a8e0be;
+font-weight:800;
+letter-spacing:.10em;
+text-transform:uppercase;
+margin-bottom:16px;
+}
+
+.reservation-box h3 {
+font-size:clamp(24px,4vw,38px);
+letter-spacing:-.04em;
+max-width:760px;
+margin:0 auto 24px;
+}
+
+.reservation-box a {
+display:inline-block;
+background:#25d366;
+color:white;
+text-decoration:none;
+font-weight:900;
+font-size:22px;
+padding:18px 34px;
+border-radius:999px;
+margin-bottom:22px;
+}
+
+.reservation-box strong {
+display:block;
+font-size:clamp(28px,5vw,44px);
+letter-spacing:.06em;
+}
+
+@media(max-width:850px) {
+.special-grid {
+grid-template-columns:1fr;
+}
+.special-event-card {
+grid-template-columns:1fr;
+}
+}
+
+
+.experience-box,
+.photo-box {
+background:#0b1712;
+border:1px solid var(--line);
+border-radius:30px;
+padding:34px;
+box-shadow:0 18px 40px rgba(0,0,0,.18);
+margin-bottom:28px;
+}
+
+.experience-box small,
+.photo-box small {
+display:block;
+color:#a8e0be;
+font-weight:800;
+letter-spacing:.10em;
+text-transform:uppercase;
+margin-bottom:14px;
+}
+
+.experience-box h3,
+.photo-box h3 {
+font-size:clamp(28px,4vw,44px);
+letter-spacing:-.05em;
+margin-bottom:12px;
+}
+
+.experience-box p,
+.photo-box p,
+.program-card p {
+color:var(--muted);
+font-size:18px;
+}
+
+.photo-box {
+display:flex;
+justify-content:space-between;
+align-items:center;
+gap:22px;
+}
+
+.photo-box a {
+display:inline-block;
+white-space:nowrap;
+background:rgba(255,255,255,.10);
+border:1px solid rgba(168,224,190,.28);
+color:#a8e0be;
+text-decoration:none;
+font-weight:900;
+padding:14px 20px;
+border-radius:999px;
+}
+
+.program-card h4 {
+margin-bottom:14px;
+}
+
+.program-card p + p {
+margin-top:12px;
+}
+
+.featured-program {
+border-color:rgba(248,198,68,.55);
+}
+
+@media(max-width:850px) {
+.photo-box {
+flex-direction:column;
+align-items:flex-start;
+}
+}
+
+
+.food-highlight {
+background:linear-gradient(135deg,#12351f,#1a4a2d);
+border:1px solid rgba(168,224,190,.28);
+border-radius:30px;
+padding:38px;
+margin-bottom:34px;
+box-shadow:0 18px 40px rgba(0,0,0,.20);
+}
+
+.food-highlight small {
+display:block;
+color:#a8e0be;
+font-weight:800;
+letter-spacing:.10em;
+text-transform:uppercase;
+margin-bottom:14px;
+}
+
+.food-highlight h3 {
+font-size:clamp(30px,4vw,50px);
+letter-spacing:-.05em;
+margin-bottom:18px;
+max-width:780px;
+}
+
+.food-highlight p {
+font-size:20px;
+line-height:1.55;
+color:#dbe8df;
+max-width:900px;
+}
+
+.food-note {
+margin-top:18px;
+font-size:17px !important;
+color:#b7c7be !important;
+}
+
+
+.experience-list {
+display:flex;
+flex-wrap:wrap;
+gap:12px;
+margin:22px 0;
+}
+
+.experience-list span {
+background:rgba(255,255,255,.10);
+border:1px solid rgba(168,224,190,.18);
+padding:12px 16px;
+border-radius:14px;
+font-weight:700;
+color:#eef6f1;
+}
+
+.reservation-note {
+margin-top:24px;
+font-size:20px !important;
+color:#a8e0be !important;
+font-weight:800;
+}
+
+
+.landing-hero {
+background:linear-gradient(135deg,#12351f,#173528);
+border:1px solid rgba(168,224,190,.18);
+border-radius:34px;
+padding:48px;
+margin:26px 0 34px;
+box-shadow:0 18px 40px rgba(0,0,0,.22);
+}
+
+.landing-hero small {
+display:block;
+color:#a8e0be;
+font-weight:900;
+letter-spacing:.14em;
+margin-bottom:16px;
+}
+
+.landing-hero h2 {
+font-size:clamp(54px,8vw,92px);
+line-height:.9;
+letter-spacing:-.07em;
+margin-bottom:14px;
+}
+
+.landing-hero p {
+font-size:24px;
+color:#dce8e0;
+}
+
+.simple-section {
+margin-bottom:42px;
+}
+
+.simple-section h3 {
+font-size:clamp(34px,5vw,58px);
+letter-spacing:-.05em;
+margin-bottom:18px;
+}
+
+.simple-section p {
+font-size:20px;
+line-height:1.6;
+color:#dce8e0;
+max-width:920px;
+}
+
+.simple-tags {
+display:flex;
+flex-wrap:wrap;
+gap:12px;
+margin:24px 0;
+}
+
+.simple-tags span {
+background:rgba(255,255,255,.08);
+border:1px solid rgba(255,255,255,.10);
+padding:14px 18px;
+border-radius:16px;
+font-weight:800;
+}
+
+.program-list {
+display:grid;
+gap:18px;
+}
+
+.program-item {
+background:#0b1712;
+border:1px solid var(--line);
+border-radius:24px;
+padding:28px;
+}
+
+.program-item strong {
+display:block;
+font-size:28px;
+margin-bottom:10px;
+color:#a8e0be;
+}
+
+.program-item p {
+font-size:18px;
+}
+
+.featured-item {
+border-color:rgba(248,198,68,.45);
+background:#14241b;
+}
+
+.price-grid {
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:18px;
+margin-top:24px;
+}
+
+.price-card-clean {
+background:#0b1712;
+border:1px solid var(--line);
+border-radius:26px;
+padding:34px;
+text-align:center;
+}
+
+.price-card-clean small {
+display:block;
+color:#a8e0be;
+font-weight:900;
+letter-spacing:.12em;
+margin-bottom:14px;
+}
+
+.price-card-clean h4 {
+font-size:56px;
+line-height:.9;
+letter-spacing:-.05em;
+margin-bottom:12px;
+color:#f8c644;
+}
+
+.price-card-clean p {
+font-size:18px;
+color:#dce8e0;
+}
+
+@media(max-width:850px) {
+.price-grid {
+grid-template-columns:1fr;
+}
+}
+
+
+.event-register-card {
+cursor:default;
+}
+
+.event-register-card:hover {
+transform:none;
+}
+
+.event-actions {
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:10px;
+margin-top:18px;
+}
+
+.event-actions a {
+display:block;
+text-align:center;
+text-decoration:none;
+background:#69bd8d;
+color:#07110d;
+font-weight:900;
+padding:12px 10px;
+border-radius:14px;
+font-size:14px;
+}
+
+.event-actions .secondary-action {
+background:#f8c644;
+color:#07110d;
+}
+
+.event-actions .ghost-action {
+background:rgba(255,255,255,.10);
+color:#a8e0be;
+border:1px solid rgba(168,224,190,.24);
+}
+
+.form-note {
+color:#9fb5aa;
+font-size:13px;
+margin-top:10px;
+}
+
+.other-event-box,
+.placeholder-link-box {
+background:#0b1712;
+border:1px solid var(--line);
+border-radius:28px;
+padding:28px;
+margin-bottom:28px;
+box-shadow:0 18px 40px rgba(0,0,0,.16);
+}
+
+.other-event-box {
+display:flex;
+align-items:center;
+justify-content:space-between;
+gap:22px;
+}
+
+.other-event-box small {
+display:block;
+color:#a8e0be;
+font-weight:900;
+letter-spacing:.10em;
+text-transform:uppercase;
+margin-bottom:10px;
+}
+
+.other-event-box h3,
+.placeholder-link-box h3 {
+font-size:clamp(26px,4vw,40px);
+letter-spacing:-.04em;
+margin-bottom:8px;
+}
+
+.other-event-box p,
+.placeholder-link-box p {
+color:var(--muted);
+font-size:17px;
+max-width:720px;
+}
+
+.other-event-box a {
+white-space:nowrap;
+background:#a8e0be;
+color:#07110d;
+text-decoration:none;
+font-weight:900;
+padding:16px 22px;
+border-radius:999px;
+}
+
+.placeholder-link-box {
+display:block;
+scroll-margin-top:24px;
+}
+
+@media(max-width:850px) {
+.event-actions {
+grid-template-columns:1fr;
+}
+.other-event-box {
+flex-direction:column;
+align-items:flex-start;
+}
+.other-event-box a {
+white-space:normal;
+text-align:center;
+}
+}
+
+</style>
+</head>
+
+<body>
+
+<input type="radio" name="view" id="view-home" checked>
+<input type="radio" name="view" id="view-official">
+<input type="radio" name="view" id="view-special">
+
+<input type="radio" name="official-tab" id="tab-all" checked>
+<input type="radio" name="official-tab" id="tab-trail">
+<input type="radio" name="official-tab" id="tab-run">
+<input type="radio" name="official-tab" id="tab-tri">
+
+<header class="hero" id="home">
+<div class="hero-inner">
+<div class="brand">RIO SAÚDE • 2026</div>
+<h1>Calendário de eventos da temporada.</h1>
+<p class="subtitle">Uma central para organizar os eventos oficiais e os eventos especiais da Rio Saúde ao longo de 2026.</p>
+</div>
+</header>
+
+<main class="container">
+
+<section class="home-area">
+<div class="home-choices">
+<label class="choice-card" for="view-official">
+<small>calendário 2026</small>
+<strong>Eventos Oficiais</strong>
+<p>Corrida, trail run e triathlon organizados por mês, com links para as principais provas da temporada.</p>
+</label>
+
+<label class="choice-card" for="view-special">
+<small>rio saúde</small>
+<strong>Eventos Especiais</strong>
+<p>Eventos organizados, produzidos e executados pela Rio Saúde ao longo da temporada.</p>
+</label>
+</div>
+</section>
+
+<section class="official-area">
+<label class="back-button" for="view-home">← Voltar para a página inicial</label>
+
+<div class="selector">
+<label class="filter-card" for="tab-all"><small>visão geral</small><strong>Todos</strong></label>
+<label class="filter-card" for="tab-trail"><small>calendário</small><strong>Trail Run</strong></label>
+<label class="filter-card" for="tab-run"><small>calendário</small><strong>Corrida</strong></label>
+<label class="filter-card" for="tab-tri"><small>calendário</small><strong>Triathlon</strong></label>
+</div>
+
+
+<div class="other-event-box">
+    <div>
+        <small>Não encontrou sua prova?</small>
+        <h3>Cadastrar outro evento</h3>
+        <p>Use esta opção quando o atleta estiver inscrito em uma prova que ainda não aparece no calendário oficial da Rio Saúde.</p>
+    </div>
+    <a href="#outro-evento-em-breve">Cadastrar outro evento</a>
+</div>
+
+
+<section class="panel panel-all">
+<div class="section-head">
+<h2>Todos os eventos</h2>
+<span>Calendário oficial 2026</span>
+</div>
+
+        <div class="month-block">
+            <div class="month-title">Junho</div>
+            <div class="cards">
+            
+            <div class="card event-register-card" data-event="XTERRA São Sebastião">
+                
+                <div class="top">
+                    <div class="date">19 a 21/06</div>
+                    <span class="note">Cupom RIOSAUDE</span>
+                </div>
+                <h4>XTERRA São Sebastião</h4>
+                
+            
+                
+                <div class="event-actions">
+                    <a href="https://xterrabrasil.com.br/" target="_blank" rel="noopener">Site oficial</a>
+                    <a href="https://docs.google.com/forms/d/1qHaZBUwQXFC7Dkz5r8pi7VBVw6Rh0NSB-HSot6rdMhM/edit?pli=1" target="_blank" rel="noopener" class="secondary-action">Já estou inscrito</a>
+                    <a href="#relacao-em-breve" class="ghost-action">Ver atletas</a>
+                </div>
+                <div class="form-note">Abrir formulário Rio Saúde para informar nome, prova e distância.</div>
+    
+            </div>
+            
+            
+            
+            <div class="card event-register-card" data-event="WTR Agulhas Negras">
+                
+                <div class="top">
+                    <div class="date">27 e 28/06</div>
+                    <span class="note">Trail Run</span>
+                </div>
+                <h4>WTR Agulhas Negras</h4>
+                
+            
+                
+                <div class="event-actions">
+                    <a href="https://worldtrailraces.com.br/" target="_blank" rel="noopener">Site oficial</a>
+                    <a href="https://docs.google.com/forms/d/1qHaZBUwQXFC7Dkz5r8pi7VBVw6Rh0NSB-HSot6rdMhM/edit?pli=1" target="_blank" rel="noopener" class="secondary-action">Já estou inscrito</a>
+                    <a href="#relacao-em-breve" class="ghost-action">Ver atletas</a>
+                </div>
+                <div class="form-note">Abrir formulário Rio Saúde para informar nome, prova e distância.</div>
+    
+            </div>
+            
+            
+            
+            <div class="card event-register-card" data-event="Maratona do Rio">
+                
+                <div class="top">
+                    <div class="date">04 a 07/06</div>
+                    <span class="note">Corrida</span>
+                </div>
+                <h4>Maratona do Rio</h4>
+                
+            
+                
+                <div class="event-actions">
+                    <a href="https://maratonadorio.com.br/" target="_blank" rel="noopener">Site oficial</a>
+                    <a href="https://docs.google.com/forms/d/1qHaZBUwQXFC7Dkz5r8pi7VBVw6Rh0NSB-HSot6rdMhM/edit?pli=1" target="_blank" rel="noopener" class="secondary-action">Já estou inscrito</a>
+                    <a href="#relacao-em-breve" class="ghost-action">Ver atletas</a>
+                </div>
+                <div class="form-note">Abrir formulário Rio Saúde para informar nome, prova e distância.</div>
+    
+            </div>
+            
+            
+            
+            <div class="card event-register-card" data-event="Rio 21K">
+                
+                <div class="top">
+                    <div class="date">28/06</div>
+                    <span class="note">Corrida</span>
+                </div>
+                <h4>Rio 21K</h4>
+                
+            
+                
+                <div class="event-actions">
+                    <a href="https://www.rio21k.com.br/" target="_blank" rel="noopener">Site oficial</a>
+                    <a href="https://docs.google.com/forms/d/1qHaZBUwQXFC7Dkz5r8pi7VBVw6Rh0NSB-HSot6rdMhM/edit?pli=1" target="_blank" rel="noopener" class="secondary-action">Já estou inscrito</a>
+                    <a href="#relacao-em-breve" class="ghost-action">Ver atletas</a>
+                </div>
+                <div class="form-note">Abrir formulário Rio Saúde para informar nome, prova e distância.</div>
+    
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="month-block">
+            <div class="month-title">Julho</div>
+            <div class="cards">
+            
+            <div class="card event-register-card" data-event="XTERRA Mina de Águas Claras">
+                
+                <div class="top">
+                    <div class="date">24 a 26/07</div>
+                    <span class="note">Cupom RIOSAUDE</span>
+                </div>
+                <h4>XTERRA Mina de Águas Claras</h4>
+                
+            
+                
+                <div class="event-actions">
+                    <a href="https://xterrabrasil.com.br/" target="_blank" rel="noopener">Site oficial</a>
+                    <a href="https://docs.google.com/forms/d/1qHaZBUwQXFC7Dkz5r8pi7VBVw6Rh0NSB-HSot6rdMhM/edit?pli=1" target="_blank" rel="noopener" class="secondary-action">Já estou inscrito</a>
+                    <a href="#relacao-em-breve" class="ghost-action">Ver atletas</a>
+                </div>
+                <div class="form-note">Abrir formulário Rio Saúde para informar nome, prova e distância.</div>
+    
+            </div>
+            
+            
+            
+            <div class="card event-register-card" data-event="LIVE! RUN XP — Rio II">
+                
+                <div class="top">
+                    <div class="date">05/07</div>
+                    <span class="note">Corrida</span>
+                </div>
+                <h4>LIVE! RUN XP — Rio II</h4>
+                
+            
+                
+                <div class="event-actions">
+                    <a href="https://www.ticketsports.com.br/" target="_blank" rel="noopener">Site oficial</a>
+                    <a href="https://docs.google.com/forms/d/1qHaZBUwQXFC7Dkz5r8pi7VBVw6Rh0NSB-HSot6rdMhM/edit?pli=1" target="_blank" rel="noopener" class="secondary-action">Já estou inscrito</a>
+                    <a href="#relacao-em-breve" class="ghost-action">Ver atletas</a>
+                </div>
+                <div class="form-note">Abrir formulário Rio Saúde para informar nome, prova e distância.</div>
+    
+            </div>
+            
+            
+            
+            <div class="card event-register-card" data-event="ASICS Golden Run">
+                
+                <div class="top">
+                    <div class="date">12/07</div>
+                    <span class="note">Corrida</span>
+                </div>
+                <h4>ASICS Golden Run</h4>
+                
+            
+                
+                <div class="event-actions">
+                    <a href="https://www.asics.com.br/golden-run" target="_blank" rel="noopener">Site oficial</a>
+                    <a href="https://docs.google.com/forms/d/1qHaZBUwQXFC7Dkz5r8pi7VBVw6Rh0NSB-HSot6rdMhM/edit?pli=1" target="_blank" rel="noopener" class="secondary-action">Já estou inscrito</a>
+                    <a href="#relacao-em-breve" class="ghost-action">Ver atletas</a>
+                </div>
+                <div class="form-note">Abrir formulário Rio Saúde para informar nome, prova e distância.</div>
+    
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="month-block">
+            <div class="month-title">Agosto</div>
+            <div class="cards">
+            
+            <div class="card event-register-card" data-event="XTERRA Serra do Mar">
+                
+                <div class="top">
+                    <div class="date">28 e 29/08</div>
+                    <span class="note">Cupom RIOSAUDE</span>
+                </div>
+                <h4>XTERRA Serra do Mar</h4>
+                
+            
+                
+                <div class="event-actions">
+                    <a href="https://xterrabrasil.com.br/" target="_blank" rel="noopener">Site oficial</a>
+                    <a href="https://docs.google.com/forms/d/1qHaZBUwQXFC7Dkz5r8pi7VBVw6Rh0NSB-HSot6rdMhM/edit?pli=1" target="_blank" rel="noopener" class="secondary-action">Já estou inscrito</a>
+                    <a href="#relacao-em-breve" class="ghost-action">Ver atletas</a>
+                </div>
+                <div class="form-note">Abrir formulário Rio Saúde para informar nome, prova e distância.</div>
+    
+            </div>
+            
+            
+            
+            <div class="card event-register-card" data-event="Meia da Ponte">
+                
+                <div class="top">
+                    <div class="date">02/08</div>
+                    <span class="note">Corrida</span>
+                </div>
+                <h4>Meia da Ponte</h4>
+                
+            
+                
+                <div class="event-actions">
+                    <a href="https://www.ticketsports.com.br/" target="_blank" rel="noopener">Site oficial</a>
+                    <a href="https://docs.google.com/forms/d/1qHaZBUwQXFC7Dkz5r8pi7VBVw6Rh0NSB-HSot6rdMhM/edit?pli=1" target="_blank" rel="noopener" class="secondary-action">Já estou inscrito</a>
+                    <a href="#relacao-em-breve" class="ghost-action">Ver atletas</a>
+                </div>
+                <div class="form-note">Abrir formulário Rio Saúde para informar nome, prova e distância.</div>
+    
+            </div>
+            
+            
+            
+            <div class="card event-register-card" data-event="Rio Half Marathon">
+                
+                <div class="top">
+                    <div class="date">16/08</div>
+                    <span class="note">Corrida</span>
+                </div>
+                <h4>Rio Half Marathon</h4>
+                
+            
+                
+                <div class="event-actions">
+                    <a href="https://www.riohalfmarathon.com.br/" target="_blank" rel="noopener">Site oficial</a>
+                    <a href="https://docs.google.com/forms/d/1qHaZBUwQXFC7Dkz5r8pi7VBVw6Rh0NSB-HSot6rdMhM/edit?pli=1" target="_blank" rel="noopener" class="secondary-action">Já estou inscrito</a>
+                    <a href="#relacao-em-breve" class="ghost-action">Ver atletas</a>
+                </div>
+                <div class="form-note">Abrir formulário Rio Saúde para informar nome, prova e distância.</div>
+    
+            </div>
+            
+            
+            
+            <div class="card event-register-card" data-event="Meia de Buenos Aires">
+                
+                <div class="top">
+                    <div class="date">23/08</div>
+                    <span class="note">Corrida</span>
+                </div>
+                <h4>Meia de Buenos Aires</h4>
+                
+            
+                
+                <div class="event-actions">
+                    <a href="https://maratondebuenosaires.com/" target="_blank" rel="noopener">Site oficial</a>
+                    <a href="https://docs.google.com/forms/d/1qHaZBUwQXFC7Dkz5r8pi7VBVw6Rh0NSB-HSot6rdMhM/edit?pli=1" target="_blank" rel="noopener" class="secondary-action">Já estou inscrito</a>
+                    <a href="#relacao-em-breve" class="ghost-action">Ver atletas</a>
+                </div>
+                <div class="form-note">Abrir formulário Rio Saúde para informar nome, prova e distância.</div>
+    
+            </div>
+            
+            
+            
+            <div class="card event-register-card" data-event="IRONMAN 70.3 Rio de Janeiro">
+                
+                <div class="top">
+                    <div class="date">09/08</div>
+                    <span class="note">Triathlon</span>
+                </div>
+                <h4>IRONMAN 70.3 Rio de Janeiro</h4>
+                
+            
+                
+                <div class="event-actions">
+                    <a href="https://www.ironman.com/" target="_blank" rel="noopener">Site oficial</a>
+                    <a href="https://docs.google.com/forms/d/1qHaZBUwQXFC7Dkz5r8pi7VBVw6Rh0NSB-HSot6rdMhM/edit?pli=1" target="_blank" rel="noopener" class="secondary-action">Já estou inscrito</a>
+                    <a href="#relacao-em-breve" class="ghost-action">Ver atletas</a>
+                </div>
+                <div class="form-note">Abrir formulário Rio Saúde para informar nome, prova e distância.</div>
+    
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="month-block">
+            <div class="month-title">Setembro</div>
+            <div class="cards">
+            
+            <div class="card event-register-card" data-event="UTMB Paraty">
+                
+                <div class="top">
+                    <div class="date">18 a 20/09</div>
+                    <span class="note">Prova foco</span>
+                </div>
+                <h4>UTMB Paraty</h4>
+                
+            
+                
+                <div class="event-actions">
+                    <a href="https://paraty.utmb.world/" target="_blank" rel="noopener">Site oficial</a>
+                    <a href="https://docs.google.com/forms/d/1qHaZBUwQXFC7Dkz5r8pi7VBVw6Rh0NSB-HSot6rdMhM/edit?pli=1" target="_blank" rel="noopener" class="secondary-action">Já estou inscrito</a>
+                    <a href="#relacao-em-breve" class="ghost-action">Ver atletas</a>
+                </div>
+                <div class="form-note">Abrir formulário Rio Saúde para informar nome, prova e distância.</div>
+    
+            </div>
+            
+            
+            
+            <div class="card event-register-card" data-event="Circuito das Estações — Primavera">
+                
+                <div class="top">
+                    <div class="date">Setembro</div>
+                    <span class="note">Corrida</span>
+                </div>
+                <h4>Circuito das Estações — Primavera</h4>
+                
+            
+                
+                <div class="event-actions">
+                    <a href="https://www.ticketagora.com.br/" target="_blank" rel="noopener">Site oficial</a>
+                    <a href="https://docs.google.com/forms/d/1qHaZBUwQXFC7Dkz5r8pi7VBVw6Rh0NSB-HSot6rdMhM/edit?pli=1" target="_blank" rel="noopener" class="secondary-action">Já estou inscrito</a>
+                    <a href="#relacao-em-breve" class="ghost-action">Ver atletas</a>
+                </div>
+                <div class="form-note">Abrir formulário Rio Saúde para informar nome, prova e distância.</div>
+    
+            </div>
+            
+            
+            
+            <div class="card event-register-card" data-event="Maratona de Buenos Aires">
+                
+                <div class="top">
+                    <div class="date">20/09</div>
+                    <span class="note">Corrida</span>
+                </div>
+                <h4>Maratona de Buenos Aires</h4>
+                
+            
+                
+                <div class="event-actions">
+                    <a href="https://maratondebuenosaires.com/" target="_blank" rel="noopener">Site oficial</a>
+                    <a href="https://docs.google.com/forms/d/1qHaZBUwQXFC7Dkz5r8pi7VBVw6Rh0NSB-HSot6rdMhM/edit?pli=1" target="_blank" rel="noopener" class="secondary-action">Já estou inscrito</a>
+                    <a href="#relacao-em-breve" class="ghost-action">Ver atletas</a>
+                </div>
+                <div class="form-note">Abrir formulário Rio Saúde para informar nome, prova e distância.</div>
+    
+            </div>
+            
+            
+            
+            <div class="card event-register-card" data-event="Maratona de Berlim">
+                
+                <div class="top">
+                    <div class="date">27/09</div>
+                    <span class="note">Corrida</span>
+                </div>
+                <h4>Maratona de Berlim</h4>
+                
+            
+                
+                <div class="event-actions">
+                    <a href="https://www.bmw-berlin-marathon.com/" target="_blank" rel="noopener">Site oficial</a>
+                    <a href="https://docs.google.com/forms/d/1qHaZBUwQXFC7Dkz5r8pi7VBVw6Rh0NSB-HSot6rdMhM/edit?pli=1" target="_blank" rel="noopener" class="secondary-action">Já estou inscrito</a>
+                    <a href="#relacao-em-breve" class="ghost-action">Ver atletas</a>
+                </div>
+                <div class="form-note">Abrir formulário Rio Saúde para informar nome, prova e distância.</div>
+    
+            </div>
+            
+            
+            
+            <div class="card event-register-card" data-event="IRONMAN 70.3 São Paulo">
+                
+                <div class="top">
+                    <div class="date">20/09</div>
+                    <span class="note">Triathlon</span>
+                </div>
+                <h4>IRONMAN 70.3 São Paulo</h4>
+                
+            
+                
+                <div class="event-actions">
+                    <a href="https://www.ironman.com/" target="_blank" rel="noopener">Site oficial</a>
+                    <a href="https://docs.google.com/forms/d/1qHaZBUwQXFC7Dkz5r8pi7VBVw6Rh0NSB-HSot6rdMhM/edit?pli=1" target="_blank" rel="noopener" class="secondary-action">Já estou inscrito</a>
+                    <a href="#relacao-em-breve" class="ghost-action">Ver atletas</a>
+                </div>
+                <div class="form-note">Abrir formulário Rio Saúde para informar nome, prova e distância.</div>
+    
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="month-block">
+            <div class="month-title">Outubro</div>
+            <div class="cards">
+            
+            <div class="card event-register-card" data-event="XTERRA Costa Verde">
+                
+                <div class="top">
+                    <div class="date">02 a 04/10</div>
+                    <span class="note">Cupom RIOSAUDE</span>
+                </div>
+                <h4>XTERRA Costa Verde</h4>
+                
+            
+                
+                <div class="event-actions">
+                    <a href="https://xterrabrasil.com.br/" target="_blank" rel="noopener">Site oficial</a>
+                    <a href="https://docs.google.com/forms/d/1qHaZBUwQXFC7Dkz5r8pi7VBVw6Rh0NSB-HSot6rdMhM/edit?pli=1" target="_blank" rel="noopener" class="secondary-action">Já estou inscrito</a>
+                    <a href="#relacao-em-breve" class="ghost-action">Ver atletas</a>
+                </div>
+                <div class="form-note">Abrir formulário Rio Saúde para informar nome, prova e distância.</div>
+    
+            </div>
+            
+            
+            
+            <div class="card event-register-card" data-event="WTR Campos do Jordão">
+                
+                <div class="top">
+                    <div class="date">10 e 11/10</div>
+                    <span class="note">Trail Run</span>
+                </div>
+                <h4>WTR Campos do Jordão</h4>
+                
+            
+                
+                <div class="event-actions">
+                    <a href="https://worldtrailraces.com.br/" target="_blank" rel="noopener">Site oficial</a>
+                    <a href="https://docs.google.com/forms/d/1qHaZBUwQXFC7Dkz5r8pi7VBVw6Rh0NSB-HSot6rdMhM/edit?pli=1" target="_blank" rel="noopener" class="secondary-action">Já estou inscrito</a>
+                    <a href="#relacao-em-breve" class="ghost-action">Ver atletas</a>
+                </div>
+                <div class="form-note">Abrir formulário Rio Saúde para informar nome, prova e distância.</div>
+    
+            </div>
+            
+            
+            
+            <div class="card event-register-card" data-event="XC Búzios">
+                
+                <div class="top">
+                    <div class="date">17/10</div>
+                    <span class="note">Inscrições Rio Saúde</span>
+                </div>
+                <h4>XC Búzios</h4>
+                
+            
+                
+                <div class="event-actions">
+                    <a href="https://www.instagram.com/riosaude/" target="_blank" rel="noopener">Site oficial</a>
+                    <a href="https://docs.google.com/forms/d/1qHaZBUwQXFC7Dkz5r8pi7VBVw6Rh0NSB-HSot6rdMhM/edit?pli=1" target="_blank" rel="noopener" class="secondary-action">Já estou inscrito</a>
+                    <a href="#relacao-em-breve" class="ghost-action">Ver atletas</a>
+                </div>
+                <div class="form-note">Abrir formulário Rio Saúde para informar nome, prova e distância.</div>
+    
+            </div>
+            
+            
+            
+            <div class="card event-register-card" data-event="Maratona de Lisboa">
+                
+                <div class="top">
+                    <div class="date">10/10</div>
+                    <span class="note">Corrida</span>
+                </div>
+                <h4>Maratona de Lisboa</h4>
+                
+            
+                
+                <div class="event-actions">
+                    <a href="https://www.maratonaclubedeportugal.com/" target="_blank" rel="noopener">Site oficial</a>
+                    <a href="https://docs.google.com/forms/d/1qHaZBUwQXFC7Dkz5r8pi7VBVw6Rh0NSB-HSot6rdMhM/edit?pli=1" target="_blank" rel="noopener" class="secondary-action">Já estou inscrito</a>
+                    <a href="#relacao-em-breve" class="ghost-action">Ver atletas</a>
+                </div>
+                <div class="form-note">Abrir formulário Rio Saúde para informar nome, prova e distância.</div>
+    
+            </div>
+            
+            
+            
+            <div class="card event-register-card" data-event="Maratona de Chicago">
+                
+                <div class="top">
+                    <div class="date">11/10</div>
+                    <span class="note">Corrida</span>
+                </div>
+                <h4>Maratona de Chicago</h4>
+                
+            
+                
+                <div class="event-actions">
+                    <a href="https://www.chicagomarathon.com/" target="_blank" rel="noopener">Site oficial</a>
+                    <a href="https://docs.google.com/forms/d/1qHaZBUwQXFC7Dkz5r8pi7VBVw6Rh0NSB-HSot6rdMhM/edit?pli=1" target="_blank" rel="noopener" class="secondary-action">Já estou inscrito</a>
+                    <a href="#relacao-em-breve" class="ghost-action">Ver atletas</a>
+                </div>
+                <div class="form-note">Abrir formulário Rio Saúde para informar nome, prova e distância.</div>
+    
+            </div>
+            
+            
+            
+            <div class="card event-register-card" data-event="IRONMAN 70.3 Florianópolis">
+                
+                <div class="top">
+                    <div class="date">18/10</div>
+                    <span class="note">Triathlon</span>
+                </div>
+                <h4>IRONMAN 70.3 Florianópolis</h4>
+                
+            
+                
+                <div class="event-actions">
+                    <a href="https://www.ironman.com/" target="_blank" rel="noopener">Site oficial</a>
+                    <a href="https://docs.google.com/forms/d/1qHaZBUwQXFC7Dkz5r8pi7VBVw6Rh0NSB-HSot6rdMhM/edit?pli=1" target="_blank" rel="noopener" class="secondary-action">Já estou inscrito</a>
+                    <a href="#relacao-em-breve" class="ghost-action">Ver atletas</a>
+                </div>
+                <div class="form-note">Abrir formulário Rio Saúde para informar nome, prova e distância.</div>
+    
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="month-block">
+            <div class="month-title">Novembro</div>
+            <div class="cards">
+            
+            <div class="card event-register-card" data-event="XTERRA Ilhabela">
+                
+                <div class="top">
+                    <div class="date">20 a 22/11</div>
+                    <span class="note">Cupom RIOSAUDE</span>
+                </div>
+                <h4>XTERRA Ilhabela</h4>
+                
+            
+                
+                <div class="event-actions">
+                    <a href="https://xterrabrasil.com.br/" target="_blank" rel="noopener">Site oficial</a>
+                    <a href="https://docs.google.com/forms/d/1qHaZBUwQXFC7Dkz5r8pi7VBVw6Rh0NSB-HSot6rdMhM/edit?pli=1" target="_blank" rel="noopener" class="secondary-action">Já estou inscrito</a>
+                    <a href="#relacao-em-breve" class="ghost-action">Ver atletas</a>
+                </div>
+                <div class="form-note">Abrir formulário Rio Saúde para informar nome, prova e distância.</div>
+    
+            </div>
+            
+            
+            
+            <div class="card event-register-card" data-event="WTR Serra do Mar">
+                
+                <div class="top">
+                    <div class="date">21 e 22/11</div>
+                    <span class="note">Trail Run</span>
+                </div>
+                <h4>WTR Serra do Mar</h4>
+                
+            
+                
+                <div class="event-actions">
+                    <a href="https://worldtrailraces.com.br/" target="_blank" rel="noopener">Site oficial</a>
+                    <a href="https://docs.google.com/forms/d/1qHaZBUwQXFC7Dkz5r8pi7VBVw6Rh0NSB-HSot6rdMhM/edit?pli=1" target="_blank" rel="noopener" class="secondary-action">Já estou inscrito</a>
+                    <a href="#relacao-em-breve" class="ghost-action">Ver atletas</a>
+                </div>
+                <div class="form-note">Abrir formulário Rio Saúde para informar nome, prova e distância.</div>
+    
+            </div>
+            
+            
+            
+            <div class="card event-register-card" data-event="Maratona de Nova Iorque">
+                
+                <div class="top">
+                    <div class="date">01/11</div>
+                    <span class="note">Corrida</span>
+                </div>
+                <h4>Maratona de Nova Iorque</h4>
+                
+            
+                
+                <div class="event-actions">
+                    <a href="https://www.nyrr.org/tcsnycmarathon" target="_blank" rel="noopener">Site oficial</a>
+                    <a href="https://docs.google.com/forms/d/1qHaZBUwQXFC7Dkz5r8pi7VBVw6Rh0NSB-HSot6rdMhM/edit?pli=1" target="_blank" rel="noopener" class="secondary-action">Já estou inscrito</a>
+                    <a href="#relacao-em-breve" class="ghost-action">Ver atletas</a>
+                </div>
+                <div class="form-note">Abrir formulário Rio Saúde para informar nome, prova e distância.</div>
+    
+            </div>
+            
+            
+            
+            <div class="card event-register-card" data-event="LIVE! RUN XP — Rio III">
+                
+                <div class="top">
+                    <div class="date">16/11</div>
+                    <span class="note">Corrida</span>
+                </div>
+                <h4>LIVE! RUN XP — Rio III</h4>
+                
+            
+                
+                <div class="event-actions">
+                    <a href="https://www.ticketsports.com.br/" target="_blank" rel="noopener">Site oficial</a>
+                    <a href="https://docs.google.com/forms/d/1qHaZBUwQXFC7Dkz5r8pi7VBVw6Rh0NSB-HSot6rdMhM/edit?pli=1" target="_blank" rel="noopener" class="secondary-action">Já estou inscrito</a>
+                    <a href="#relacao-em-breve" class="ghost-action">Ver atletas</a>
+                </div>
+                <div class="form-note">Abrir formulário Rio Saúde para informar nome, prova e distância.</div>
+    
+            </div>
+            
+            
+            
+            <div class="card event-register-card" data-event="IRONMAN 70.3 Aracaju">
+                
+                <div class="top">
+                    <div class="date">29/11</div>
+                    <span class="note">Triathlon</span>
+                </div>
+                <h4>IRONMAN 70.3 Aracaju</h4>
+                
+            
+                
+                <div class="event-actions">
+                    <a href="https://www.ironman.com/" target="_blank" rel="noopener">Site oficial</a>
+                    <a href="https://docs.google.com/forms/d/1qHaZBUwQXFC7Dkz5r8pi7VBVw6Rh0NSB-HSot6rdMhM/edit?pli=1" target="_blank" rel="noopener" class="secondary-action">Já estou inscrito</a>
+                    <a href="#relacao-em-breve" class="ghost-action">Ver atletas</a>
+                </div>
+                <div class="form-note">Abrir formulário Rio Saúde para informar nome, prova e distância.</div>
+    
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="month-block">
+            <div class="month-title">Dezembro</div>
+            <div class="cards">
+            
+            <div class="card event-register-card" data-event="Circuito das Estações — Verão">
+                
+                <div class="top">
+                    <div class="date">Dezembro</div>
+                    <span class="note">Corrida</span>
+                </div>
+                <h4>Circuito das Estações — Verão</h4>
+                
+            
+                
+                <div class="event-actions">
+                    <a href="https://www.ticketagora.com.br/" target="_blank" rel="noopener">Site oficial</a>
+                    <a href="https://docs.google.com/forms/d/1qHaZBUwQXFC7Dkz5r8pi7VBVw6Rh0NSB-HSot6rdMhM/edit?pli=1" target="_blank" rel="noopener" class="secondary-action">Já estou inscrito</a>
+                    <a href="#relacao-em-breve" class="ghost-action">Ver atletas</a>
+                </div>
+                <div class="form-note">Abrir formulário Rio Saúde para informar nome, prova e distância.</div>
+    
+            </div>
+            
+            </div>
+        </div>
+        
+</section>
+
+<section class="panel panel-trail">
+<div class="section-head">
+<h2>Trail Run</h2>
+<span>Calendário Trail 2026</span>
+</div>
+<div class="panel-highlight">
+  <div class="panel-info">
+    <strong>XTERRA Brasil</strong>
+    <p>Cupom oficial Rio Saúde para o circuito: <b>RIOSAUDE</b>.</p>
+  </div>
+  <div class="panel-info">
+    <strong>XC Búzios</strong>
+    <p>As inscrições serão realizadas diretamente pela Rio Saúde.</p>
+  </div>
+</div>
+
+        <div class="month-block">
+            <div class="month-title">Junho</div>
+            <div class="cards">
+            
+            <div class="card event-register-card" data-event="XTERRA São Sebastião">
+                
+                <div class="top">
+                    <div class="date">19 a 21/06</div>
+                    <span class="note">Cupom RIOSAUDE</span>
+                </div>
+                <h4>XTERRA São Sebastião</h4>
+                
+            
+                
+                <div class="event-actions">
+                    <a href="https://xterrabrasil.com.br/" target="_blank" rel="noopener">Site oficial</a>
+                    <a href="https://docs.google.com/forms/d/1qHaZBUwQXFC7Dkz5r8pi7VBVw6Rh0NSB-HSot6rdMhM/edit?pli=1" target="_blank" rel="noopener" class="secondary-action">Já estou inscrito</a>
+                    <a href="#relacao-em-breve" class="ghost-action">Ver atletas</a>
+                </div>
+                <div class="form-note">Abrir formulário Rio Saúde para informar nome, prova e distância.</div>
+    
+            </div>
+            
+            
+            
+            <div class="card event-register-card" data-event="WTR Agulhas Negras">
+                
+                <div class="top">
+                    <div class="date">27 e 28/06</div>
+                    
+                </div>
+                <h4>WTR Agulhas Negras</h4>
+                
+            
+                
+                <div class="event-actions">
+                    <a href="https://worldtrailraces.com.br/" target="_blank" rel="noopener">Site oficial</a>
+                    <a href="https://docs.google.com/forms/d/1qHaZBUwQXFC7Dkz5r8pi7VBVw6Rh0NSB-HSot6rdMhM/edit?pli=1" target="_blank" rel="noopener" class="secondary-action">Já estou inscrito</a>
+                    <a href="#relacao-em-breve" class="ghost-action">Ver atletas</a>
+                </div>
+                <div class="form-note">Abrir formulário Rio Saúde para informar nome, prova e distância.</div>
+    
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="month-block">
+            <div class="month-title">Julho</div>
+            <div class="cards">
+            
+            <div class="card event-register-card" data-event="XTERRA Mina de Águas Claras">
+                
+                <div class="top">
+                    <div class="date">24 a 26/07</div>
+                    <span class="note">Cupom RIOSAUDE</span>
+                </div>
+                <h4>XTERRA Mina de Águas Claras</h4>
+                
+            
+                
+                <div class="event-actions">
+                    <a href="https://xterrabrasil.com.br/" target="_blank" rel="noopener">Site oficial</a>
+                    <a href="https://docs.google.com/forms/d/1qHaZBUwQXFC7Dkz5r8pi7VBVw6Rh0NSB-HSot6rdMhM/edit?pli=1" target="_blank" rel="noopener" class="secondary-action">Já estou inscrito</a>
+                    <a href="#relacao-em-breve" class="ghost-action">Ver atletas</a>
+                </div>
+                <div class="form-note">Abrir formulário Rio Saúde para informar nome, prova e distância.</div>
+    
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="month-block">
+            <div class="month-title">Agosto</div>
+            <div class="cards">
+            
+            <div class="card event-register-card" data-event="XTERRA Serra do Mar">
+                
+                <div class="top">
+                    <div class="date">28 e 29/08</div>
+                    <span class="note">Cupom RIOSAUDE</span>
+                </div>
+                <h4>XTERRA Serra do Mar</h4>
+                
+            
+                
+                <div class="event-actions">
+                    <a href="https://xterrabrasil.com.br/" target="_blank" rel="noopener">Site oficial</a>
+                    <a href="https://docs.google.com/forms/d/1qHaZBUwQXFC7Dkz5r8pi7VBVw6Rh0NSB-HSot6rdMhM/edit?pli=1" target="_blank" rel="noopener" class="secondary-action">Já estou inscrito</a>
+                    <a href="#relacao-em-breve" class="ghost-action">Ver atletas</a>
+                </div>
+                <div class="form-note">Abrir formulário Rio Saúde para informar nome, prova e distância.</div>
+    
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="month-block">
+            <div class="month-title">Setembro</div>
+            <div class="cards">
+            
+            <div class="card event-register-card" data-event="UTMB Paraty">
+                
+                <div class="top">
+                    <div class="date">18 a 20/09</div>
+                    <span class="note">Prova foco</span>
+                </div>
+                <h4>UTMB Paraty</h4>
+                
+            
+                
+                <div class="event-actions">
+                    <a href="https://paraty.utmb.world/" target="_blank" rel="noopener">Site oficial</a>
+                    <a href="https://docs.google.com/forms/d/1qHaZBUwQXFC7Dkz5r8pi7VBVw6Rh0NSB-HSot6rdMhM/edit?pli=1" target="_blank" rel="noopener" class="secondary-action">Já estou inscrito</a>
+                    <a href="#relacao-em-breve" class="ghost-action">Ver atletas</a>
+                </div>
+                <div class="form-note">Abrir formulário Rio Saúde para informar nome, prova e distância.</div>
+    
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="month-block">
+            <div class="month-title">Outubro</div>
+            <div class="cards">
+            
+            <div class="card event-register-card" data-event="XTERRA Costa Verde">
+                
+                <div class="top">
+                    <div class="date">02 a 04/10</div>
+                    <span class="note">Cupom RIOSAUDE</span>
+                </div>
+                <h4>XTERRA Costa Verde</h4>
+                
+            
+                
+                <div class="event-actions">
+                    <a href="https://xterrabrasil.com.br/" target="_blank" rel="noopener">Site oficial</a>
+                    <a href="https://docs.google.com/forms/d/1qHaZBUwQXFC7Dkz5r8pi7VBVw6Rh0NSB-HSot6rdMhM/edit?pli=1" target="_blank" rel="noopener" class="secondary-action">Já estou inscrito</a>
+                    <a href="#relacao-em-breve" class="ghost-action">Ver atletas</a>
+                </div>
+                <div class="form-note">Abrir formulário Rio Saúde para informar nome, prova e distância.</div>
+    
+            </div>
+            
+            
+            
+            <div class="card event-register-card" data-event="WTR Campos do Jordão">
+                
+                <div class="top">
+                    <div class="date">10 e 11/10</div>
+                    
+                </div>
+                <h4>WTR Campos do Jordão</h4>
+                
+            
+                
+                <div class="event-actions">
+                    <a href="https://worldtrailraces.com.br/" target="_blank" rel="noopener">Site oficial</a>
+                    <a href="https://docs.google.com/forms/d/1qHaZBUwQXFC7Dkz5r8pi7VBVw6Rh0NSB-HSot6rdMhM/edit?pli=1" target="_blank" rel="noopener" class="secondary-action">Já estou inscrito</a>
+                    <a href="#relacao-em-breve" class="ghost-action">Ver atletas</a>
+                </div>
+                <div class="form-note">Abrir formulário Rio Saúde para informar nome, prova e distância.</div>
+    
+            </div>
+            
+            
+            
+            <div class="card event-register-card" data-event="XC Búzios">
+                
+                <div class="top">
+                    <div class="date">17/10</div>
+                    <span class="note">Inscrições Rio Saúde</span>
+                </div>
+                <h4>XC Búzios</h4>
+                
+            
+                
+                <div class="event-actions">
+                    <a href="https://www.instagram.com/riosaude/" target="_blank" rel="noopener">Site oficial</a>
+                    <a href="https://docs.google.com/forms/d/1qHaZBUwQXFC7Dkz5r8pi7VBVw6Rh0NSB-HSot6rdMhM/edit?pli=1" target="_blank" rel="noopener" class="secondary-action">Já estou inscrito</a>
+                    <a href="#relacao-em-breve" class="ghost-action">Ver atletas</a>
+                </div>
+                <div class="form-note">Abrir formulário Rio Saúde para informar nome, prova e distância.</div>
+    
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="month-block">
+            <div class="month-title">Novembro</div>
+            <div class="cards">
+            
+            <div class="card event-register-card" data-event="XTERRA Ilhabela">
+                
+                <div class="top">
+                    <div class="date">20 a 22/11</div>
+                    <span class="note">Cupom RIOSAUDE</span>
+                </div>
+                <h4>XTERRA Ilhabela</h4>
+                
+            
+                
+                <div class="event-actions">
+                    <a href="https://xterrabrasil.com.br/" target="_blank" rel="noopener">Site oficial</a>
+                    <a href="https://docs.google.com/forms/d/1qHaZBUwQXFC7Dkz5r8pi7VBVw6Rh0NSB-HSot6rdMhM/edit?pli=1" target="_blank" rel="noopener" class="secondary-action">Já estou inscrito</a>
+                    <a href="#relacao-em-breve" class="ghost-action">Ver atletas</a>
+                </div>
+                <div class="form-note">Abrir formulário Rio Saúde para informar nome, prova e distância.</div>
+    
+            </div>
+            
+            
+            
+            <div class="card event-register-card" data-event="WTR Serra do Mar">
+                
+                <div class="top">
+                    <div class="date">21 e 22/11</div>
+                    
+                </div>
+                <h4>WTR Serra do Mar</h4>
+                
+            
+                
+                <div class="event-actions">
+                    <a href="https://worldtrailraces.com.br/" target="_blank" rel="noopener">Site oficial</a>
+                    <a href="https://docs.google.com/forms/d/1qHaZBUwQXFC7Dkz5r8pi7VBVw6Rh0NSB-HSot6rdMhM/edit?pli=1" target="_blank" rel="noopener" class="secondary-action">Já estou inscrito</a>
+                    <a href="#relacao-em-breve" class="ghost-action">Ver atletas</a>
+                </div>
+                <div class="form-note">Abrir formulário Rio Saúde para informar nome, prova e distância.</div>
+    
+            </div>
+            
+            </div>
+        </div>
+        
+</section>
+
+<section class="panel panel-run">
+<div class="section-head">
+<h2>Corrida de Rua</h2>
+<span>Calendário Running 2026</span>
+</div>
+
+        <div class="month-block">
+            <div class="month-title">Junho</div>
+            <div class="cards">
+            
+            <div class="card event-register-card" data-event="Maratona do Rio">
+                
+                <div class="top">
+                    <div class="date">04 a 07/06</div>
+                    
+                </div>
+                <h4>Maratona do Rio</h4>
+                
+            
+                
+                <div class="event-actions">
+                    <a href="https://maratonadorio.com.br/" target="_blank" rel="noopener">Site oficial</a>
+                    <a href="https://docs.google.com/forms/d/1qHaZBUwQXFC7Dkz5r8pi7VBVw6Rh0NSB-HSot6rdMhM/edit?pli=1" target="_blank" rel="noopener" class="secondary-action">Já estou inscrito</a>
+                    <a href="#relacao-em-breve" class="ghost-action">Ver atletas</a>
+                </div>
+                <div class="form-note">Abrir formulário Rio Saúde para informar nome, prova e distância.</div>
+    
+            </div>
+            
+            
+            
+            <div class="card event-register-card" data-event="Rio 21K">
+                
+                <div class="top">
+                    <div class="date">28/06</div>
+                    
+                </div>
+                <h4>Rio 21K</h4>
+                
+            
+                
+                <div class="event-actions">
+                    <a href="https://www.rio21k.com.br/" target="_blank" rel="noopener">Site oficial</a>
+                    <a href="https://docs.google.com/forms/d/1qHaZBUwQXFC7Dkz5r8pi7VBVw6Rh0NSB-HSot6rdMhM/edit?pli=1" target="_blank" rel="noopener" class="secondary-action">Já estou inscrito</a>
+                    <a href="#relacao-em-breve" class="ghost-action">Ver atletas</a>
+                </div>
+                <div class="form-note">Abrir formulário Rio Saúde para informar nome, prova e distância.</div>
+    
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="month-block">
+            <div class="month-title">Julho</div>
+            <div class="cards">
+            
+            <div class="card event-register-card" data-event="LIVE! RUN XP — Rio II">
+                
+                <div class="top">
+                    <div class="date">05/07</div>
+                    
+                </div>
+                <h4>LIVE! RUN XP — Rio II</h4>
+                
+            
+                
+                <div class="event-actions">
+                    <a href="https://www.ticketsports.com.br/" target="_blank" rel="noopener">Site oficial</a>
+                    <a href="https://docs.google.com/forms/d/1qHaZBUwQXFC7Dkz5r8pi7VBVw6Rh0NSB-HSot6rdMhM/edit?pli=1" target="_blank" rel="noopener" class="secondary-action">Já estou inscrito</a>
+                    <a href="#relacao-em-breve" class="ghost-action">Ver atletas</a>
+                </div>
+                <div class="form-note">Abrir formulário Rio Saúde para informar nome, prova e distância.</div>
+    
+            </div>
+            
+            
+            
+            <div class="card event-register-card" data-event="ASICS Golden Run">
+                
+                <div class="top">
+                    <div class="date">12/07</div>
+                    
+                </div>
+                <h4>ASICS Golden Run</h4>
+                
+            
+                
+                <div class="event-actions">
+                    <a href="https://www.asics.com.br/golden-run" target="_blank" rel="noopener">Site oficial</a>
+                    <a href="https://docs.google.com/forms/d/1qHaZBUwQXFC7Dkz5r8pi7VBVw6Rh0NSB-HSot6rdMhM/edit?pli=1" target="_blank" rel="noopener" class="secondary-action">Já estou inscrito</a>
+                    <a href="#relacao-em-breve" class="ghost-action">Ver atletas</a>
+                </div>
+                <div class="form-note">Abrir formulário Rio Saúde para informar nome, prova e distância.</div>
+    
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="month-block">
+            <div class="month-title">Agosto</div>
+            <div class="cards">
+            
+            <div class="card event-register-card" data-event="Meia da Ponte">
+                
+                <div class="top">
+                    <div class="date">02/08</div>
+                    
+                </div>
+                <h4>Meia da Ponte</h4>
+                
+            
+                
+                <div class="event-actions">
+                    <a href="https://www.ticketsports.com.br/" target="_blank" rel="noopener">Site oficial</a>
+                    <a href="https://docs.google.com/forms/d/1qHaZBUwQXFC7Dkz5r8pi7VBVw6Rh0NSB-HSot6rdMhM/edit?pli=1" target="_blank" rel="noopener" class="secondary-action">Já estou inscrito</a>
+                    <a href="#relacao-em-breve" class="ghost-action">Ver atletas</a>
+                </div>
+                <div class="form-note">Abrir formulário Rio Saúde para informar nome, prova e distância.</div>
+    
+            </div>
+            
+            
+            
+            <div class="card event-register-card" data-event="Rio Half Marathon">
+                
+                <div class="top">
+                    <div class="date">16/08</div>
+                    
+                </div>
+                <h4>Rio Half Marathon</h4>
+                
+            
+                
+                <div class="event-actions">
+                    <a href="https://www.riohalfmarathon.com.br/" target="_blank" rel="noopener">Site oficial</a>
+                    <a href="https://docs.google.com/forms/d/1qHaZBUwQXFC7Dkz5r8pi7VBVw6Rh0NSB-HSot6rdMhM/edit?pli=1" target="_blank" rel="noopener" class="secondary-action">Já estou inscrito</a>
+                    <a href="#relacao-em-breve" class="ghost-action">Ver atletas</a>
+                </div>
+                <div class="form-note">Abrir formulário Rio Saúde para informar nome, prova e distância.</div>
+    
+            </div>
+            
+            
+            
+            <div class="card event-register-card" data-event="Meia de Buenos Aires">
+                
+                <div class="top">
+                    <div class="date">23/08</div>
+                    
+                </div>
+                <h4>Meia de Buenos Aires</h4>
+                
+            
+                
+                <div class="event-actions">
+                    <a href="https://maratondebuenosaires.com/" target="_blank" rel="noopener">Site oficial</a>
+                    <a href="https://docs.google.com/forms/d/1qHaZBUwQXFC7Dkz5r8pi7VBVw6Rh0NSB-HSot6rdMhM/edit?pli=1" target="_blank" rel="noopener" class="secondary-action">Já estou inscrito</a>
+                    <a href="#relacao-em-breve" class="ghost-action">Ver atletas</a>
+                </div>
+                <div class="form-note">Abrir formulário Rio Saúde para informar nome, prova e distância.</div>
+    
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="month-block">
+            <div class="month-title">Setembro</div>
+            <div class="cards">
+            
+            <div class="card event-register-card" data-event="Circuito das Estações — Primavera">
+                
+                <div class="top">
+                    <div class="date">Setembro</div>
+                    
+                </div>
+                <h4>Circuito das Estações — Primavera</h4>
+                
+            
+                
+                <div class="event-actions">
+                    <a href="https://www.ticketagora.com.br/" target="_blank" rel="noopener">Site oficial</a>
+                    <a href="https://docs.google.com/forms/d/1qHaZBUwQXFC7Dkz5r8pi7VBVw6Rh0NSB-HSot6rdMhM/edit?pli=1" target="_blank" rel="noopener" class="secondary-action">Já estou inscrito</a>
+                    <a href="#relacao-em-breve" class="ghost-action">Ver atletas</a>
+                </div>
+                <div class="form-note">Abrir formulário Rio Saúde para informar nome, prova e distância.</div>
+    
+            </div>
+            
+            
+            
+            <div class="card event-register-card" data-event="Maratona de Buenos Aires">
+                
+                <div class="top">
+                    <div class="date">20/09</div>
+                    
+                </div>
+                <h4>Maratona de Buenos Aires</h4>
+                
+            
+                
+                <div class="event-actions">
+                    <a href="https://maratondebuenosaires.com/" target="_blank" rel="noopener">Site oficial</a>
+                    <a href="https://docs.google.com/forms/d/1qHaZBUwQXFC7Dkz5r8pi7VBVw6Rh0NSB-HSot6rdMhM/edit?pli=1" target="_blank" rel="noopener" class="secondary-action">Já estou inscrito</a>
+                    <a href="#relacao-em-breve" class="ghost-action">Ver atletas</a>
+                </div>
+                <div class="form-note">Abrir formulário Rio Saúde para informar nome, prova e distância.</div>
+    
+            </div>
+            
+            
+            
+            <div class="card event-register-card" data-event="Maratona de Berlim">
+                
+                <div class="top">
+                    <div class="date">27/09</div>
+                    
+                </div>
+                <h4>Maratona de Berlim</h4>
+                
+            
+                
+                <div class="event-actions">
+                    <a href="https://www.bmw-berlin-marathon.com/" target="_blank" rel="noopener">Site oficial</a>
+                    <a href="https://docs.google.com/forms/d/1qHaZBUwQXFC7Dkz5r8pi7VBVw6Rh0NSB-HSot6rdMhM/edit?pli=1" target="_blank" rel="noopener" class="secondary-action">Já estou inscrito</a>
+                    <a href="#relacao-em-breve" class="ghost-action">Ver atletas</a>
+                </div>
+                <div class="form-note">Abrir formulário Rio Saúde para informar nome, prova e distância.</div>
+    
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="month-block">
+            <div class="month-title">Outubro</div>
+            <div class="cards">
+            
+            <div class="card event-register-card" data-event="Maratona de Lisboa">
+                
+                <div class="top">
+                    <div class="date">10/10</div>
+                    
+                </div>
+                <h4>Maratona de Lisboa</h4>
+                
+            
+                
+                <div class="event-actions">
+                    <a href="https://www.maratonaclubedeportugal.com/" target="_blank" rel="noopener">Site oficial</a>
+                    <a href="https://docs.google.com/forms/d/1qHaZBUwQXFC7Dkz5r8pi7VBVw6Rh0NSB-HSot6rdMhM/edit?pli=1" target="_blank" rel="noopener" class="secondary-action">Já estou inscrito</a>
+                    <a href="#relacao-em-breve" class="ghost-action">Ver atletas</a>
+                </div>
+                <div class="form-note">Abrir formulário Rio Saúde para informar nome, prova e distância.</div>
+    
+            </div>
+            
+            
+            
+            <div class="card event-register-card" data-event="Maratona de Chicago">
+                
+                <div class="top">
+                    <div class="date">11/10</div>
+                    
+                </div>
+                <h4>Maratona de Chicago</h4>
+                
+            
+                
+                <div class="event-actions">
+                    <a href="https://www.chicagomarathon.com/" target="_blank" rel="noopener">Site oficial</a>
+                    <a href="https://docs.google.com/forms/d/1qHaZBUwQXFC7Dkz5r8pi7VBVw6Rh0NSB-HSot6rdMhM/edit?pli=1" target="_blank" rel="noopener" class="secondary-action">Já estou inscrito</a>
+                    <a href="#relacao-em-breve" class="ghost-action">Ver atletas</a>
+                </div>
+                <div class="form-note">Abrir formulário Rio Saúde para informar nome, prova e distância.</div>
+    
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="month-block">
+            <div class="month-title">Novembro</div>
+            <div class="cards">
+            
+            <div class="card event-register-card" data-event="Maratona de Nova Iorque">
+                
+                <div class="top">
+                    <div class="date">01/11</div>
+                    
+                </div>
+                <h4>Maratona de Nova Iorque</h4>
+                
+            
+                
+                <div class="event-actions">
+                    <a href="https://www.nyrr.org/tcsnycmarathon" target="_blank" rel="noopener">Site oficial</a>
+                    <a href="https://docs.google.com/forms/d/1qHaZBUwQXFC7Dkz5r8pi7VBVw6Rh0NSB-HSot6rdMhM/edit?pli=1" target="_blank" rel="noopener" class="secondary-action">Já estou inscrito</a>
+                    <a href="#relacao-em-breve" class="ghost-action">Ver atletas</a>
+                </div>
+                <div class="form-note">Abrir formulário Rio Saúde para informar nome, prova e distância.</div>
+    
+            </div>
+            
+            
+            
+            <div class="card event-register-card" data-event="LIVE! RUN XP — Rio III">
+                
+                <div class="top">
+                    <div class="date">16/11</div>
+                    
+                </div>
+                <h4>LIVE! RUN XP — Rio III</h4>
+                
+            
+                
+                <div class="event-actions">
+                    <a href="https://www.ticketsports.com.br/" target="_blank" rel="noopener">Site oficial</a>
+                    <a href="https://docs.google.com/forms/d/1qHaZBUwQXFC7Dkz5r8pi7VBVw6Rh0NSB-HSot6rdMhM/edit?pli=1" target="_blank" rel="noopener" class="secondary-action">Já estou inscrito</a>
+                    <a href="#relacao-em-breve" class="ghost-action">Ver atletas</a>
+                </div>
+                <div class="form-note">Abrir formulário Rio Saúde para informar nome, prova e distância.</div>
+    
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="month-block">
+            <div class="month-title">Dezembro</div>
+            <div class="cards">
+            
+            <div class="card event-register-card" data-event="Circuito das Estações — Verão">
+                
+                <div class="top">
+                    <div class="date">Dezembro</div>
+                    
+                </div>
+                <h4>Circuito das Estações — Verão</h4>
+                
+            
+                
+                <div class="event-actions">
+                    <a href="https://www.ticketagora.com.br/" target="_blank" rel="noopener">Site oficial</a>
+                    <a href="https://docs.google.com/forms/d/1qHaZBUwQXFC7Dkz5r8pi7VBVw6Rh0NSB-HSot6rdMhM/edit?pli=1" target="_blank" rel="noopener" class="secondary-action">Já estou inscrito</a>
+                    <a href="#relacao-em-breve" class="ghost-action">Ver atletas</a>
+                </div>
+                <div class="form-note">Abrir formulário Rio Saúde para informar nome, prova e distância.</div>
+    
+            </div>
+            
+            </div>
+        </div>
+        
+</section>
+
+<section class="panel panel-tri">
+<div class="section-head">
+<h2>Triathlon</h2>
+<span>Calendário Triathlon 2026</span>
+</div>
+
+        <div class="month-block">
+            <div class="month-title">Agosto</div>
+            <div class="cards">
+            
+            <div class="card event-register-card" data-event="IRONMAN 70.3 Rio de Janeiro">
+                
+                <div class="top">
+                    <div class="date">09/08</div>
+                    
+                </div>
+                <h4>IRONMAN 70.3 Rio de Janeiro</h4>
+                
+            
+                
+                <div class="event-actions">
+                    <a href="https://www.ironman.com/" target="_blank" rel="noopener">Site oficial</a>
+                    <a href="https://docs.google.com/forms/d/1qHaZBUwQXFC7Dkz5r8pi7VBVw6Rh0NSB-HSot6rdMhM/edit?pli=1" target="_blank" rel="noopener" class="secondary-action">Já estou inscrito</a>
+                    <a href="#relacao-em-breve" class="ghost-action">Ver atletas</a>
+                </div>
+                <div class="form-note">Abrir formulário Rio Saúde para informar nome, prova e distância.</div>
+    
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="month-block">
+            <div class="month-title">Setembro</div>
+            <div class="cards">
+            
+            <div class="card event-register-card" data-event="IRONMAN 70.3 São Paulo">
+                
+                <div class="top">
+                    <div class="date">20/09</div>
+                    
+                </div>
+                <h4>IRONMAN 70.3 São Paulo</h4>
+                
+            
+                
+                <div class="event-actions">
+                    <a href="https://www.ironman.com/" target="_blank" rel="noopener">Site oficial</a>
+                    <a href="https://docs.google.com/forms/d/1qHaZBUwQXFC7Dkz5r8pi7VBVw6Rh0NSB-HSot6rdMhM/edit?pli=1" target="_blank" rel="noopener" class="secondary-action">Já estou inscrito</a>
+                    <a href="#relacao-em-breve" class="ghost-action">Ver atletas</a>
+                </div>
+                <div class="form-note">Abrir formulário Rio Saúde para informar nome, prova e distância.</div>
+    
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="month-block">
+            <div class="month-title">Outubro</div>
+            <div class="cards">
+            
+            <div class="card event-register-card" data-event="IRONMAN 70.3 Florianópolis">
+                
+                <div class="top">
+                    <div class="date">18/10</div>
+                    
+                </div>
+                <h4>IRONMAN 70.3 Florianópolis</h4>
+                
+            
+                
+                <div class="event-actions">
+                    <a href="https://www.ironman.com/" target="_blank" rel="noopener">Site oficial</a>
+                    <a href="https://docs.google.com/forms/d/1qHaZBUwQXFC7Dkz5r8pi7VBVw6Rh0NSB-HSot6rdMhM/edit?pli=1" target="_blank" rel="noopener" class="secondary-action">Já estou inscrito</a>
+                    <a href="#relacao-em-breve" class="ghost-action">Ver atletas</a>
+                </div>
+                <div class="form-note">Abrir formulário Rio Saúde para informar nome, prova e distância.</div>
+    
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="month-block">
+            <div class="month-title">Novembro</div>
+            <div class="cards">
+            
+            <div class="card event-register-card" data-event="IRONMAN 70.3 Aracaju">
+                
+                <div class="top">
+                    <div class="date">29/11</div>
+                    
+                </div>
+                <h4>IRONMAN 70.3 Aracaju</h4>
+                
+            
+                
+                <div class="event-actions">
+                    <a href="https://www.ironman.com/" target="_blank" rel="noopener">Site oficial</a>
+                    <a href="https://docs.google.com/forms/d/1qHaZBUwQXFC7Dkz5r8pi7VBVw6Rh0NSB-HSot6rdMhM/edit?pli=1" target="_blank" rel="noopener" class="secondary-action">Já estou inscrito</a>
+                    <a href="#relacao-em-breve" class="ghost-action">Ver atletas</a>
+                </div>
+                <div class="form-note">Abrir formulário Rio Saúde para informar nome, prova e distância.</div>
+    
+            </div>
+            
+            </div>
+        </div>
+        
+</section>
+
+<div id="formulario-em-breve" class="placeholder-link-box">
+    <h3>Formulário em breve</h3>
+    <p>Este botão será conectado ao Google Forms para o atleta informar nome, distância e observações.</p>
+</div>
+
+<div id="relacao-em-breve" class="placeholder-link-box">
+    <h3>Relação de atletas em breve</h3>
+    <p>Este botão será conectado à planilha ou página pública com os atletas inscritos em cada evento.</p>
+</div>
+
+<div id="outro-evento-em-breve" class="placeholder-link-box">
+    <h3>Cadastrar outro evento</h3>
+    <p>Este botão será conectado ao formulário para o atleta cadastrar uma prova que não está na lista.</p>
+</div>
+
+</section>
+
+<section class="special-area">
+
+<label class="back-button" for="view-home">← Voltar para a página inicial</label>
+
+<div class="special-placeholder">
+<h2>Eventos Especiais Rio Saúde</h2>
+<p>Eventos organizados, produzidos e executados pela Rio Saúde ao longo da temporada.</p>
+</div>
+
+<div class="special-grid">
+  <label class="special-event-card featured" for="special-itatiaia">
+    <div class="special-icon">🏔️</div>
+    <div>
+      <small>Trail Camp 2026</small>
+      <h3>Itatiaia</h3>
+      <p><strong>20 a 23 de agosto</strong><br>Hotel São Gotardo · 1.700m</p>
+      <span>Ver detalhes →</span>
+    </div>
+  </label>
+
+  <div class="special-event-card soon">
+    <div class="special-icon">🏝️</div>
+    <div>
+      <small>Trail Camp 2026</small>
+      <h3>Noronha</h3>
+      <p><strong>19 a 22 de novembro</strong><br>Mais informações em breve.</p>
+      <span>Em breve</span>
+    </div>
+  </div>
+</div>
+
+<input type="radio" name="special-event" id="special-itatiaia">
+
+<section class="special-detail">
+  <div class="section-head">
+    <h2>Trail Camp Itatiaia</h2>
+    <span>20 a 23 de agosto</span>
+  </div>
+
+  <div class="panel-highlight">
+    <div class="panel-info">
+      <strong>Hotel São Gotardo</strong>
+      <p>Em frente ao Parque Nacional de Itatiaia · 1.700m de altitude.</p>
+      <div class="chips">
+        <span>🏊 Piscina</span>
+        <span>🧖 Sauna</span>
+        <span>🍖 Churrasqueira</span>
+        <span>☕ Café reforçado</span>
+        <span>♨️ Hidromassagem</span>
+        <span>🔥 Lareira</span>
+        <span>🛁 Banheira</span>
+      </div>
+    </div>
+
+    <div class="panel-info alert-box">
+      <strong>Quartos disponíveis</strong>
+      <p><b>Apenas 22 quartos disponíveis.</b><br>Garanta o seu quarto com antecedência direto com o hotel.</p>
+    </div>
+  </div>
+
+  
+
+<div class="landing-hero">
+  <small>TRAIL CAMP 2026</small>
+  <h2>Itatiaia</h2>
+  <p>Uma experiência intensa nas montanhas.</p>
+</div>
+
+<div class="simple-section">
+  <h3>Sobre a experiência</h3>
+
+  <p>
+    Uma programação completa para quem quer viver uma experiência intensa nas montanhas:
+  </p>
+
+  <div class="simple-tags">
+    <span>🏃 Treinos técnicos</span>
+    <span>🌙 Treino noturno</span>
+    <span>🏔️ Expedição nas trilhas da região</span>
+  </div>
+
+  <p>
+    A base será o <strong>Hotel São Gotardo</strong>, a 1700m de altitude,
+    em frente ao Parque Nacional de Itatiaia.
+  </p>
+
+  <div class="simple-tags">
+    <span>🏊 Lago com raia de natação</span>
+    <span>🚵 Pista de MTB</span>
+    <span>🧖 Piscina, sauna e churrasqueira</span>
+    <span>☕ Café da manhã reforçado</span>
+    <span>👨‍👩‍👧 Espaço perfeito para família</span>
+  </div>
+
+  <p>
+    As reservas e informações de hospedagem são feitas diretamente com o hotel.
+  </p>
+</div>
+
+<div class="simple-section">
+  <h3>Parque Nacional de Itatiaia</h3>
+
+  <p>
+    Um dos cenários mais tradicionais de montanha do Brasil,
+    com altitude, natureza preservada e trilhas que transformam o treino
+    em uma experiência única.
+  </p>
+</div>
+
+<div class="simple-section">
+  <h3>Programação</h3>
+
+  <div class="program-list">
+    <div class="program-item">
+      <strong>Sexta-feira</strong>
+      <p>
+        Treino noturno leve dentro do hotel, integração do grupo e briefing oficial do camp.
+      </p>
+    </div>
+
+    <div class="program-item featured-item">
+      <strong>Sábado</strong>
+      <p>
+        Treino especial no Parque Nacional de Itatiaia + experiência principal do camp.
+      </p>
+    </div>
+
+    <div class="program-item">
+      <strong>Domingo</strong>
+      <p>
+        Desafio São Gotardo nas trilhas e caminhos internos do hotel.
+      </p>
+    </div>
+  </div>
+</div>
+
+<div class="food-highlight">
+    <small>Tudo incluso</small>
+    <h3>Todas as refeições já estão incluídas no pacote.</h3>
+    <p>Café da manhã, almoço e jantar fazem parte da experiência do Trail Camp.</p>
+    <p class="food-note">🍷 Bebidas consumidas no hotel são cobradas separadamente.</p>
+</div>
+
+<div class="simple-section">
+  <h3>Hospedagem</h3>
+
+  <div class="price-grid">
+    <div class="price-card-clean">
+      <small>Qui → Dom</small>
+      <h4>R$3.332</h4>
+      <p>2 pessoas · 6x sem juros</p>
+    </div>
+
+    <div class="price-card-clean">
+      <small>Sex → Dom</small>
+      <h4>R$2.805</h4>
+      <p>2 pessoas · 6x sem juros</p>
+    </div>
+  </div>
+</div>
+
+<div class="reservation-box">
+
+    <small>Reserva direta com o hotel</small>
+    <h3>Tire suas dúvidas, escolha sua suíte e garanta sua vaga direto com o Hotel São Gotardo.</h3>
+    <a href="https://wa.me/5521972440306?text=Olá!%20Tenho%20interesse%20no%20Trail%20Camp%20Itatiaia%202026%20da%20Rio%20Saúde%20e%20gostaria%20de%20mais%20informações%20sobre%20hospedagem%20e%20reserva." target="_blank" rel="noopener">📲 Falar no WhatsApp</a>
+    <strong>(21) 97244-0306</strong>
+  </div>
+</section>
+
+</section>
+</main>
+
+<footer class="footer">
+Rio Saúde • Corrida • Trail Run • Triathlon
+</footer>
+
+</body>
+</html>
