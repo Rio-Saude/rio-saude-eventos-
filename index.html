@@ -935,6 +935,13 @@ text-align:center;
 }
 }
 
+.realizada {
+  opacity: 0.45;
+  pointer-events: none;
+}
+.realizada .badge-data {
+  text-decoration: line-through;
+}    
 </style>
 </head>
 
@@ -2570,5 +2577,25 @@ text-align:center;
 Rio Saúde • Corrida • Trail Run • Triathlon
 </footer>
 
+<script>
+(function () {
+  var hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+
+  document.querySelectorAll('[data-end]').forEach(function (card) {
+    var fim = new Date(card.dataset.end);
+    fim.setHours(23, 59, 59, 0);
+
+    if (hoje > fim) {
+      var count = parseInt(card.dataset.count || '0', 10);
+      if (count === 0) {
+        card.style.display = 'none';
+      } else {
+        card.classList.add('realizada');
+      }
+    }
+  });
+})();
+</script>    
 </body>
 </html>
