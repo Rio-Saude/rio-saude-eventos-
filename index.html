@@ -2579,15 +2579,55 @@ Rio Saúde • Corrida • Trail Run • Triathlon
 
 <script>
 (function () {
+  var datas = {
+    "Maratona do Rio":                   "2026-06-07",
+    "XTERRA São Sebastião":              "2026-06-21",
+    "WTR Agulhas Negras":                "2026-06-28",
+    "Rio 21K":                           "2026-06-28",
+    "LIVE! RUN XP — Rio II":             "2026-07-05",
+    "ASICS Golden Run":                  "2026-07-12",
+    "XTERRA Mina de Águas Claras":       "2026-07-26",
+    "Meia da Ponte":                     "2026-08-02",
+    "IRONMAN 70.3 Rio de Janeiro":       "2026-08-09",
+    "Rio Half Marathon":                 "2026-08-16",
+    "Meia de Buenos Aires":              "2026-08-23",
+    "XTERRA Serra do Mar":               "2026-08-29",
+    "UTMB Paraty":                       "2026-09-20",
+    "Circuito das Estações — Primavera": "2026-09-30",
+    "Maratona de Buenos Aires":          "2026-09-20",
+    "Maratona de Berlim":                "2026-09-27",
+    "IRONMAN 70.3 São Paulo":            "2026-09-20",
+    "XTERRA Costa Verde":                "2026-10-04",
+    "WTR Campos do Jordão":              "2026-10-11",
+    "Maratona de Lisboa":                "2026-10-10",
+    "Maratona de Chicago":               "2026-10-11",
+    "XC Búzios":                         "2026-10-17",
+    "IRONMAN 70.3 Florianópolis":        "2026-10-18",
+    "Maratona de Nova Iorque":           "2026-11-01",
+    "LIVE! RUN XP — Rio III":            "2026-11-16",
+    "XTERRA Ilhabela":                   "2026-11-22",
+    "WTR Serra do Mar":                  "2026-11-22",
+    "IRONMAN 70.3 Aracaju":              "2026-11-29",
+    "Circuito das Estações — Verão":     "2026-12-31"
+  };
+
+  var inscritos = {
+    "Maratona do Rio": 0
+  };
+
   var hoje = new Date();
   hoje.setHours(0, 0, 0, 0);
 
-  document.querySelectorAll('[data-end]').forEach(function (card) {
-    var fim = new Date(card.dataset.end);
+  document.querySelectorAll('[data-event]').forEach(function (card) {
+    var nome = card.dataset.event;
+    var dataFim = datas[nome];
+    if (!dataFim) return;
+
+    var fim = new Date(dataFim);
     fim.setHours(23, 59, 59, 0);
 
     if (hoje > fim) {
-      var count = parseInt(card.dataset.count || '0', 10);
+      var count = inscritos[nome] || 0;
       if (count === 0) {
         card.style.display = 'none';
       } else {
