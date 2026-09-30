@@ -39,7 +39,11 @@ button,input{font:inherit}.panel{background:var(--panel);border:1px solid var(--
     <p>Entre com um e-mail autorizado da Rio Saúde. O acesso será validado pelo banco e os nomes dos atletas não ficam públicos.</p>
     <form id="login-form">
       <div class="field"><label for="email">E-mail</label><input id="email" type="email" autocomplete="email" required></div>
-      <button class="primary" type="submit">Receber link de acesso</button>
+      <div class="field"><label for="password">Senha</label><input id="password" type="password" autocomplete="current-password" minlength="8" required></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="primary" type="submit">Entrar</button>
+        <button class="secondary" type="button" id="first-access">Primeiro acesso</button>
+      </div>
       <p id="login-feedback"></p>
     </form>
   </section>
@@ -79,11 +83,41 @@ button,input{font:inherit}.panel{background:var(--panel);border:1px solid var(--
   document.querySelector("#login-form").addEventListener("submit", async (e) => {
     e.preventDefault();
     const email = document.querySelector("#email").value.trim().toLowerCase();
+    const password = document.querySelector("#password").value;
     const feedback = document.querySelector("#login-feedback");
-    feedback.textContent = "Enviando...";
-    const redirectTo = new URL("admin.html", window.location.href).href;
-    const { error } = await client.auth.signInWithOtp({ email, options: { emailRedirectTo: redirectTo } });
-    feedback.textContent = error ? "Não foi possível enviar o acesso." : "Link enviado. Abra o e-mail para entrar.";
+    feedback.textContent = "Entrando...";
+    const { error } = await client.auth.signInWithPassword({ email, password });
+    if (error) {
+      feedback.textContent = "E-mail ou senha inválidos. Se for seu primeiro acesso, use o botão abaixo.";
+      return;
+    }
+    await init();
+  });
+
+  document.querySelector("#first-access").addEventListener("click", async () => {
+    const email = document.querySelector("#email").value.trim().toLowerCase();
+    const password = document.querySelector("#password").value;
+    const feedback = document.querySelector("#login-feedback");
+
+    if (!email || password.length < 8) {
+      feedback.textContent = "Informe seu e-mail e crie uma senha com pelo menos 8 caracteres.";
+      return;
+    }
+
+    feedback.textContent = "Criando acesso...";
+    const { data, error } = await client.auth.signUp({ email, password });
+
+    if (error) {
+      feedback.textContent = "Não foi possível criar o acesso. Se você já criou uma senha antes, use Entrar.";
+      return;
+    }
+
+    if (data.session) {
+      feedback.textContent = "Acesso criado.";
+      await init();
+    } else {
+      feedback.textContent = "Confira seu e-mail para confirmar o cadastro. Depois volte aqui e entre com a senha criada.";
+    }
   });
 
   logout.addEventListener("click", async () => {
