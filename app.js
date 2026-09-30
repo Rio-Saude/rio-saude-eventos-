@@ -10,29 +10,32 @@
   if (!dbReady) return;
 
   const client = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey);
+  const cards = Array.from(document.querySelectorAll(".panel-all .event-register-card[data-event]"));
+  const filterButtons = Array.from(document.querySelectorAll(".filter-card[data-filter]"));
   let currentEvent = "";
   let currentStatus = "going";
+  let activeFilter = "all";
 
   injectStyles();
   injectModal();
   prepareCards();
+  bindFilters();
   hydratePublicData();
 
   function prepareCards() {
-    document.querySelectorAll(".event-register-card[data-event]").forEach((card) => {
+    cards.forEach((card) => {
       const actions = card.querySelector(".event-actions");
       if (!actions) return;
 
       const official = actions.querySelector('a[href^="http"]');
       if (!official) return;
 
-      const officialHtml = official.outerHTML;
-      actions.innerHTML = `
-        ${officialHtml}
-        <button type="button" class="rs-action rs-interest" data-status="interest">Tenho interesse</button>
-        <button type="button" class="rs-action rs-going" data-status="going">Vou fazer esta prova</button>
-        <button type="button" class="rs-action rs-group" data-status="group_interest">Quero inscrição em grupo</button>
-      `;
+      actions.innerHTML = "";
+      official.classList.add("rs-official-link");
+      actions.appendChild(official);
+
+      actions.appendChild(createStatusButton("Tenho interesse", "interest", "rs-interest"));
+      actions.appendChild(createStatusButton("Vou fazer esta prova", "going", "rs-going"));
 
       const note = card.querySelector(".form-note");
       if (note) {
@@ -44,13 +47,30 @@
         info.className = "rs-public-info";
         actions.before(info);
       }
+    });
+  }
 
-      actions.querySelectorAll("[data-status]").forEach((button) => {
-        button.addEventListener("click", () => {
-          currentEvent = card.dataset.event || "";
-          currentStatus = button.dataset.status || "going";
-          openModal(currentEvent, currentStatus);
-        });
+  function createStatusButton(label, status, cssClass) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "rs-action " + cssClass;
+    button.dataset.status = status;
+    button.textContent = label;
+    button.addEventListener("click", () => {
+      const card = button.closest(".event-register-card");
+      currentEvent = card?.dataset.event || "";
+      currentStatus = status;
+      openModal(currentEvent, currentStatus);
+    });
+    return button;
+  }
+
+  function bindFilters() {
+    filterButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        activeFilter = button.dataset.filter || "all";
+        filterButtons.forEach((item) => item.classList.toggle("active", item === button));
+        applyFilter();
       });
     });
   }
@@ -59,7 +79,7 @@
     const [{ data: events, error: eventsError }, { data: stats, error: statsError }] = await Promise.all([
       client
         .from("events")
-        .select("name,coupon_code,coupon_label,group_status,group_minimum,group_deadline,active")
+        .select("name,event_date,end_date,category,coupon_code,coupon_label,group_status,group_minimum,group_deadline,active")
         .eq("active", true),
       client
         .from("event_public_stats")
@@ -68,21 +88,81 @@
 
     if (eventsError || statsError) {
       console.error("Rio Saúde public data", eventsError || statsError);
+      applyFilter();
       return;
     }
 
     const eventMap = new Map((events || []).map((item) => [normalize(item.name), item]));
     const statsMap = new Map((stats || []).map((item) => [normalize(item.event_name), item]));
 
-    document.querySelectorAll(".event-register-card[data-event]").forEach((card) => {
+    cards.forEach((card) => {
       const key = normalize(card.dataset.event || "");
       const meta = eventMap.get(key);
       const stat = statsMap.get(key) || { interest_count:0, going_count:0, group_count:0 };
-      if (!meta) return;
 
-      renderPublicInfo(card, meta, stat);
-      configureGroupButton(card, meta, stat);
+      card.dataset.rsType = classifyEvent(meta, card.dataset.event || "");
+
+      if (meta) {
+        const finalDate = meta.end_date || meta.event_date;
+        if (finalDate && isPast(finalDate)) card.dataset.past = "true";
+        renderPublicInfo(card, meta, stat);
+        configureGroupButton(card, meta, stat);
+      }
     });
+
+    applyFilter();
+  }
+
+  function classifyEvent(meta, eventName) {
+    const category = normalize(meta?.category);
+    const name = normalize(eventName);
+
+    if (category.includes("trail")) return "trail";
+    if (category.includes("tri")) return "tri";
+
+    if (
+      name.includes("meia") ||
+      name.includes("half marathon") ||
+      name.includes("21k") ||
+      name.includes("21 km")
+    ) return "half";
+
+    if (name.includes("maratona") || name.includes("marathon")) return "marathon";
+
+    return "run";
+  }
+
+  function isPast(dateString) {
+    const end = new Date(dateString + "T23:59:59");
+    const now = new Date();
+    return now > end;
+  }
+
+  function applyFilter() {
+    cards.forEach((card) => {
+      const past = card.dataset.past === "true";
+      const type = card.dataset.rsType || classifyEvent(null, card.dataset.event || "");
+      const matches = activeFilter === "all" || activeFilter === type;
+      card.style.display = !past && matches ? "" : "none";
+    });
+
+    document.querySelectorAll(".panel-all .month-block").forEach((block) => {
+      const visible = Array.from(block.querySelectorAll(".event-register-card")).some(
+        (card) => card.style.display !== "none"
+      );
+      block.style.display = visible ? "" : "none";
+    });
+
+    const titles = {
+      all: "Próximas provas",
+      run: "Corridas",
+      half: "Meias maratonas",
+      marathon: "Maratonas",
+      trail: "Trail Run",
+      tri: "Triathlon"
+    };
+    const title = document.querySelector(".panel-all .section-head h2");
+    if (title) title.textContent = titles[activeFilter] || titles.all;
   }
 
   function renderPublicInfo(card, meta, stat) {
@@ -93,47 +173,60 @@
       ? `<div class="rs-coupon"><span>Cupom Rio Saúde</span><strong>${escapeHtml(meta.coupon_code)}</strong></div>`
       : "";
 
+    const groupVisible = ["collecting", "confirmed"].includes(meta.group_status);
     const minimum = Number(meta.group_minimum || 10);
-    const groupAvailable = !["disabled","closed"].includes(meta.group_status);
-    const group = groupAvailable
-      ? `<div class="rs-group-progress"><span>Inscrição em grupo</span><strong>${Number(stat.group_count || 0)}/${minimum}</strong><small>${groupStatusText(meta.group_status, Number(stat.group_count || 0), minimum)}</small></div>`
+    const group = groupVisible
+      ? `<div class="rs-group-progress">
+           <span>Inscrição em grupo Rio Saúde</span>
+           <strong>${Number(stat.group_count || 0)}/${minimum}</strong>
+           <small>${groupStatusText(meta.group_status, Number(stat.group_count || 0), minimum)}</small>
+         </div>`
       : "";
 
     info.innerHTML = `
       ${coupon}
+      <div class="rs-community-label">Rio Saúde nesta prova</div>
       <div class="rs-counts">
-        <div><strong>${Number(stat.going_count || 0)}</strong><span>vão fazer</span></div>
-        <div><strong>${Number(stat.interest_count || 0)}</strong><span>interessados</span></div>
+        <div><strong>${Number(stat.going_count || 0)}</strong><span>vão participar</span></div>
+        <div><strong>${Number(stat.interest_count || 0)}</strong><span>têm interesse</span></div>
       </div>
       ${group}
     `;
   }
 
   function configureGroupButton(card, meta, stat) {
-    const button = card.querySelector('[data-status="group_interest"]');
-    if (!button) return;
+    const actions = card.querySelector(".event-actions");
+    if (!actions) return;
 
-    if (["disabled","closed"].includes(meta.group_status)) {
-      button.remove();
-      return;
-    }
+    actions.querySelector('[data-status="group_interest"]')?.remove();
+
+    if (!["collecting", "confirmed"].includes(meta.group_status)) return;
 
     const minimum = Number(meta.group_minimum || 10);
     const count = Number(stat.group_count || 0);
-    button.textContent = `Quero inscrição em grupo · ${count}/${minimum}`;
+    actions.appendChild(
+      createStatusButton(`Quero inscrição em grupo · ${count}/${minimum}`, "group_interest", "rs-group")
+    );
   }
 
   function groupStatusText(status, count, minimum) {
-    if (status === "confirmed") return "Grupo confirmado pela Rio Saúde.";
-    if (count >= minimum) return "Mínimo atingido. A equipe vai validar a condição com a organização.";
-    if (status === "collecting") return `Faltam ${Math.max(0, minimum-count)} para o mínimo.`;
-    return "A Rio Saúde está verificando a possibilidade de inscrição em grupo.";
+    if (status === "confirmed") return "Inscrição em grupo confirmada pela Rio Saúde.";
+    if (count >= minimum) return "Mínimo atingido. A equipe vai validar a inscrição com a organização.";
+    return `Disponível com mínimo de ${minimum} interessados. Até agora: ${count}.`;
   }
 
   function injectStyles() {
     const style = document.createElement("style");
     style.textContent = `
+      .official-area .panel { display:none !important; }
+      .official-area .panel-all { display:block !important; }
+      .filter-card.active {
+        transform:translateY(-3px);
+        background:#214b37;
+        border-color:rgba(168,224,190,.35);
+      }
       .event-actions { grid-template-columns: repeat(2,1fr) !important; }
+      .event-actions .rs-official-link { grid-column:1/-1; }
       .rs-action {
         border:0; cursor:pointer; text-align:center; font:inherit;
         font-weight:900; padding:12px 10px; border-radius:14px; font-size:14px;
@@ -141,7 +234,11 @@
       .rs-interest { background:rgba(255,255,255,.10); color:#a8e0be; border:1px solid rgba(168,224,190,.24); }
       .rs-going { background:#f8c644; color:#07110d; }
       .rs-group { background:#a8e0be; color:#07110d; grid-column:1/-1; }
-      .rs-public-info { display:grid; gap:10px; margin:0 0 16px; }
+      .rs-public-info { display:grid; gap:9px; margin:0 0 16px; }
+      .rs-community-label {
+        color:#d6e6dd; font-size:11px; font-weight:900; letter-spacing:.08em;
+        text-transform:uppercase; margin-top:2px;
+      }
       .rs-counts { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
       .rs-counts div {
         background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.09);
@@ -198,7 +295,7 @@
       .rs-feedback { margin-top:14px; font-size:14px; }
       @media(max-width:700px){
         .event-actions { grid-template-columns:1fr !important; }
-        .rs-group { grid-column:auto; }
+        .event-actions .rs-official-link, .rs-group { grid-column:auto; }
       }
     `;
     document.head.appendChild(style);
@@ -251,9 +348,9 @@
     const modal = document.querySelector("#rs-modal");
     document.querySelector("#rs-event-name").textContent = eventName;
     const explainers = {
-      interest: "Você ainda está avaliando esta prova. Isso entra como interesse, não como participação confirmada.",
+      interest: "Você ainda está avaliando esta prova. Marcar interesse ajuda a Rio Saúde a medir a demanda e, em algumas provas, buscar inscrição em grupo ou condição especial.",
       going: "Você está avisando que vai participar. A inscrição oficial continua sendo feita no site da prova.",
-      group_interest: "Você quer entrar na contagem para uma possível inscrição em grupo da Rio Saúde. A vaga só será confirmada quando a equipe validar as condições da prova."
+      group_interest: "Você quer entrar na contagem da inscrição em grupo da Rio Saúde para esta prova. A vaga só será confirmada quando a equipe validar as condições."
     };
     document.querySelector("#rs-status-explainer").textContent = explainers[status] || explainers.going;
     document.querySelector("#rs-feedback").textContent = "";
@@ -293,7 +390,7 @@
       await hydratePublicData();
       setTimeout(closeModal, 1500);
     } catch (err) {
-      console.error(err);
+      console.error("Erro ao registrar prova", err);
       feedback.textContent = "Não foi possível salvar agora. Tente novamente.";
     } finally {
       submit.disabled = false;
