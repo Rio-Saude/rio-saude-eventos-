@@ -2,37 +2,113 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Rio Saúde • Admin de Provas</title>
 <style>
-:root{--dark:#07110d;--panel:#0b1712;--green:#69bd8d;--green2:#a8e0be;--white:#fff;--muted:#d6e6dd;--line:rgba(255,255,255,.12);--yellow:#f8c644}
-*{box-sizing:border-box} body{margin:0;font-family:Helvetica,Arial,sans-serif;background:linear-gradient(180deg,#07110d,#13251d 55%,#07110d);color:white;min-height:100vh}
-.wrap{max-width:1180px;margin:auto;padding:28px 22px 70px}.topbar{display:flex;justify-content:space-between;gap:20px;align-items:center;margin-bottom:28px}
-.brand{font-size:13px;letter-spacing:.16em;color:#9ec7b4;font-weight:900}.topbar h1{font-size:clamp(34px,6vw,64px);letter-spacing:-.06em;margin:8px 0 0}
-button,input{font:inherit}.panel{background:var(--panel);border:1px solid var(--line);border-radius:24px;padding:24px;box-shadow:0 18px 40px rgba(0,0,0,.18)}
-.login{max-width:520px;margin:60px auto}.login h2{font-size:32px;margin:0 0 10px}.login p{color:var(--muted);line-height:1.5}
-.field{margin:18px 0}.field label{display:block;font-weight:800;margin-bottom:7px}.field input{width:100%;padding:14px;border-radius:12px;border:1px solid var(--line);background:#07110d;color:white}
-.primary{border:0;border-radius:999px;background:var(--green2);color:#07110d;font-weight:900;padding:13px 20px;cursor:pointer}.secondary{border:1px solid var(--line);border-radius:999px;background:transparent;color:white;font-weight:800;padding:10px 16px;cursor:pointer}
-.hidden{display:none!important}.month{margin-top:34px}.month-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}.month-head h2{font-size:30px;margin:0}.event-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
-.event{background:rgba(255,255,255,.07);border:1px solid var(--line);border-radius:20px;padding:20px;cursor:pointer}.event:hover{border-color:rgba(168,224,190,.4)}
-.event h3{font-size:24px;margin:0 0 12px}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:rgba(255,255,255,.06);border-radius:12px;padding:10px}.stat strong{display:block;font-size:22px;color:var(--green2)}.stat span{font-size:11px;color:var(--muted)}
-.group-progress{margin-top:12px;background:rgba(248,198,68,.10);border:1px solid rgba(248,198,68,.28);border-radius:12px;padding:11px;color:#fff4cf}
-.drawer{position:fixed;top:0;right:0;width:min(620px,100%);height:100vh;background:#07110d;border-left:1px solid var(--line);padding:24px;overflow:auto;z-index:20;transform:translateX(100%);transition:.2s}.drawer.open{transform:translateX(0)}
-.drawer-head{display:flex;justify-content:space-between;gap:18px;align-items:flex-start}.drawer h2{font-size:30px;margin:0}.list{margin-top:20px}.person{padding:14px 0;border-bottom:1px solid var(--line)}.person strong{display:block}.person small{color:var(--muted)}.badge{display:inline-block;margin-top:7px;padding:5px 8px;border-radius:999px;background:rgba(168,224,190,.12);color:var(--green2);font-size:11px;font-weight:900}
-.notice{background:rgba(248,198,68,.10);border:1px solid rgba(248,198,68,.30);color:#fff4cf;border-radius:16px;padding:14px;margin-bottom:20px;line-height:1.5}
-@media(max-width:800px){.event-grid{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr 1fr}.topbar{align-items:flex-start;flex-direction:column}}
+:root{
+  --dark:#07110d;--panel:#0b1712;--panel2:#102219;--green:#69bd8d;--green2:#a8e0be;
+  --white:#fff;--muted:#bcd0c5;--line:rgba(255,255,255,.12);--yellow:#f8c644;--red:#ff8d8d;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,Helvetica,Arial,sans-serif;background:linear-gradient(180deg,#07110d,#13251d 55%,#07110d);color:white;min-height:100vh}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+.wrap{max-width:1240px;margin:auto;padding:24px 18px 80px}
+.topbar{display:flex;justify-content:space-between;gap:20px;align-items:center;margin-bottom:24px}
+.brand{font-size:12px;letter-spacing:.16em;color:#9ec7b4;font-weight:900}
+.topbar h1{font-size:clamp(34px,6vw,60px);letter-spacing:-.055em;margin:6px 0 0}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+.primary,.secondary,.danger{border-radius:999px;font-weight:900;padding:11px 17px}
+.primary{border:0;background:var(--green2);color:#07110d}
+.secondary{border:1px solid var(--line);background:transparent;color:white}
+.danger{border:1px solid rgba(255,141,141,.35);background:rgba(255,141,141,.08);color:#ffc3c3}
+.hidden{display:none!important}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:24px;padding:22px;box-shadow:0 18px 40px rgba(0,0,0,.18)}
+.login{max-width:540px;margin:54px auto}
+.login h2{font-size:32px;margin:0 0 10px}
+.login p{color:var(--muted);line-height:1.5}
+.field{margin:14px 0}
+.field label{display:block;font-weight:800;margin-bottom:7px;font-size:13px;color:#d8e9df}
+.field input,.field select,.field textarea{
+  width:100%;padding:13px 14px;border-radius:12px;border:1px solid var(--line);
+  background:#07110d;color:white;outline:none
+}
+.field textarea{min-height:90px;resize:vertical}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:rgba(168,224,190,.55)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.notice{background:rgba(248,198,68,.10);border:1px solid rgba(248,198,68,.30);color:#fff4cf;border-radius:16px;padding:14px;margin-bottom:18px;line-height:1.45}
+.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.summary-card{background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:18px;padding:16px}
+.summary-card strong{display:block;font-size:28px;color:var(--green2)}
+.summary-card span{font-size:12px;color:var(--muted)}
+.toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 24px}
+.toolbar input,.toolbar select{padding:11px 13px;border-radius:999px;border:1px solid var(--line);background:#0b1712;color:white}
+.toolbar input{min-width:240px;flex:1}
+.month{margin-top:30px}
+.month-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.month-head h2{font-size:28px;margin:0}
+.month-head span{font-size:12px;color:var(--muted)}
+.event-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:13px}
+.event{background:rgba(255,255,255,.065);border:1px solid var(--line);border-radius:20px;padding:18px}
+.event.inactive{opacity:.5}
+.event-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.event-date{display:inline-flex;padding:7px 9px;border-radius:10px;background:rgba(168,224,190,.10);color:var(--green2);font-weight:900;font-size:13px}
+.event-badges{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.badge{display:inline-block;padding:5px 8px;border-radius:999px;background:rgba(168,224,190,.12);color:var(--green2);font-size:10px;font-weight:900}
+.badge.yellow{background:rgba(248,198,68,.12);color:#ffe49a}
+.badge.red{background:rgba(255,141,141,.12);color:#ffc3c3}
+.event h3{font-size:22px;margin:12px 0 5px}
+.event-meta{font-size:12px;color:var(--muted);min-height:18px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:13px}
+.stat{background:rgba(255,255,255,.055);border-radius:12px;padding:9px}
+.stat strong{display:block;font-size:20px;color:var(--green2)}
+.stat span{font-size:10px;color:var(--muted)}
+.event-actions{display:flex;gap:8px;margin-top:13px}
+.event-actions button{flex:1}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.68);z-index:40;display:none;align-items:flex-start;justify-content:flex-end}
+.overlay.open{display:flex}
+.drawer{width:min(720px,100%);height:100%;background:#07110d;border-left:1px solid var(--line);padding:22px;overflow:auto}
+.drawer-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;position:sticky;top:-22px;background:#07110d;padding:22px 0 14px;z-index:2}
+.drawer-head h2{font-size:30px;margin:0}
+.section{margin-top:22px;padding-top:18px;border-top:1px solid var(--line)}
+.section h3{margin:0 0 12px;font-size:19px}
+.check-row{display:flex;align-items:center;gap:10px;margin:12px 0}
+.check-row input{width:18px;height:18px}
+.person{padding:13px 0;border-bottom:1px solid var(--line)}
+.person strong{display:block}
+.person small{color:var(--muted)}
+.person-row{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.window-row{padding:12px;border:1px solid var(--line);border-radius:14px;margin:8px 0;background:rgba(255,255,255,.04)}
+.window-row strong{display:block}
+.window-row small{color:var(--muted)}
+.window-row .row-actions{margin-top:8px}
+.feedback{margin-top:10px;font-size:13px;color:var(--green2)}
+.empty{padding:20px;border:1px dashed var(--line);border-radius:16px;color:var(--muted)}
+@media(max-width:850px){
+  .summary{grid-template-columns:1fr 1fr}
+  .event-grid{grid-template-columns:1fr}
+  .grid2,.grid3{grid-template-columns:1fr}
+  .topbar{align-items:flex-start;flex-direction:column}
+  .event-actions{flex-direction:column}
+  .toolbar input{min-width:100%}
+}
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="topbar">
-    <div><div class="brand">RIO SAÚDE • ADMIN</div><h1>Central de provas</h1></div>
-    <button id="logout" class="secondary hidden">Sair</button>
+    <div>
+      <div class="brand">RIO SAÚDE • ADMIN</div>
+      <h1>Central de provas</h1>
+    </div>
+    <div class="actions">
+      <a class="secondary" style="text-decoration:none" href="./">Ver site</a>
+      <button id="logout" class="secondary hidden">Sair</button>
+    </div>
   </div>
 
-  <section id="setup-warning" class="notice hidden">
-    O painel está pronto, mas o banco seguro ainda não foi conectado. Assim que a configuração do Supabase for preenchida, este mesmo endereço passa a funcionar com login e dados reais.
-  </section>
+  <section id="setup-warning" class="notice hidden">Banco não configurado.</section>
 
   <section id="login-panel" class="panel login">
     <h2>Acesso da equipe</h2>
@@ -40,23 +116,46 @@ button,input{font:inherit}.panel{background:var(--panel);border:1px solid var(--
     <form id="login-form">
       <div class="field"><label for="email">E-mail</label><input id="email" type="email" autocomplete="email" required></div>
       <div class="field"><label for="password">Senha</label><input id="password" type="password" autocomplete="current-password" minlength="8" required></div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <div class="actions">
         <button class="primary" type="submit">Entrar</button>
         <button class="secondary" type="button" id="first-access">Primeiro acesso</button>
       </div>
-      <p id="login-feedback"></p>
+      <p id="login-feedback" class="feedback"></p>
     </form>
   </section>
 
   <main id="dashboard" class="hidden">
+    <section class="summary">
+      <div class="summary-card"><strong id="sum-events">0</strong><span>provas ativas</span></div>
+      <div class="summary-card"><strong id="sum-going">0</strong><span>atletas confirmados</span></div>
+      <div class="summary-card"><strong id="sum-interest">0</strong><span>interesses</span></div>
+      <div class="summary-card"><strong id="sum-group">0</strong><span>grupos ativos</span></div>
+    </section>
+
+    <div class="toolbar">
+      <button id="new-event" class="primary">+ Nova prova</button>
+      <input id="search" type="search" placeholder="Buscar prova, cidade ou circuito">
+      <select id="year-filter"><option value="all">Todos os anos</option></select>
+      <select id="active-filter">
+        <option value="active">Ativas</option>
+        <option value="all">Todas</option>
+        <option value="inactive">Inativas</option>
+      </select>
+    </div>
+
     <div id="months"></div>
   </main>
 </div>
 
-<aside id="drawer" class="drawer">
-  <div class="drawer-head"><h2 id="drawer-title"></h2><button id="drawer-close" class="secondary">Fechar</button></div>
-  <div id="drawer-body" class="list"></div>
-</aside>
+<div id="overlay" class="overlay">
+  <aside class="drawer">
+    <div class="drawer-head">
+      <div><div class="brand" id="drawer-kicker">PROVA</div><h2 id="drawer-title">Editar prova</h2></div>
+      <button id="drawer-close" class="secondary">Fechar</button>
+    </div>
+    <div id="drawer-body"></div>
+  </aside>
+</div>
 
 <script src="race-config-20260930.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -64,23 +163,45 @@ button,input{font:inherit}.panel{background:var(--panel);border:1px solid var(--
 (() => {
   const cfg = window.RIO_SAUDE_CONFIG || {};
   const ready = Boolean(cfg.supabaseUrl && cfg.supabaseAnonKey && window.supabase);
-  const setupWarning = document.querySelector("#setup-warning");
+
   const loginPanel = document.querySelector("#login-panel");
   const dashboard = document.querySelector("#dashboard");
   const logout = document.querySelector("#logout");
   const monthsEl = document.querySelector("#months");
-  let client = null;
-  let rows = [];
+  const overlay = document.querySelector("#overlay");
+  const drawerBody = document.querySelector("#drawer-body");
+  const drawerTitle = document.querySelector("#drawer-title");
+  const drawerKicker = document.querySelector("#drawer-kicker");
+  const searchEl = document.querySelector("#search");
+  const yearFilter = document.querySelector("#year-filter");
+  const activeFilter = document.querySelector("#active-filter");
+
+  let client;
+  let events = [];
+  let responses = [];
+  let windows = [];
 
   if (!ready) {
-    setupWarning.classList.remove("hidden");
+    document.querySelector("#setup-warning").classList.remove("hidden");
     loginPanel.classList.add("hidden");
     return;
   }
 
   client = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey);
 
-  document.querySelector("#login-form").addEventListener("submit", async (e) => {
+  document.querySelector("#login-form").addEventListener("submit", login);
+  document.querySelector("#first-access").addEventListener("click", firstAccess);
+  document.querySelector("#drawer-close").addEventListener("click", closeDrawer);
+  overlay.addEventListener("click", (e) => { if (e.target === overlay) closeDrawer(); });
+  logout.addEventListener("click", async () => { await client.auth.signOut(); location.reload(); });
+  document.querySelector("#new-event").addEventListener("click", () => openEditor(null));
+  searchEl.addEventListener("input", renderDashboard);
+  yearFilter.addEventListener("change", renderDashboard);
+  activeFilter.addEventListener("change", renderDashboard);
+
+  init();
+
+  async function login(e){
     e.preventDefault();
     const email = document.querySelector("#email").value.trim().toLowerCase();
     const password = document.querySelector("#password").value;
@@ -88,53 +209,40 @@ button,input{font:inherit}.panel{background:var(--panel);border:1px solid var(--
     feedback.textContent = "Entrando...";
     const { error } = await client.auth.signInWithPassword({ email, password });
     if (error) {
-      feedback.textContent = "E-mail ou senha inválidos. Se for seu primeiro acesso, use o botão abaixo.";
+      feedback.textContent = "E-mail ou senha inválidos.";
       return;
     }
     await init();
-  });
+  }
 
-  document.querySelector("#first-access").addEventListener("click", async () => {
+  async function firstAccess(){
     const email = document.querySelector("#email").value.trim().toLowerCase();
     const password = document.querySelector("#password").value;
     const feedback = document.querySelector("#login-feedback");
-
     if (!email || password.length < 8) {
-      feedback.textContent = "Informe seu e-mail e crie uma senha com pelo menos 8 caracteres.";
+      feedback.textContent = "Informe o e-mail e crie uma senha com pelo menos 8 caracteres.";
       return;
     }
-
     feedback.textContent = "Criando acesso...";
     const { data, error } = await client.auth.signUp({ email, password });
-
     if (error) {
       feedback.textContent = "Não foi possível criar o acesso agora.";
       return;
     }
-
     if (data.session) {
       feedback.textContent = "Acesso criado.";
       await init();
     } else {
-      feedback.textContent = "Conta criada. Se receber um e-mail de confirmação, confirme e depois volte aqui para entrar.";
+      feedback.textContent = "Conta criada. Confirme o e-mail, se solicitado, e depois entre.";
     }
-  });
+  }
 
-  logout.addEventListener("click", async () => {
-    await client.auth.signOut();
-    window.location.reload();
-  });
-
-  document.querySelector("#drawer-close").addEventListener("click", () => document.querySelector("#drawer").classList.remove("open"));
-
-  init();
-
-  async function init() {
-    const { data: { session } } = await client.auth.getSession();
+  async function init(){
+    const { data:{ session } } = await client.auth.getSession();
     if (!session) return;
 
-    const { data: adminOk } = await client.rpc("is_admin");
-    if (!adminOk) {
+    const { data: adminOk, error } = await client.rpc("is_admin");
+    if (error || !adminOk) {
       document.querySelector("#login-feedback").textContent = "Este e-mail não tem acesso ao admin.";
       await client.auth.signOut();
       return;
@@ -143,85 +251,368 @@ button,input{font:inherit}.panel{background:var(--panel);border:1px solid var(--
     loginPanel.classList.add("hidden");
     dashboard.classList.remove("hidden");
     logout.classList.remove("hidden");
-    await loadDashboard();
+    await loadAll();
   }
 
-  async function loadDashboard() {
-    const [{ data: responseData, error: responseError }, { data: eventData, error: eventError }] = await Promise.all([
-      client.from("race_responses").select("*").order("updated_at", { ascending:false }),
-      client.from("events").select("*").order("event_date", { ascending:true })
+  async function loadAll(){
+    const [eventRes,responseRes,windowRes] = await Promise.all([
+      client.from("events").select("*").order("event_date",{ascending:true}),
+      client.from("race_responses").select("*").order("updated_at",{ascending:false}),
+      client.from("event_entry_windows").select("*").order("start_date",{ascending:true})
     ]);
-    if (responseError || eventError) {
-      monthsEl.innerHTML = '<div class="notice">Não foi possível carregar os dados agora.</div>';
+
+    if (eventRes.error || responseRes.error || windowRes.error) {
+      monthsEl.innerHTML = '<div class="notice">Não foi possível carregar o painel agora.</div>';
+      console.error(eventRes.error || responseRes.error || windowRes.error);
       return;
     }
 
-    const events = eventData || [];
-    rows = responseData || [];
-    const grouped = new Map();
+    events = eventRes.data || [];
+    responses = responseRes.data || [];
+    windows = windowRes.data || [];
+    buildYearFilter();
+    updateSummary();
+    renderDashboard();
+  }
 
-    events.forEach((event) => {
-      const date = event.event_date ? new Date(event.event_date + "T12:00:00") : null;
-      const key = date ? date.toLocaleString("pt-BR", { month:"long", year:"numeric" }) : "Sem data";
-      if (!grouped.has(key)) grouped.set(key, []);
+  function buildYearFilter(){
+    const current = yearFilter.value || "all";
+    const years = [...new Set(events.filter(e=>e.event_date).map(e=>String(e.event_date).slice(0,4)))].sort();
+    yearFilter.innerHTML = '<option value="all">Todos os anos</option>' +
+      years.map(y=>'<option value="'+escapeHtml(y)+'">'+escapeHtml(y)+'</option>').join("");
+    if ([...yearFilter.options].some(o=>o.value===current)) yearFilter.value=current;
+  }
+
+  function updateSummary(){
+    document.querySelector("#sum-events").textContent = events.filter(e=>e.active).length;
+    document.querySelector("#sum-going").textContent = responses.filter(r=>r.status==="going").length;
+    document.querySelector("#sum-interest").textContent = responses.filter(r=>r.status==="interest").length;
+    document.querySelector("#sum-group").textContent = events.filter(e=>["collecting","confirmed"].includes(e.group_status)).length;
+  }
+
+  function renderDashboard(){
+    const q = normalize(searchEl.value);
+    const year = yearFilter.value;
+    const activeMode = activeFilter.value;
+
+    let filtered = events.filter(e=>{
+      const hay = normalize([e.name,e.city,e.venue,e.series_name,e.category].filter(Boolean).join(" "));
+      const matchesQ = !q || hay.includes(q);
+      const matchesYear = year==="all" || String(e.event_date||"").startsWith(year);
+      const matchesActive = activeMode==="all" || (activeMode==="active" ? e.active : !e.active);
+      return matchesQ && matchesYear && matchesActive;
+    });
+
+    const grouped = new Map();
+    filtered.forEach(event=>{
+      const d = event.event_date ? new Date(event.event_date+"T12:00:00") : null;
+      const key = d ? d.toLocaleString("pt-BR",{month:"long",year:"numeric"}) : "Sem data";
+      if (!grouped.has(key)) grouped.set(key,[]);
       grouped.get(key).push(event);
     });
 
-    monthsEl.innerHTML = "";
-    grouped.forEach((eventsInMonth, month) => {
-      const section = document.createElement("section");
-      section.className = "month";
-      section.innerHTML = '<div class="month-head"><h2>'+escapeHtml(capitalize(month))+'</h2><span>'+eventsInMonth.length+' provas</span></div><div class="event-grid"></div>';
-      const grid = section.querySelector(".event-grid");
-      eventsInMonth.forEach((event) => grid.appendChild(renderEvent(event)));
+    monthsEl.innerHTML="";
+    if (!filtered.length) {
+      monthsEl.innerHTML='<div class="empty">Nenhuma prova encontrada neste filtro.</div>';
+      return;
+    }
+
+    grouped.forEach((list,month)=>{
+      const section=document.createElement("section");
+      section.className="month";
+      section.innerHTML='<div class="month-head"><h2>'+escapeHtml(capitalize(month))+'</h2><span>'+list.length+' provas</span></div><div class="event-grid"></div>';
+      const grid=section.querySelector(".event-grid");
+      list.forEach(event=>grid.appendChild(renderEvent(event)));
       monthsEl.appendChild(section);
     });
   }
 
-  function renderEvent(event) {
-    const related = rows.filter((row) => row.event_name === event.name);
-    const interest = related.filter((r) => r.status === "interest").length;
-    const going = related.filter((r) => r.status === "going").length;
-    const group = related.filter((r) => r.status === "group_interest").length;
-    const minimum = event.group_minimum || 10;
+  function renderEvent(event){
+    const related = responses.filter(r=>r.event_name===event.name);
+    const going = related.filter(r=>r.status==="going").length;
+    const interest = related.filter(r=>r.status==="interest").length;
+    const group = related.filter(r=>r.status==="group_interest").length;
 
-    const div = document.createElement("div");
-    div.className = "event";
-    div.innerHTML = `
-      <h3>${escapeHtml(event.name)}</h3>
-      <div class="stats">
-        <div class="stat"><strong>${going}</strong><span>vão fazer</span></div>
-        <div class="stat"><strong>${interest}</strong><span>interessados</span></div>
-        <div class="stat"><strong>${group}</strong><span>grupo RS</span></div>
-      </div>
-      <div class="group-progress">${event.group_status === "disabled" ? "Inscrição em grupo não disponível" : "Grupo Rio Saúde: "+group+"/"+minimum}</div>
-    `;
-    div.addEventListener("click", () => openEvent(event, related));
+    const div=document.createElement("article");
+    div.className="event"+(event.active?"":" inactive");
+
+    const badges=[];
+    if (!event.active) badges.push('<span class="badge red">INATIVA</span>');
+    if (event.featured) badges.push('<span class="badge yellow">DESTAQUE</span>');
+    if (event.coupon_code) badges.push('<span class="badge">CUPOM '+escapeHtml(event.coupon_code)+'</span>');
+    if (["collecting","confirmed"].includes(event.group_status)) badges.push('<span class="badge yellow">GRUPO '+group+'/'+Number(event.group_minimum||10)+'</span>');
+
+    const loc=[event.venue,event.city,event.state].filter(Boolean).join(" · ");
+
+    div.innerHTML=
+      '<div class="event-top">'+
+        '<span class="event-date">'+escapeHtml(formatDate(event.event_date))+'</span>'+
+        '<div class="event-badges">'+badges.join("")+'</div>'+
+      '</div>'+
+      '<h3>'+escapeHtml(event.name)+'</h3>'+
+      '<div class="event-meta">'+escapeHtml([event.category,event.distances,loc].filter(Boolean).join(" • "))+'</div>'+
+      '<div class="stats">'+
+        '<div class="stat"><strong>'+going+'</strong><span>vão fazer</span></div>'+
+        '<div class="stat"><strong>'+interest+'</strong><span>interessados</span></div>'+
+        '<div class="stat"><strong>'+group+'</strong><span>grupo RS</span></div>'+
+      '</div>'+
+      '<div class="event-actions">'+
+        '<button class="secondary athletes">Atletas</button>'+
+        '<button class="primary edit">Editar prova</button>'+
+      '</div>';
+
+    div.querySelector(".athletes").addEventListener("click",()=>openAthletes(event));
+    div.querySelector(".edit").addEventListener("click",()=>openEditor(event));
     return div;
   }
 
-  function openEvent(event, related) {
-    document.querySelector("#drawer-title").textContent = event.name;
-    const labels = { interest:"Tenho interesse", going:"Vou fazer", group_interest:"Quero inscrição em grupo" };
-    const body = document.querySelector("#drawer-body");
-    if (!related.length) {
-      body.innerHTML = '<div class="notice">Nenhum atleta registrado ainda.</div>';
-    } else {
-      body.innerHTML = related.map((row) => `
-        <div class="person">
-          <strong>${escapeHtml(row.athlete_name)}</strong>
-          <small>${escapeHtml(row.athlete_email)}${row.distance ? " · "+escapeHtml(row.distance) : ""}</small>
-          <span class="badge">${labels[row.status] || row.status}</span>
-        </div>
-      `).join("");
-    }
-    document.querySelector("#drawer").classList.add("open");
+  function openAthletes(event){
+    drawerKicker.textContent="ATLETAS";
+    drawerTitle.textContent=event.name;
+    const related=responses.filter(r=>r.event_name===event.name);
+    const labels={interest:"Tenho interesse",going:"Vai fazer",group_interest:"Grupo Rio Saúde"};
+
+    drawerBody.innerHTML = related.length ? related.map(row=>
+      '<div class="person">'+
+        '<div class="person-row"><div>'+
+          '<strong>'+escapeHtml(row.athlete_name)+'</strong>'+
+          '<small>'+escapeHtml(row.athlete_email)+(row.distance?' · '+escapeHtml(row.distance):'')+'</small>'+
+          '<br><span class="badge">'+escapeHtml(labels[row.status]||row.status)+'</span>'+
+        '</div><button class="danger remove-response" data-id="'+escapeHtml(row.id)+'">Remover</button></div>'+
+      '</div>'
+    ).join("") : '<div class="empty">Nenhum atleta registrado ainda.</div>';
+
+    drawerBody.querySelectorAll(".remove-response").forEach(btn=>{
+      btn.addEventListener("click",async()=>{
+        if(!confirm("Remover este registro de atleta?")) return;
+        const { error }=await client.from("race_responses").delete().eq("id",btn.dataset.id);
+        if(error){ alert("Não foi possível remover."); return; }
+        await loadAll();
+        openAthletes(event);
+      });
+    });
+
+    openDrawer();
   }
 
-  function escapeHtml(value) {
-    return String(value ?? "").replace(/[&<>"']/g, (m) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+  function openEditor(event){
+    const isNew=!event;
+    const e=event || {
+      name:"",event_date:"",end_date:"",city:"Rio de Janeiro",state:"RJ",country:"Brasil",
+      venue:"",category:"Corrida",distances:"",series_name:"",site_url:"",source_url:"",
+      coupon_code:"",coupon_label:"",group_status:"disabled",group_minimum:10,group_deadline:"",
+      featured:false,featured_note:"",active:true
+    };
+
+    drawerKicker.textContent=isNew?"NOVA PROVA":"EDITAR PROVA";
+    drawerTitle.textContent=isNew?"Cadastrar prova":e.name;
+
+    drawerBody.innerHTML=
+      '<form id="event-form">'+
+        '<div class="field"><label>Nome da prova</label><input id="f-name" required '+(isNew?'':'disabled')+' value="'+attr(e.name)+'"></div>'+
+        '<div class="grid2">'+
+          '<div class="field"><label>Data inicial</label><input id="f-date" type="date" required value="'+attr(e.event_date||"")+'"></div>'+
+          '<div class="field"><label>Data final</label><input id="f-end" type="date" value="'+attr(e.end_date||"")+'"></div>'+
+        '</div>'+
+        '<div class="grid2">'+
+          '<div class="field"><label>Categoria</label><select id="f-category">'+categoryOptions(e.category)+'</select></div>'+
+          '<div class="field"><label>Distâncias</label><input id="f-distances" value="'+attr(e.distances||"")+'" placeholder="5K • 10K • 21K"></div>'+
+        '</div>'+
+        '<div class="grid3">'+
+          '<div class="field"><label>Cidade</label><input id="f-city" value="'+attr(e.city||"")+'"></div>'+
+          '<div class="field"><label>Estado</label><input id="f-state" value="'+attr(e.state||"")+'"></div>'+
+          '<div class="field"><label>País</label><input id="f-country" value="'+attr(e.country||"")+'"></div>'+
+        '</div>'+
+        '<div class="field"><label>Local / arena</label><input id="f-venue" value="'+attr(e.venue||"")+'"></div>'+
+        '<div class="field"><label>Circuito / série</label><input id="f-series" value="'+attr(e.series_name||"")+'" placeholder="IRONMAN, SuperHalfs, AbbottWMM..."></div>'+
+        '<div class="field"><label>Site oficial</label><input id="f-site" type="url" value="'+attr(e.site_url||"")+'"></div>'+
+        '<div class="field"><label>Fonte / referência</label><input id="f-source" type="url" value="'+attr(e.source_url||"")+'"></div>'+
+
+        '<div class="section"><h3>Cupom</h3>'+
+          '<div class="grid2">'+
+            '<div class="field"><label>Código</label><input id="f-coupon" value="'+attr(e.coupon_code||"")+'"></div>'+
+            '<div class="field"><label>Texto</label><input id="f-coupon-label" value="'+attr(e.coupon_label||"")+'" placeholder="Cupom Rio Saúde"></div>'+
+          '</div>'+
+        '</div>'+
+
+        '<div class="section"><h3>Inscrição em grupo</h3>'+
+          '<div class="grid3">'+
+            '<div class="field"><label>Status</label><select id="f-group-status">'+groupOptions(e.group_status)+'</select></div>'+
+            '<div class="field"><label>Mínimo</label><input id="f-group-min" type="number" min="1" value="'+Number(e.group_minimum||10)+'"></div>'+
+            '<div class="field"><label>Prazo</label><input id="f-group-deadline" type="date" value="'+attr(e.group_deadline||"")+'"></div>'+
+          '</div>'+
+          '<div class="notice">Só aparece publicamente quando o status estiver em <strong>Coletando</strong> ou <strong>Confirmado</strong>.</div>'+
+        '</div>'+
+
+        '<div class="section"><h3>Destaque</h3>'+
+          '<label class="check-row"><input id="f-featured" type="checkbox" '+(e.featured?'checked':'')+'> Mostrar como destaque enquanto houver prazo válido</label>'+
+          '<div class="field"><label>Mensagem</label><input id="f-featured-note" value="'+attr(e.featured_note||"")+'" placeholder="Inscrição pela Rio Saúde até 03/10"></div>'+
+        '</div>'+
+
+        '<label class="check-row"><input id="f-active" type="checkbox" '+(e.active?'checked':'')+'> Prova ativa no calendário</label>'+
+        '<div class="actions"><button class="primary" type="submit">Salvar prova</button>'+(isNew?'':'<button class="secondary" type="button" id="toggle-active">'+(e.active?'Desativar':'Reativar')+'</button>')+'</div>'+
+        '<div id="save-feedback" class="feedback"></div>'+
+      '</form>'+
+      (isNew?'':'<div class="section"><h3>Janelas de inscrição</h3><div id="window-list"></div><button id="add-window" class="secondary">+ Adicionar janela</button><div id="window-form-slot"></div></div>');
+
+    const form=drawerBody.querySelector("#event-form");
+    form.addEventListener("submit",async(ev)=>{
+      ev.preventDefault();
+      const feedback=drawerBody.querySelector("#save-feedback");
+      feedback.textContent="Salvando...";
+
+      const payload={
+        name: drawerBody.querySelector("#f-name").value.trim(),
+        event_date: drawerBody.querySelector("#f-date").value || null,
+        end_date: drawerBody.querySelector("#f-end").value || null,
+        category: drawerBody.querySelector("#f-category").value || null,
+        distances: clean(drawerBody.querySelector("#f-distances").value),
+        city: clean(drawerBody.querySelector("#f-city").value),
+        state: clean(drawerBody.querySelector("#f-state").value),
+        country: clean(drawerBody.querySelector("#f-country").value),
+        venue: clean(drawerBody.querySelector("#f-venue").value),
+        series_name: clean(drawerBody.querySelector("#f-series").value),
+        site_url: clean(drawerBody.querySelector("#f-site").value),
+        source_url: clean(drawerBody.querySelector("#f-source").value),
+        coupon_code: clean(drawerBody.querySelector("#f-coupon").value),
+        coupon_label: clean(drawerBody.querySelector("#f-coupon-label").value),
+        group_status: drawerBody.querySelector("#f-group-status").value,
+        group_minimum: Number(drawerBody.querySelector("#f-group-min").value||10),
+        group_deadline: drawerBody.querySelector("#f-group-deadline").value || null,
+        featured: drawerBody.querySelector("#f-featured").checked,
+        featured_note: clean(drawerBody.querySelector("#f-featured-note").value),
+        active: drawerBody.querySelector("#f-active").checked
+      };
+
+      let result;
+      if(isNew){
+        result=await client.from("events").insert(payload).select().single();
+        if(!result.error) await client.from("event_public_stats").upsert({event_name:payload.name});
+      } else {
+        delete payload.name;
+        result=await client.from("events").update(payload).eq("id",e.id).select().single();
+      }
+
+      if(result.error){
+        console.error(result.error);
+        feedback.textContent="Não foi possível salvar.";
+        return;
+      }
+
+      feedback.textContent="Salvo.";
+      await loadAll();
+      if(isNew) closeDrawer();
+      else openEditor(result.data);
+    });
+
+    if(!isNew){
+      drawerBody.querySelector("#toggle-active").addEventListener("click",async()=>{
+        const { error }=await client.from("events").update({active:!e.active}).eq("id",e.id);
+        if(error){ alert("Não foi possível alterar."); return; }
+        await loadAll();
+        closeDrawer();
+      });
+      renderWindows(e);
+      drawerBody.querySelector("#add-window").addEventListener("click",()=>renderWindowForm(e));
+    }
+
+    openDrawer();
   }
+
+  function renderWindows(event){
+    const list=drawerBody.querySelector("#window-list");
+    const related=windows.filter(w=>w.event_name===event.name);
+    list.innerHTML=related.length?related.map(w=>
+      '<div class="window-row">'+
+        '<strong>'+escapeHtml(w.label)+'</strong>'+
+        '<small>'+escapeHtml(windowKindLabel(w.kind))+' · '+escapeHtml(formatRange(w.start_date,w.end_date))+'</small>'+
+        '<div class="row-actions"><button class="danger delete-window" data-id="'+attr(w.id)+'">Excluir</button></div>'+
+      '</div>'
+    ).join(""):'<div class="empty">Nenhuma janela cadastrada.</div>';
+
+    list.querySelectorAll(".delete-window").forEach(btn=>{
+      btn.addEventListener("click",async()=>{
+        if(!confirm("Excluir esta janela?")) return;
+        const { error }=await client.from("event_entry_windows").delete().eq("id",btn.dataset.id);
+        if(error){ alert("Não foi possível excluir."); return; }
+        await loadAll();
+        const fresh=events.find(x=>x.id===event.id)||event;
+        openEditor(fresh);
+      });
+    });
+  }
+
+  function renderWindowForm(event){
+    const slot=drawerBody.querySelector("#window-form-slot");
+    slot.innerHTML=
+      '<div class="panel" style="margin-top:12px">'+
+        '<div class="field"><label>Nome da janela</label><input id="w-label" placeholder="Sorteio / Inscrição por índice / Inscrição Rio Saúde"></div>'+
+        '<div class="grid3">'+
+          '<div class="field"><label>Tipo</label><select id="w-kind"><option value="ballot">Sorteio</option><option value="qualifying">Índice</option><option value="registration">Inscrição</option><option value="group">Grupo Rio Saúde</option><option value="other">Outro</option></select></div>'+
+          '<div class="field"><label>Início</label><input id="w-start" type="date"></div>'+
+          '<div class="field"><label>Fim</label><input id="w-end" type="date"></div>'+
+        '</div>'+
+        '<div class="field"><label>Link</label><input id="w-url" type="url"></div>'+
+        '<button id="save-window" class="primary">Salvar janela</button><div id="window-feedback" class="feedback"></div>'+
+      '</div>';
+
+    slot.querySelector("#save-window").addEventListener("click",async()=>{
+      const label=slot.querySelector("#w-label").value.trim();
+      if(!label){ slot.querySelector("#window-feedback").textContent="Informe o nome da janela."; return; }
+      const payload={
+        event_name:event.name,
+        label,
+        kind:slot.querySelector("#w-kind").value,
+        start_date:slot.querySelector("#w-start").value||null,
+        end_date:slot.querySelector("#w-end").value||null,
+        url:clean(slot.querySelector("#w-url").value),
+        active:true
+      };
+      const { error }=await client.from("event_entry_windows").insert(payload);
+      if(error){ console.error(error); slot.querySelector("#window-feedback").textContent="Não foi possível salvar."; return; }
+      await loadAll();
+      const fresh=events.find(x=>x.id===event.id)||event;
+      openEditor(fresh);
+    });
+  }
+
+  function openDrawer(){ overlay.classList.add("open"); }
+  function closeDrawer(){ overlay.classList.remove("open"); drawerBody.innerHTML=""; }
+
+  function categoryOptions(value){
+    return ["Corrida","Meia Maratona","Maratona","Trail Run","Triathlon"]
+      .map(x=>'<option '+(x===value?'selected':'')+'>'+escapeHtml(x)+'</option>').join("");
+  }
+
+  function groupOptions(value){
+    const items=[
+      ["disabled","Desligado"],["checking","Verificando"],["collecting","Coletando"],["confirmed","Confirmado"],["closed","Encerrado"]
+    ];
+    return items.map(([v,l])=>'<option value="'+v+'" '+(v===value?'selected':'')+'>'+l+'</option>').join("");
+  }
+
+  function windowKindLabel(v){
+    return {ballot:"Sorteio",qualifying:"Índice",registration:"Inscrição",group:"Grupo Rio Saúde",other:"Outro"}[v]||v;
+  }
+
+  function formatRange(a,b){
+    if(a&&b) return formatDate(a)+" a "+formatDate(b);
+    if(b) return "até "+formatDate(b);
+    if(a) return "a partir de "+formatDate(a);
+    return "sem data";
+  }
+
+  function formatDate(v){
+    if(!v) return "Sem data";
+    const p=String(v).split("-");
+    return p.length===3 ? p[2]+"/"+p[1]+"/"+p[0] : v;
+  }
+
+  function clean(v){ const x=String(v||"").trim(); return x||null; }
+  function normalize(v){ return String(v||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase(); }
   function capitalize(v){ return v ? v.charAt(0).toUpperCase()+v.slice(1) : v; }
+  function escapeHtml(v){ return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[m])); }
+  function attr(v){ return escapeHtml(v).replace(/\n/g," "); }
 })();
 </script>
 </body>
