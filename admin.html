@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rio Saúde • Admin de Provas</title>
+<style>
+:root{--dark:#07110d;--panel:#0b1712;--green:#69bd8d;--green2:#a8e0be;--white:#fff;--muted:#d6e6dd;--line:rgba(255,255,255,.12);--yellow:#f8c644}
+*{box-sizing:border-box} body{margin:0;font-family:Helvetica,Arial,sans-serif;background:linear-gradient(180deg,#07110d,#13251d 55%,#07110d);color:white;min-height:100vh}
+.wrap{max-width:1180px;margin:auto;padding:28px 22px 70px}.topbar{display:flex;justify-content:space-between;gap:20px;align-items:center;margin-bottom:28px}
+.brand{font-size:13px;letter-spacing:.16em;color:#9ec7b4;font-weight:900}.topbar h1{font-size:clamp(34px,6vw,64px);letter-spacing:-.06em;margin:8px 0 0}
+button,input{font:inherit}.panel{background:var(--panel);border:1px solid var(--line);border-radius:24px;padding:24px;box-shadow:0 18px 40px rgba(0,0,0,.18)}
+.login{max-width:520px;margin:60px auto}.login h2{font-size:32px;margin:0 0 10px}.login p{color:var(--muted);line-height:1.5}
+.field{margin:18px 0}.field label{display:block;font-weight:800;margin-bottom:7px}.field input{width:100%;padding:14px;border-radius:12px;border:1px solid var(--line);background:#07110d;color:white}
+.primary{border:0;border-radius:999px;background:var(--green2);color:#07110d;font-weight:900;padding:13px 20px;cursor:pointer}.secondary{border:1px solid var(--line);border-radius:999px;background:transparent;color:white;font-weight:800;padding:10px 16px;cursor:pointer}
+.hidden{display:none!important}.month{margin-top:34px}.month-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}.month-head h2{font-size:30px;margin:0}.event-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.event{background:rgba(255,255,255,.07);border:1px solid var(--line);border-radius:20px;padding:20px;cursor:pointer}.event:hover{border-color:rgba(168,224,190,.4)}
+.event h3{font-size:24px;margin:0 0 12px}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:rgba(255,255,255,.06);border-radius:12px;padding:10px}.stat strong{display:block;font-size:22px;color:var(--green2)}.stat span{font-size:11px;color:var(--muted)}
+.group-progress{margin-top:12px;background:rgba(248,198,68,.10);border:1px solid rgba(248,198,68,.28);border-radius:12px;padding:11px;color:#fff4cf}
+.drawer{position:fixed;top:0;right:0;width:min(620px,100%);height:100vh;background:#07110d;border-left:1px solid var(--line);padding:24px;overflow:auto;z-index:20;transform:translateX(100%);transition:.2s}.drawer.open{transform:translateX(0)}
+.drawer-head{display:flex;justify-content:space-between;gap:18px;align-items:flex-start}.drawer h2{font-size:30px;margin:0}.list{margin-top:20px}.person{padding:14px 0;border-bottom:1px solid var(--line)}.person strong{display:block}.person small{color:var(--muted)}.badge{display:inline-block;margin-top:7px;padding:5px 8px;border-radius:999px;background:rgba(168,224,190,.12);color:var(--green2);font-size:11px;font-weight:900}
+.notice{background:rgba(248,198,68,.10);border:1px solid rgba(248,198,68,.30);color:#fff4cf;border-radius:16px;padding:14px;margin-bottom:20px;line-height:1.5}
+@media(max-width:800px){.event-grid{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr 1fr}.topbar{align-items:flex-start;flex-direction:column}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div><div class="brand">RIO SAÚDE • ADMIN</div><h1>Central de provas</h1></div>
+    <button id="logout" class="secondary hidden">Sair</button>
+  </div>
+
+  <section id="setup-warning" class="notice hidden">
+    O painel está pronto, mas o banco seguro ainda não foi conectado. Assim que a configuração do Supabase for preenchida, este mesmo endereço passa a funcionar com login e dados reais.
+  </section>
+
+  <section id="login-panel" class="panel login">
+    <h2>Acesso da equipe</h2>
+    <p>Entre com um e-mail autorizado da Rio Saúde. O acesso será validado pelo banco e os nomes dos atletas não ficam públicos.</p>
+    <form id="login-form">
+      <div class="field"><label for="email">E-mail</label><input id="email" type="email" autocomplete="email" required></div>
+      <button class="primary" type="submit">Receber link de acesso</button>
+      <p id="login-feedback"></p>
+    </form>
+  </section>
+
+  <main id="dashboard" class="hidden">
+    <div id="months"></div>
+  </main>
+</div>
+
+<aside id="drawer" class="drawer">
+  <div class="drawer-head"><h2 id="drawer-title"></h2><button id="drawer-close" class="secondary">Fechar</button></div>
+  <div id="drawer-body" class="list"></div>
+</aside>
+
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(() => {
+  const cfg = window.RIO_SAUDE_CONFIG || {};
+  const ready = Boolean(cfg.supabaseUrl && cfg.supabaseAnonKey && window.supabase);
+  const setupWarning = document.querySelector("#setup-warning");
+  const loginPanel = document.querySelector("#login-panel");
+  const dashboard = document.querySelector("#dashboard");
+  const logout = document.querySelector("#logout");
+  const monthsEl = document.querySelector("#months");
+  let client = null;
+  let rows = [];
+
+  if (!ready) {
+    setupWarning.classList.remove("hidden");
+    loginPanel.classList.add("hidden");
+    return;
+  }
+
+  client = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey);
+
+  document.querySelector("#login-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const email = document.querySelector("#email").value.trim().toLowerCase();
+    const feedback = document.querySelector("#login-feedback");
+    feedback.textContent = "Enviando...";
+    const redirectTo = new URL("admin.html", window.location.href).href;
+    const { error } = await client.auth.signInWithOtp({ email, options: { emailRedirectTo: redirectTo } });
+    feedback.textContent = error ? "Não foi possível enviar o acesso." : "Link enviado. Abra o e-mail para entrar.";
+  });
+
+  logout.addEventListener("click", async () => {
+    await client.auth.signOut();
+    window.location.reload();
+  });
+
+  document.querySelector("#drawer-close").addEventListener("click", () => document.querySelector("#drawer").classList.remove("open"));
+
+  init();
+
+  async function init() {
+    const { data: { session } } = await client.auth.getSession();
+    if (!session) return;
+
+    const { data: adminOk } = await client.rpc("is_admin");
+    if (!adminOk) {
+      document.querySelector("#login-feedback").textContent = "Este e-mail não tem acesso ao admin.";
+      await client.auth.signOut();
+      return;
+    }
+
+    loginPanel.classList.add("hidden");
+    dashboard.classList.remove("hidden");
+    logout.classList.remove("hidden");
+    await loadDashboard();
+  }
+
+  async function loadDashboard() {
+    const [{ data: responseData, error: responseError }, { data: eventData, error: eventError }] = await Promise.all([
+      client.from("race_responses").select("*").order("updated_at", { ascending:false }),
+      client.from("events").select("*").order("event_date", { ascending:true })
+    ]);
+    if (responseError || eventError) {
+      monthsEl.innerHTML = '<div class="notice">Não foi possível carregar os dados agora.</div>';
+      return;
+    }
+
+    const events = eventData || [];
+    rows = responseData || [];
+    const grouped = new Map();
+
+    events.forEach((event) => {
+      const date = event.event_date ? new Date(event.event_date + "T12:00:00") : null;
+      const key = date ? date.toLocaleString("pt-BR", { month:"long", year:"numeric" }) : "Sem data";
+      if (!grouped.has(key)) grouped.set(key, []);
+      grouped.get(key).push(event);
+    });
+
+    monthsEl.innerHTML = "";
+    grouped.forEach((eventsInMonth, month) => {
+      const section = document.createElement("section");
+      section.className = "month";
+      section.innerHTML = '<div class="month-head"><h2>'+escapeHtml(capitalize(month))+'</h2><span>'+eventsInMonth.length+' provas</span></div><div class="event-grid"></div>';
+      const grid = section.querySelector(".event-grid");
+      eventsInMonth.forEach((event) => grid.appendChild(renderEvent(event)));
+      monthsEl.appendChild(section);
+    });
+  }
+
+  function renderEvent(event) {
+    const related = rows.filter((row) => row.event_name === event.name);
+    const interest = related.filter((r) => r.status === "interest").length;
+    const going = related.filter((r) => r.status === "going").length;
+    const group = related.filter((r) => r.status === "group_interest").length;
+    const minimum = event.group_minimum || 10;
+
+    const div = document.createElement("div");
+    div.className = "event";
+    div.innerHTML = `
+      <h3>${escapeHtml(event.name)}</h3>
+      <div class="stats">
+        <div class="stat"><strong>${going}</strong><span>vão fazer</span></div>
+        <div class="stat"><strong>${interest}</strong><span>interessados</span></div>
+        <div class="stat"><strong>${group}</strong><span>grupo RS</span></div>
+      </div>
+      <div class="group-progress">${event.group_status === "disabled" ? "Inscrição em grupo não disponível" : "Grupo Rio Saúde: "+group+"/"+minimum}</div>
+    `;
+    div.addEventListener("click", () => openEvent(event, related));
+    return div;
+  }
+
+  function openEvent(event, related) {
+    document.querySelector("#drawer-title").textContent = event.name;
+    const labels = { interest:"Tenho interesse", going:"Vou fazer", group_interest:"Quero inscrição em grupo" };
+    const body = document.querySelector("#drawer-body");
+    if (!related.length) {
+      body.innerHTML = '<div class="notice">Nenhum atleta registrado ainda.</div>';
+    } else {
+      body.innerHTML = related.map((row) => `
+        <div class="person">
+          <strong>${escapeHtml(row.athlete_name)}</strong>
+          <small>${escapeHtml(row.athlete_email)}${row.distance ? " · "+escapeHtml(row.distance) : ""}</small>
+          <span class="badge">${labels[row.status] || row.status}</span>
+        </div>
+      `).join("");
+    }
+    document.querySelector("#drawer").classList.add("open");
+  }
+
+  function escapeHtml(value) {
+    return String(value ?? "").replace(/[&<>"']/g, (m) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+  }
+  function capitalize(v){ return v ? v.charAt(0).toUpperCase()+v.slice(1) : v; }
+})();
+</script>
+</body>
+</html>
