@@ -2,7 +2,35 @@
 insert into public.events
 (name,event_date,category,site_url,coupon_code,coupon_label,group_status,group_minimum,active)
 values
-
+('Maratona do Rio','2026-06-07','Corrida','https://maratonadorio.com.br/',null,null,'checking',10,true),
+('XTERRA São Sebastião','2026-06-21','Trail Run','https://xterrabrasil.com.br/','RIOSAUDE','Cupom parceiro','checking',10,true),
+('WTR Agulhas Negras','2026-06-28','Trail Run','https://worldtrailraces.com.br/',null,null,'checking',10,true),
+('Rio 21K','2026-06-28','Corrida','https://www.rio21k.com.br/',null,null,'checking',10,true),
+('LIVE! RUN XP — Rio II','2026-07-05','Corrida','https://www.ticketsports.com.br/',null,null,'checking',10,true),
+('ASICS Golden Run','2026-07-12','Corrida','https://www.asics.com.br/golden-run',null,null,'checking',10,true),
+('XTERRA Mina de Águas Claras','2026-07-26','Trail Run','https://xterrabrasil.com.br/','RIOSAUDE','Cupom parceiro','checking',10,true),
+('Meia da Ponte','2026-08-02','Corrida','https://www.ticketsports.com.br/',null,null,'checking',10,true),
+('IRONMAN 70.3 Rio de Janeiro','2026-08-09','Triathlon','https://www.ironman.com/',null,null,'checking',10,true),
+('Rio Half Marathon','2026-08-16','Corrida','https://www.riohalfmarathon.com.br/',null,null,'checking',10,true),
+('Meia de Buenos Aires','2026-08-23','Corrida','https://maratondebuenosaires.com/',null,null,'checking',10,true),
+('XTERRA Serra do Mar','2026-08-29','Trail Run','https://xterrabrasil.com.br/','RIOSAUDE','Cupom parceiro','checking',10,true),
+('UTMB Paraty','2026-09-20','Trail Run','https://paraty.utmb.world/',null,null,'checking',10,true),
+('Maratona de Buenos Aires','2026-09-20','Corrida','https://maratondebuenosaires.com/',null,null,'checking',10,true),
+('IRONMAN 70.3 São Paulo','2026-09-20','Triathlon','https://www.ironman.com/',null,null,'checking',10,true),
+('Maratona de Berlim','2026-09-27','Corrida','https://www.bmw-berlin-marathon.com/',null,null,'checking',10,true),
+('Circuito das Estações — Primavera','2026-09-30','Corrida','https://www.ticketagora.com.br/',null,null,'checking',10,true),
+('XTERRA Costa Verde','2026-10-04','Trail Run','https://xterrabrasil.com.br/','RIOSAUDE','Cupom parceiro','checking',10,true),
+('Maratona de Lisboa','2026-10-10','Corrida','https://www.maratonaclubedeportugal.com/',null,null,'checking',10,true),
+('WTR Campos do Jordão','2026-10-11','Trail Run','https://worldtrailraces.com.br/',null,null,'checking',10,true),
+('Maratona de Chicago','2026-10-11','Corrida','https://www.chicagomarathon.com/',null,null,'checking',10,true),
+('XC Búzios','2026-10-17','Trail Run','https://www.instagram.com/riosaude/',null,null,'checking',10,true),
+('IRONMAN 70.3 Florianópolis','2026-10-18','Triathlon','https://www.ironman.com/',null,null,'checking',10,true),
+('Maratona de Nova Iorque','2026-11-01','Corrida','https://www.nyrr.org/tcsnycmarathon',null,null,'checking',10,true),
+('LIVE! RUN XP — Rio III','2026-11-16','Corrida','https://www.ticketsports.com.br/',null,null,'checking',10,true),
+('XTERRA Ilhabela','2026-11-22','Trail Run','https://xterrabrasil.com.br/','RIOSAUDE','Cupom parceiro','checking',10,true),
+('WTR Serra do Mar','2026-11-22','Trail Run','https://worldtrailraces.com.br/',null,null,'checking',10,true),
+('IRONMAN 70.3 Aracaju','2026-11-29','Triathlon','https://www.ironman.com/',null,null,'checking',10,true),
+('Circuito das Estações — Verão','2026-12-31','Corrida','https://www.ticketagora.com.br/',null,null,'checking',10,true)
 on conflict (name) do update set
   event_date=excluded.event_date,
   category=excluded.category,
