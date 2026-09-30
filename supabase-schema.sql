@@ -181,3 +181,56 @@ revoke all on table public.race_responses from anon, authenticated;
 grant select, insert, update, delete on table public.admin_emails to authenticated;
 grant select, insert, update, delete on table public.events to authenticated;
 grant select, insert, update, delete on table public.race_responses to authenticated;
+
+
+-- Calendar metadata added for the live 2026/2027 calendar.
+alter table public.events add column if not exists distances text;
+alter table public.events add column if not exists series_name text;
+alter table public.events add column if not exists featured boolean not null default false;
+alter table public.events add column if not exists featured_note text;
+alter table public.events add column if not exists venue text;
+
+create table if not exists public.event_entry_windows (
+  id uuid primary key default gen_random_uuid(),
+  event_name text not null references public.events(name) on update cascade on delete cascade,
+  label text not null,
+  kind text not null default 'registration'
+    check (kind in ('ballot','qualifying','registration','group','other')),
+  start_date date,
+  end_date date,
+  url text,
+  active boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+create unique index if not exists event_entry_windows_unique
+on public.event_entry_windows (
+  lower(event_name),
+  lower(label),
+  coalesce(start_date,'1900-01-01'::date),
+  coalesce(end_date,'1900-01-01'::date)
+);
+
+alter table public.event_entry_windows enable row level security;
+
+drop policy if exists "public read entry windows" on public.event_entry_windows;
+create policy "public read entry windows"
+on public.event_entry_windows
+for select to anon, authenticated
+using (
+  active = true and exists (
+    select 1 from public.events e
+    where lower(e.name)=lower(event_entry_windows.event_name)
+      and e.active = true
+  )
+);
+
+drop policy if exists "admins manage entry windows" on public.event_entry_windows;
+create policy "admins manage entry windows"
+on public.event_entry_windows
+for all to authenticated
+using (public.is_admin())
+with check (public.is_admin());
+
+grant select on public.event_entry_windows to anon, authenticated;
+grant insert, update, delete on public.event_entry_windows to authenticated;
