@@ -1,5 +1,4 @@
 -- Rio Saúde • Central de Provas
--- Execute em um projeto Supabase e depois preencha config.js com Project URL + anon key.
 
 create extension if not exists pgcrypto;
 
@@ -47,6 +46,7 @@ on public.race_responses ((lower(event_name)), (lower(athlete_email)));
 create or replace function public.touch_updated_at()
 returns trigger
 language plpgsql
+set search_path = public
 as $$
 begin
   new.updated_at = now();
@@ -78,7 +78,7 @@ as $$
   );
 $$;
 
-revoke all on function public.is_admin() from public;
+revoke all on function public.is_admin() from public, anon;
 grant execute on function public.is_admin() to authenticated;
 
 create or replace function public.submit_race_response(
@@ -93,12 +93,40 @@ language plpgsql
 security definer
 set search_path = public
 as $$
+declare
+  v_group_status text;
 begin
-  if trim(coalesce(p_event_name,'')) = '' then raise exception 'event required'; end if;
-  if trim(coalesce(p_athlete_name,'')) = '' then raise exception 'name required'; end if;
-  if trim(coalesce(p_athlete_email,'')) = '' then raise exception 'email required'; end if;
-  if p_athlete_email !~* '^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$' then raise exception 'invalid email'; end if;
-  if p_status not in ('interest','going','group_interest') then raise exception 'invalid status'; end if;
+  if length(trim(coalesce(p_event_name,''))) = 0 or length(p_event_name) > 160 then
+    raise exception 'invalid event';
+  end if;
+  if length(trim(coalesce(p_athlete_name,''))) < 2 or length(p_athlete_name) > 120 then
+    raise exception 'invalid name';
+  end if;
+  if length(trim(coalesce(p_athlete_email,''))) = 0 or length(p_athlete_email) > 320 then
+    raise exception 'invalid email';
+  end if;
+  if p_athlete_email !~* '^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$' then
+    raise exception 'invalid email';
+  end if;
+  if length(coalesce(p_distance,'')) > 80 then
+    raise exception 'invalid distance';
+  end if;
+  if p_status not in ('interest','going','group_interest') then
+    raise exception 'invalid status';
+  end if;
+
+  select group_status into v_group_status
+  from public.events
+  where lower(name) = lower(trim(p_event_name))
+    and active = true;
+
+  if not found then
+    raise exception 'event not available';
+  end if;
+
+  if p_status = 'group_interest' and v_group_status in ('disabled','closed') then
+    raise exception 'group registration unavailable';
+  end if;
 
   insert into public.race_responses(event_name, athlete_name, athlete_email, distance, status)
   values(trim(p_event_name), trim(p_athlete_name), lower(trim(p_athlete_email)), nullif(trim(coalesce(p_distance,'')),''), p_status)
@@ -119,19 +147,37 @@ alter table public.events enable row level security;
 alter table public.race_responses enable row level security;
 
 drop policy if exists "admins read events" on public.events;
-create policy "admins read events" on public.events for select to authenticated using (public.is_admin());
+create policy "admins read events" on public.events
+for select to authenticated
+using (public.is_admin());
 
 drop policy if exists "admins write events" on public.events;
-create policy "admins write events" on public.events for all to authenticated
-using (public.is_admin()) with check (public.is_admin());
+create policy "admins write events" on public.events
+for all to authenticated
+using (public.is_admin())
+with check (public.is_admin());
 
 drop policy if exists "admins read responses" on public.race_responses;
-create policy "admins read responses" on public.race_responses for select to authenticated using (public.is_admin());
+create policy "admins read responses" on public.race_responses
+for select to authenticated
+using (public.is_admin());
 
 drop policy if exists "admins manage responses" on public.race_responses;
-create policy "admins manage responses" on public.race_responses for all to authenticated
-using (public.is_admin()) with check (public.is_admin());
+create policy "admins manage responses" on public.race_responses
+for all to authenticated
+using (public.is_admin())
+with check (public.is_admin());
 
 drop policy if exists "admins manage admin emails" on public.admin_emails;
-create policy "admins manage admin emails" on public.admin_emails for all to authenticated
-using (public.is_admin()) with check (public.is_admin());
+create policy "admins manage admin emails" on public.admin_emails
+for all to authenticated
+using (public.is_admin())
+with check (public.is_admin());
+
+revoke all on table public.admin_emails from anon, authenticated;
+revoke all on table public.events from anon, authenticated;
+revoke all on table public.race_responses from anon, authenticated;
+
+grant select, insert, update, delete on table public.admin_emails to authenticated;
+grant select, insert, update, delete on table public.events to authenticated;
+grant select, insert, update, delete on table public.race_responses to authenticated;
