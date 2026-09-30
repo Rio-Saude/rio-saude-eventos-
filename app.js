@@ -565,14 +565,19 @@
 
   async function submitForm(event) {
     event.preventDefault();
+
+    const form = event.currentTarget;
     const feedback = document.querySelector("#rs-feedback");
-    const submit = event.currentTarget.querySelector(".rs-submit");
+    const submit = form.querySelector(".rs-submit");
+
     submit.disabled = true;
     feedback.textContent = "Salvando...";
 
     const name = document.querySelector("#rs-name").value.trim();
     const email = document.querySelector("#rs-email").value.trim().toLowerCase();
     const distance = document.querySelector("#rs-distance").value.trim();
+
+    let saved = false;
 
     try {
       const result = await client.rpc("submit_race_response", {
@@ -582,24 +587,34 @@
         p_distance:distance || null,
         p_status:currentStatus
       });
-      if (result.error) throw result.error;
 
+      if (result.error) throw result.error;
+      saved = true;
+    } catch (error) {
+      console.error("Erro real ao registrar prova", error);
+      feedback.textContent = "Não foi possível salvar agora. Tente novamente.";
+      submit.disabled = false;
+      return;
+    }
+
+    if (saved) {
       feedback.textContent = currentStatus === "going"
         ? "Rio Saúde avisada. Sua inscrição oficial continua sendo responsabilidade sua."
         : "Atualização registrada com sucesso.";
 
-      event.currentTarget.reset();
+      try {
+        form.reset();
+      } catch (uiError) {
+        console.warn("Cadastro salvo; falha apenas ao limpar formulário", uiError);
+      }
+
+      submit.disabled = false;
 
       hydrateCalendar().catch((refreshError) => {
-        console.error("Cadastro salvo; falha apenas ao atualizar os contadores", refreshError);
+        console.warn("Cadastro salvo; falha apenas ao atualizar os contadores", refreshError);
       });
 
       setTimeout(closeModal, 1500);
-    } catch (error) {
-      console.error("Erro ao registrar prova", error);
-      feedback.textContent = "Não foi possível salvar agora. Tente novamente.";
-    } finally {
-      submit.disabled = false;
     }
   }
 
