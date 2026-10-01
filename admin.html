@@ -45,6 +45,19 @@ button{cursor:pointer}
 .toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 24px}
 .toolbar input,.toolbar select{padding:11px 13px;border-radius:999px;border:1px solid var(--line);background:#0b1712;color:white}
 .toolbar input{min-width:240px;flex:1}
+.month-tabs{display:flex;gap:8px;overflow:auto;padding:2px 0 12px;margin:-6px 0 18px;scrollbar-width:none}
+.month-tabs::-webkit-scrollbar{display:none}
+.month-tab{white-space:nowrap;border:1px solid var(--line);background:rgba(255,255,255,.04);color:white;border-radius:999px;padding:9px 13px;font-weight:800}
+.month-tab.active{background:var(--green2);color:#07110d;border-color:transparent}
+.cycle-panel{margin:0 0 22px}
+.cycle-panel h2{font-size:24px;margin:0 0 12px}
+.cycle-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.cycle-card{border:1px solid rgba(248,198,68,.28);background:rgba(248,198,68,.08);border-radius:16px;padding:14px}
+.cycle-card.active{border-color:rgba(168,224,190,.35);background:rgba(168,224,190,.08)}
+.cycle-card strong{display:block;font-size:16px}
+.cycle-card span{display:block;color:var(--muted);font-size:12px;margin-top:3px}
+.cycle-card b{display:block;margin-top:8px;color:#fff4cf}
+.cycle-card.active b{color:var(--green2)}
 .month{margin-top:30px}
 .month-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
 .month-head h2{font-size:28px;margin:0}
@@ -87,6 +100,7 @@ button{cursor:pointer}
 .empty{padding:20px;border:1px dashed var(--line);border-radius:16px;color:var(--muted)}
 @media(max-width:850px){
   .summary{grid-template-columns:1fr 1fr}
+  .cycle-grid{grid-template-columns:1fr}
   .event-grid{grid-template-columns:1fr}
   .grid2,.grid3{grid-template-columns:1fr}
   .topbar{align-items:flex-start;flex-direction:column}
@@ -132,6 +146,11 @@ button{cursor:pointer}
       <div class="summary-card"><strong id="sum-group">0</strong><span>grupos ativos</span></div>
     </section>
 
+    <section id="cycle-panel" class="cycle-panel hidden">
+      <h2>Ciclos</h2>
+      <div id="cycle-grid" class="cycle-grid"></div>
+    </section>
+
     <div class="toolbar">
       <button id="new-event" class="primary">+ Nova prova</button>
       <input id="search" type="search" placeholder="Buscar prova, cidade ou circuito">
@@ -143,6 +162,7 @@ button{cursor:pointer}
       </select>
     </div>
 
+    <div id="month-tabs" class="month-tabs"></div>
     <div id="months"></div>
   </main>
 </div>
@@ -175,11 +195,15 @@ button{cursor:pointer}
   const searchEl = document.querySelector("#search");
   const yearFilter = document.querySelector("#year-filter");
   const activeFilter = document.querySelector("#active-filter");
+  const monthTabs = document.querySelector("#month-tabs");
+  const cyclePanel = document.querySelector("#cycle-panel");
+  const cycleGrid = document.querySelector("#cycle-grid");
 
   let client;
   let events = [];
   let responses = [];
   let windows = [];
+  let monthFilter = "all";
 
   if (!ready) {
     document.querySelector("#setup-warning").classList.remove("hidden");
@@ -196,7 +220,7 @@ button{cursor:pointer}
   logout.addEventListener("click", async () => { await client.auth.signOut(); location.reload(); });
   document.querySelector("#new-event").addEventListener("click", () => openEditor(null));
   searchEl.addEventListener("input", renderDashboard);
-  yearFilter.addEventListener("change", renderDashboard);
+  yearFilter.addEventListener("change", () => { monthFilter="all"; renderDashboard(); });
   activeFilter.addEventListener("change", renderDashboard);
 
   init();
@@ -272,6 +296,7 @@ button{cursor:pointer}
     windows = windowRes.data || [];
     buildYearFilter();
     updateSummary();
+    renderCycleAlerts();
     renderDashboard();
   }
 
@@ -295,12 +320,18 @@ button{cursor:pointer}
     const year = yearFilter.value;
     const activeMode = activeFilter.value;
 
-    let filtered = events.filter(e=>{
+    let base = events.filter(e=>{
       const hay = normalize([e.name,e.city,e.venue,e.series_name,e.category].filter(Boolean).join(" "));
       const matchesQ = !q || hay.includes(q);
       const matchesYear = year==="all" || String(e.event_date||"").startsWith(year);
       const matchesActive = activeMode==="all" || (activeMode==="active" ? e.active : !e.active);
       return matchesQ && matchesYear && matchesActive;
+    });
+
+    renderMonthTabs(base);
+
+    let filtered = base.filter(e=>{
+      return monthFilter==="all" || String(e.event_date||"").slice(0,7)===monthFilter;
     });
 
     const grouped = new Map();
@@ -325,6 +356,108 @@ button{cursor:pointer}
       list.forEach(event=>grid.appendChild(renderEvent(event)));
       monthsEl.appendChild(section);
     });
+  }
+
+  function renderMonthTabs(list){
+    const months=[...new Set(list.filter(e=>e.event_date).map(e=>String(e.event_date).slice(0,7)))].sort();
+    if(monthFilter!=="all" && !months.includes(monthFilter)) monthFilter="all";
+
+    monthTabs.innerHTML="";
+    const all=document.createElement("button");
+    all.className="month-tab"+(monthFilter==="all"?" active":"");
+    all.textContent="Todos";
+    all.addEventListener("click",()=>{monthFilter="all";renderDashboard();});
+    monthTabs.appendChild(all);
+
+    months.forEach(key=>{
+      const [year,month]=key.split("-");
+      const date=new Date(Number(year),Number(month)-1,1);
+      const button=document.createElement("button");
+      button.className="month-tab"+(monthFilter===key?" active":"");
+      button.textContent=date.toLocaleString("pt-BR",{month:"short",year:"2-digit"}).replace(".","");
+      button.addEventListener("click",()=>{monthFilter=key;renderDashboard();});
+      monthTabs.appendChild(button);
+    });
+  }
+
+  function renderCycleAlerts(){
+    const going=responses.filter(r=>r.status==="going");
+    const alerts=[];
+    const now=startOfDay(new Date());
+
+    events.filter(e=>e.active && e.event_date).forEach(event=>{
+      const eventGoing=going.filter(r=>r.event_name===event.name);
+      if(!eventGoing.length) return;
+
+      const buckets=new Map();
+      eventGoing.forEach(row=>{
+        const type=cycleType(row.distance);
+        if(!type) return;
+        if(!buckets.has(type)) buckets.set(type,0);
+        buckets.set(type,buckets.get(type)+1);
+      });
+
+      buckets.forEach((count,type)=>{
+        const race=startOfDay(new Date(event.event_date+"T12:00:00"));
+        const cycleStart=new Date(race);
+        cycleStart.setDate(cycleStart.getDate()-91);
+        const alertStart=new Date(cycleStart);
+        alertStart.setDate(alertStart.getDate()-28);
+
+        if(now<alertStart || now>race) return;
+
+        let message="";
+        let active=false;
+
+        if(now<cycleStart){
+          const weeks=Math.max(1,Math.ceil((cycleStart-now)/(7*86400000)));
+          message="Faltam "+weeks+" "+(weeks===1?"semana":"semanas")+" para iniciar o ciclo";
+        } else {
+          active=true;
+          const elapsed=Math.floor((now-cycleStart)/(7*86400000));
+          const week=Math.min(13,Math.max(1,elapsed+1));
+          const weeksToRace=Math.max(0,Math.ceil((race-now)/(7*86400000)));
+          message="Semana "+week+"/13 · "+(weeksToRace<=1?"semana de prova":weeksToRace+" semanas para a prova");
+        }
+
+        alerts.push({event,type,count,message,active,race});
+      });
+    });
+
+    alerts.sort((a,b)=>a.race-b.race);
+    cycleGrid.innerHTML="";
+
+    if(!alerts.length){
+      cyclePanel.classList.add("hidden");
+      return;
+    }
+
+    cyclePanel.classList.remove("hidden");
+    alerts.forEach(item=>{
+      const card=document.createElement("div");
+      card.className="cycle-card"+(item.active?" active":"");
+      card.innerHTML=
+        '<strong>'+escapeHtml(item.event.name)+'</strong>'+
+        '<span>'+escapeHtml(item.type)+' · '+item.count+' '+(item.count===1?'atleta':'atletas')+'</span>'+
+        '<b>'+escapeHtml(item.message)+'</b>';
+      cycleGrid.appendChild(card);
+    });
+  }
+
+  function cycleType(distance){
+    const v=normalize(distance).replace(/\s/g,"").replace(",",".");
+    if(!v) return null;
+    if(v.includes("70.3")) return "IRONMAN 70.3";
+    if(v.includes("140.6") || v.includes("full")) return "IRONMAN Full";
+    if(v.includes("42")) return "42K";
+    if(v.includes("21")) return "21K";
+    return null;
+  }
+
+  function startOfDay(d){
+    const x=new Date(d);
+    x.setHours(12,0,0,0);
+    return x;
   }
 
   function renderEvent(event){
