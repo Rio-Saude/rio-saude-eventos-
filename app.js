@@ -12,6 +12,7 @@
   const client = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey);
   let currentEvent = "";
   let currentStatus = "going";
+  let currentEventData = null;
   let activeFilter = "all";
   let selectedYear = new Date().getFullYear();
   let allEvents = [];
@@ -41,7 +42,7 @@
     const results = await Promise.all([
       client
         .from("events")
-        .select("name,event_date,end_date,city,state,country,venue,category,distances,series_name,site_url,coupon_code,coupon_label,group_status,group_minimum,group_deadline,active,featured,featured_note")
+        .select("name,event_date,end_date,city,state,country,venue,category,distances,distance_options,allow_other_distance,allow_ultra_distance,series_name,site_url,coupon_code,coupon_label,group_status,group_minimum,group_deadline,active,featured,featured_note")
         .eq("active", true)
         .order("event_date", { ascending:true }),
       client
@@ -504,7 +505,8 @@
       ".rs-modal .rs-alert{background:rgba(248,198,68,.10);border:1px solid rgba(248,198,68,.38);color:#fff4cf;border-radius:14px;padding:12px 14px;margin-bottom:18px;font-size:14px}",
       ".rs-field{margin-bottom:14px}",
       ".rs-field label{display:block;font-size:13px;font-weight:800;margin-bottom:6px;color:#d6e6dd}",
-      ".rs-field input{width:100%;padding:13px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.16);background:#07110d;color:white;font:inherit}",
+      ".rs-field input,.rs-field select{width:100%;padding:13px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.16);background:#07110d;color:white;font:inherit}",
+      ".rs-field-note{margin-top:6px;font-size:12px;color:#9fb7aa}",
       ".rs-confirm{display:flex;gap:10px;align-items:flex-start;margin:16px 0;font-size:13px;color:#d6e6dd}",
       ".rs-confirm input{margin-top:3px}",
       ".rs-modal-actions{display:flex;gap:10px}",
@@ -530,7 +532,8 @@
         '<form id="rs-registration-form">' +
           '<div class="rs-field"><label for="rs-name">Nome e sobrenome</label><input id="rs-name" name="name" autocomplete="name" maxlength="120" required></div>' +
           '<div class="rs-field"><label for="rs-email">E-mail</label><input id="rs-email" name="email" type="email" autocomplete="email" maxlength="320" required></div>' +
-          '<div class="rs-field"><label for="rs-distance">Distância / categoria</label><input id="rs-distance" name="distance" maxlength="80" placeholder="Ex.: 10 km, 21 km, Sprint, Standard"></div>' +
+          '<div class="rs-field" id="rs-distance-wrap"><label for="rs-distance">Distância</label><select id="rs-distance" name="distance"></select><div class="rs-field-note" id="rs-distance-note"></div></div>' +
+          '<div class="rs-field" id="rs-custom-distance-wrap" style="display:none"><label for="rs-custom-distance">Quantos quilômetros?</label><input id="rs-custom-distance" type="number" min="0.1" step="0.1" inputmode="decimal" placeholder="Ex.: 50"><div class="rs-field-note" id="rs-custom-distance-note"></div></div>' +
           '<label class="rs-confirm"><input id="rs-understood" type="checkbox" required><span>Entendi que este aviso <strong>não realiza minha inscrição oficial</strong> na prova.</span></label>' +
           '<div class="rs-modal-actions"><button type="button" class="rs-cancel" id="rs-cancel">Cancelar</button><button type="submit" class="rs-submit">Confirmar aviso</button></div>' +
           '<div class="rs-feedback" id="rs-feedback"></div>' +
@@ -546,6 +549,7 @@
   }
 
   function openModal(eventName, status) {
+    currentEventData = allEvents.find((item) => item.name === eventName) || null;
     document.querySelector("#rs-event-name").textContent = eventName;
     const explainers = {
       interest:"Você ainda está avaliando esta prova. Marcar interesse ajuda a Rio Saúde a medir a demanda e, em algumas provas, buscar inscrição em grupo ou condição especial.",
@@ -555,7 +559,76 @@
     document.querySelector("#rs-status-explainer").textContent =
       explainers[status] || explainers.going;
     document.querySelector("#rs-feedback").textContent = "";
+    configureDistanceField(currentEventData, status);
     document.querySelector("#rs-modal").classList.add("open");
+  }
+
+  function configureDistanceField(eventData, status) {
+    const wrap = document.querySelector("#rs-distance-wrap");
+    const select = document.querySelector("#rs-distance");
+    const note = document.querySelector("#rs-distance-note");
+    const customWrap = document.querySelector("#rs-custom-distance-wrap");
+    const custom = document.querySelector("#rs-custom-distance");
+    const customNote = document.querySelector("#rs-custom-distance-note");
+
+    const options = Array.isArray(eventData?.distance_options)
+      ? eventData.distance_options.filter(Boolean)
+      : [];
+
+    select.innerHTML = "";
+    custom.value = "";
+    customWrap.style.display = "none";
+
+    if (!options.length && !eventData?.allow_other_distance && !eventData?.allow_ultra_distance) {
+      wrap.style.display = "none";
+      select.required = false;
+      note.textContent = "";
+      return;
+    }
+
+    wrap.style.display = "";
+    select.required = status !== "interest";
+
+    const blank = document.createElement("option");
+    blank.value = "";
+    blank.textContent = status === "interest" ? "Ainda não sei / selecionar depois" : "Selecione a distância";
+    select.appendChild(blank);
+
+    options.forEach((distance) => {
+      const option = document.createElement("option");
+      option.value = distance;
+      option.textContent = distance;
+      select.appendChild(option);
+    });
+
+    if (eventData?.allow_other_distance) {
+      const option = document.createElement("option");
+      option.value = "__other__";
+      option.textContent = "Outra distância";
+      select.appendChild(option);
+    }
+
+    if (eventData?.allow_ultra_distance) {
+      const option = document.createElement("option");
+      option.value = "__ultra__";
+      option.textContent = "Ultramaratona";
+      select.appendChild(option);
+    }
+
+    note.textContent = options.length
+      ? "Mostramos apenas as distâncias cadastradas para esta prova."
+      : "A distância oficial desta prova ainda está em atualização.";
+
+    select.onchange = () => {
+      const isOther = select.value === "__other__";
+      const isUltra = select.value === "__ultra__";
+      customWrap.style.display = (isOther || isUltra) ? "" : "none";
+      custom.required = isOther || isUltra;
+      custom.min = isUltra ? "42.2" : "0.1";
+      customNote.textContent = isUltra
+        ? "Ultramaratona: informe uma distância acima de 42,195 km."
+        : "Informe a distância que você vai percorrer.";
+    };
   }
 
   function closeModal() {
@@ -575,7 +648,26 @@
 
     const name = document.querySelector("#rs-name").value.trim();
     const email = document.querySelector("#rs-email").value.trim().toLowerCase();
-    const distance = document.querySelector("#rs-distance").value.trim();
+    const distanceSelect = document.querySelector("#rs-distance");
+    const customDistance = document.querySelector("#rs-custom-distance");
+    let distance = distanceSelect && distanceSelect.closest("#rs-distance-wrap").style.display !== "none"
+      ? distanceSelect.value
+      : "";
+
+    if (distance === "__other__" || distance === "__ultra__") {
+      const km = Number(String(customDistance.value || "").replace(",", "."));
+      if (!Number.isFinite(km) || km <= 0 || (distance === "__ultra__" && km <= 42.195)) {
+        feedback.textContent = distance === "__ultra__"
+          ? "Informe uma distância de ultramaratona acima de 42,195 km."
+          : "Informe a distância em quilômetros.";
+        submit.disabled = false;
+        return;
+      }
+      const formattedKm = String(km).replace(".", ",");
+      distance = distance === "__ultra__"
+        ? "Ultra: " + formattedKm + "K"
+        : "Outra: " + formattedKm + "K";
+    }
 
     let saved = false;
 
