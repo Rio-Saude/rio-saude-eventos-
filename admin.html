@@ -399,7 +399,7 @@ button{cursor:pointer}
     const isNew=!event;
     const e=event || {
       name:"",event_date:"",end_date:"",city:"Rio de Janeiro",state:"RJ",country:"Brasil",
-      venue:"",category:"Corrida",distances:"",series_name:"",site_url:"",source_url:"",
+      venue:"",category:"Corrida",distances:"",distance_options:[],allow_other_distance:false,allow_ultra_distance:false,series_name:"",site_url:"",source_url:"",
       coupon_code:"",coupon_label:"",group_status:"disabled",group_minimum:10,group_deadline:"",
       featured:false,featured_note:"",active:true
     };
@@ -416,7 +416,11 @@ button{cursor:pointer}
         '</div>'+
         '<div class="grid2">'+
           '<div class="field"><label>Categoria</label><select id="f-category">'+categoryOptions(e.category)+'</select></div>'+
-          '<div class="field"><label>Distâncias</label><input id="f-distances" value="'+attr(e.distances||"")+'" placeholder="5K • 10K • 21K"></div>'+
+          '<div class="field"><label>Distâncias oficiais</label><input id="f-distance-options" value="'+attr((Array.isArray(e.distance_options)?e.distance_options:[]).join(" | "))+'" placeholder="5K | 10K | 21K | 42K"><div style="font-size:12px;color:var(--muted);margin-top:6px">Separe as opções com <strong>|</strong>. O aluno só verá estas distâncias.</div></div>'+
+        '</div>'+
+        '<div class="grid2">'+
+          '<label class="check-row"><input id="f-allow-other" type="checkbox" '+(e.allow_other_distance?'checked':'')+'> Permitir “Outra distância”</label>'+
+          '<label class="check-row"><input id="f-allow-ultra" type="checkbox" '+(e.allow_ultra_distance?'checked':'')+'> Permitir “Ultramaratona” + km</label>'+
         '</div>'+
         '<div class="grid3">'+
           '<div class="field"><label>Cidade</label><input id="f-city" value="'+attr(e.city||"")+'"></div>'+
@@ -461,12 +465,21 @@ button{cursor:pointer}
       const feedback=drawerBody.querySelector("#save-feedback");
       feedback.textContent="Salvando...";
 
+      const distanceOptions = drawerBody.querySelector("#f-distance-options").value
+        .split("|")
+        .map(v=>v.trim())
+        .filter(Boolean)
+        .filter((v,i,a)=>a.indexOf(v)===i);
+
       const payload={
         name: drawerBody.querySelector("#f-name").value.trim(),
         event_date: drawerBody.querySelector("#f-date").value || null,
         end_date: drawerBody.querySelector("#f-end").value || null,
         category: drawerBody.querySelector("#f-category").value || null,
-        distances: clean(drawerBody.querySelector("#f-distances").value),
+        distance_options: distanceOptions,
+        allow_other_distance: drawerBody.querySelector("#f-allow-other").checked,
+        allow_ultra_distance: drawerBody.querySelector("#f-allow-ultra").checked,
+        distances: distanceOptions.length ? distanceOptions.join(" • ") : (e.distances === "A confirmar" ? "A confirmar" : null),
         city: clean(drawerBody.querySelector("#f-city").value),
         state: clean(drawerBody.querySelector("#f-state").value),
         country: clean(drawerBody.querySelector("#f-country").value),
