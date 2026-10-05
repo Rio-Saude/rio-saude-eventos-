@@ -13,6 +13,7 @@
   let currentEvent = "";
   let currentStatus = "going";
   let currentEventData = null;
+  let modalVersion = 0;
   let activeFilter = "all";
   let selectedYear = new Date().getFullYear();
   let allEvents = [];
@@ -561,6 +562,26 @@
     document.querySelector("#rs-feedback").textContent = "";
     configureDistanceField(currentEventData, status);
     document.querySelector("#rs-modal").classList.add("open");
+    prefillAthlete(++modalVersion);
+  }
+
+  async function prefillAthlete(version) {
+    const nameInput = document.querySelector('#rs-name');
+    const emailInput = document.querySelector('#rs-email');
+    const originalName = nameInput.value;
+    const originalEmail = emailInput.value;
+    try {
+      const { data: { session }, error: sessionError } = await client.auth.getSession();
+      if (sessionError || !session?.user) return;
+      const { data: athlete, error } = await client.from('athlete_profiles')
+        .select('first_name,last_name,email').eq('user_id', session.user.id).maybeSingle();
+      if (error || !athlete || version !== modalVersion) return;
+      const { data: { session: activeSession } } = await client.auth.getSession();
+      if (activeSession?.user.id !== session.user.id || version !== modalVersion) return;
+      const name = [athlete.first_name, athlete.last_name].filter(Boolean).join(' ').trim();
+      if (!originalName && !nameInput.value && name) nameInput.value = name;
+      if (!originalEmail && !emailInput.value && athlete.email) emailInput.value = athlete.email;
+    } catch (_) { /* Profile lookup must never block the existing form. */ }
   }
 
   function configureDistanceField(eventData, status) {
@@ -632,6 +653,7 @@
   }
 
   function closeModal() {
+    modalVersion++;
     const modal = document.querySelector("#rs-modal");
     if (modal) modal.classList.remove("open");
   }
