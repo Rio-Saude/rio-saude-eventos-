@@ -26,17 +26,29 @@
     <section id="login-view" class="card login-card">
       <div class="step-kicker">Acesso por e-mail</div>
       <h2>Entre com seu e-mail.</h2>
-      <p class="lead">Sem senha. Você recebe um link de acesso no e-mail e volta para continuar de onde parou.</p>
+      <p class="lead">Sem senha. Enviaremos um código de 6 dígitos para o seu e-mail.</p>
       <form id="login-form">
         <div class="field">
           <label for="login-email">E-mail</label>
           <input id="login-email" name="email" type="email" autocomplete="email" placeholder="voce@email.com" required>
         </div>
         <div class="actions">
-          <button class="primary-btn" type="submit">Enviar link de acesso</button>
+          <button class="primary-btn" type="submit">Enviar código</button>
         </div>
-        <div id="login-status" class="status" aria-live="polite"></div>
       </form>
+      <form id="otp-form" class="hidden">
+        <p id="otp-destination" class="lead"></p>
+        <div class="field">
+          <label for="login-code">Código de 6 dígitos</label>
+          <input id="login-code" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" minlength="6" maxlength="6" pattern="[0-9]{6}" required aria-describedby="login-status">
+        </div>
+        <div class="actions">
+          <button class="primary-btn" type="submit">Entrar</button>
+          <button id="resend-code" class="secondary-btn" type="button">Reenviar código</button>
+          <button id="change-email" class="secondary-btn" type="button">Trocar e-mail</button>
+        </div>
+      </form>
+      <div id="login-status" class="status" aria-live="polite"></div>
     </section>
 
     <section id="app-view" class="card hidden">
@@ -48,6 +60,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.min.js"></script>
   <script src="config.js"></script>
-  <script src="onboarding.js"></script>
+  <script src="onboarding.js?v=email-otp-20261005"></script>
 </body>
 </html>
