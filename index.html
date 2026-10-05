@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Rio Saúde • Calendário de Eventos 2026</title>
+<title>Portal Rio Saúde</title>
 
 <style>
 :root {
@@ -75,7 +75,7 @@ padding:36px 24px 72px;
 
 .home-choices {
 display:grid;
-grid-template-columns:1fr 1fr;
+grid-template-columns:repeat(3,minmax(0,1fr));
 gap:18px;
 margin-bottom:34px;
 }
@@ -88,6 +88,7 @@ cursor:pointer;
 }
 
 .choice-card {
+text-decoration:none;
 background:#0b1712;
 color:white;
 border:1px solid var(--line);
@@ -1028,8 +1029,8 @@ text-align:center;
 <header class="hero" id="home">
 <div class="hero-inner">
 <div class="brand">RIO SAÚDE • 2026</div>
-<h1>Calendário de eventos da temporada.</h1>
-<p class="subtitle">Uma central para organizar os eventos oficiais e os eventos especiais da Rio Saúde ao longo de 2026.</p>
+<h1>Portal Rio Saúde.</h1>
+<p class="subtitle">Primeiro acesso, calendário de provas e eventos da Rio Saúde em um só lugar.</p>
 </div>
 </header>
 
@@ -1037,6 +1038,12 @@ text-align:center;
 
 <section class="home-area">
 <div class="home-choices">
+<a class="choice-card rs-onboarding-card" href="onboarding.html">
+<small>área do aluno</small>
+<strong>Primeiro acesso</strong>
+<p>Faça seu cadastro inicial e deixe seus dados, perfil esportivo e TrainingPeaks organizados.</p>
+</a>
+
 <label class="choice-card" for="view-official">
 <small>calendário 2026</small>
 <strong>Eventos Oficiais</strong>
@@ -2590,7 +2597,7 @@ Rio Saúde • Corrida • Trail Run • Triathlon
 </footer>
 
     
-<script src="race-config-20260930.js"></script>
+<script src="race-config-20260930.js?v=portal-20261005"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="race-app-20261001.js"></script>
 </body>
