@@ -6,7 +6,7 @@ Site público da Rio Saúde para calendário de provas, eventos especiais e comu
 O GitHub Pages publica a raiz do `main` em https://rio-saude.github.io/rio-saude-eventos-/.
 
 - `index.html`: home com **Primeiro acesso**, **Eventos Oficiais** e **Eventos Especiais** escritos diretamente no HTML. O primeiro acesso abre `onboarding.html`; os eventos mantêm a navegação original por radios/CSS.
-- A home carrega, nesta ordem: `race-config-20260930.js?v=portal-20261005`, `https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2` e `race-app-20261001.js`. Seu CSS está no próprio HTML.
+- A home carrega, nesta ordem: `race-config-20260930.js?v=portal-20261005`, `https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2` e `race-app-20261001.js?v=onboarding-1.1`. Seu CSS está no próprio HTML. O fragmento `#eventos-oficiais` abre diretamente o calendário existente.
 - `race-config-20260930.js`: configuração ativa do calendário e do admin. Não deve inserir ou alterar elementos da home.
 - `race-app-20261001.js`: script ativo do calendário, filtros, anos, contadores e avisos de participação. As provas são lidas do Supabase; os eventos especiais e o calendário de fallback permanecem no HTML.
 - `onboarding.html`: primeiro acesso existente, com `portal.css`, SDK Supabase `2.117.2`, `config.js` e `onboarding.js`, nessa ordem de scripts. Mantém o acesso por link no e-mail e as etapas do cadastro.
@@ -15,12 +15,17 @@ O GitHub Pages publica a raiz do `main` em https://rio-saude.github.io/rio-saude
 - `supabase-schema.sql`: banco, segurança e funções do admin.
 
 ### Duplicados e versões antigas confirmados em 05/10/2026
-- `app.js` é uma cópia idêntica de `race-app-20261001.js`, mas nenhuma página o carrega.
+- `app.js` era uma cópia idêntica de `race-app-20261001.js` na revisão de 05/10/2026; permanece como legado e não recebe as melhorias da V1.1. Nenhuma página o carrega.
 - `race-app-20260930.js` e `race-app-20260930b.js` são versões anteriores; nenhuma página as carrega.
 - Esses três arquivos foram mantidos apenas como legado. **Não editar esses arquivos para alterar o site publicado**; usar o script ativo acima.
 - `config.js` e `race-config-20260930.js` atendem páginas diferentes e não são intercambiáveis: o primeiro contém também as opções do onboarding. Ambos agora contêm apenas configuração; a home não depende mais de injeção de HTML por JavaScript.
 
 Não alterar o conteúdo das provas nem o funcionamento atual do calendário sem necessidade. Não reaplicar os SQLs para uma alteração visual da home.
+
+### Onboarding V1.1
+As opções rápidas e o texto complementar usam o campo existente `primary_goal` (opção e texto separados por uma quebra de linha). Textos antigos continuam disponíveis. `goal_event_name` é preservado, e a escolha de prova leva ao calendário em outra aba para manter o formulário em andamento. A resposta “Sim” também direciona o responsável inicial para Dum; sem prova ou data, permanece Pedrinho. Não há migração de banco.
+
+O formulário de aviso preenche campos vazios a partir de `athlete_profiles` do usuário da sessão, respeitando as políticas existentes e sem sobrescrever digitação manual. O botão financeiro usa apenas `efiPaymentUrl`; enquanto vazio, fica indisponível com orientação e opção “Fazer depois”.
 
 ## Validação da home
 Servir a pasta com um servidor HTTP local e conferir:
