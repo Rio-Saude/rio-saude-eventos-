@@ -273,6 +273,7 @@
         <div class="actions field full"><button class="primary-btn" type="submit">Continuar</button></div>
       </form>`;
     document.querySelector('#personal-form').addEventListener('submit', savePersonal);
+    bindDatePickers();
   }
 
   async function savePersonal(event) {
@@ -289,6 +290,11 @@
   }
 
   function renderSport() {
+    const goals = ['Performance', 'Consistência', '5 km', '10 km', 'Meia maratona', 'Maratona', 'Triathlon', '70.3', 'Ironman', 'Trail', 'Voltar a treinar', 'Outro'];
+    const savedGoal = String(profile.primary_goal || '');
+    const quickGoal = goals.find(goal => savedGoal === goal || savedGoal.startsWith(goal + '\n')) || '';
+    const goalDetails = quickGoal ? savedGoal.slice(quickGoal.length).replace(/^\n/, '') : savedGoal;
+    const hasRace = Boolean(profile.goal_event_name || profile.goal_event_date || profile.coach === 'Dum');
     const selected = new Set(Array.isArray(profile.modalities) ? profile.modalities : []);
     const modal = [
       ['corrida','Corrida'],
@@ -311,13 +317,23 @@
         <div class="field"><label for="training_days_current">Quantos dias por semana você treina hoje?</label><input id="training_days_current" name="training_days_current" value="${value(profile.training_days_current)}" placeholder="Ex.: 4 dias"></div>
         <div class="field"><label for="training_days_available">Quantos dias você tem disponíveis?</label><input id="training_days_available" name="training_days_available" value="${value(profile.training_days_available)}" placeholder="Ex.: 5 dias"></div>
         <div class="field full"><label for="base_preference">Onde você costuma ou prefere treinar?</label><input id="base_preference" name="base_preference" value="${value(profile.base_preference)}" placeholder="Ex.: Lagoa, Aterro, Ipanema"></div>
-        <div class="field full"><label for="primary_goal">Qual é seu principal objetivo agora?</label><textarea id="primary_goal" name="primary_goal" placeholder="Conte de forma simples o que você quer buscar nos próximos meses.">${value(profile.primary_goal)}</textarea></div>
-        <div class="field"><label for="goal_event_name">Já tem alguma prova marcada?</label><input id="goal_event_name" name="goal_event_name" value="${value(profile.goal_event_name)}" placeholder="Nome da prova"></div>
-        <div class="field"><label for="goal_event_date">Data da prova</label><input id="goal_event_date" name="goal_event_date" type="date" value="${value(profile.goal_event_date)}"></div>
+        <fieldset class="field full choice-fieldset"><legend>Qual é seu principal objetivo agora?</legend><div class="goal-options">${goals.map(goal => `<label class="goal-option"><input type="radio" name="quick_goal" value="${escapeAttr(goal)}" ${quickGoal === goal ? 'checked' : ''}><span>${escapeHtml(goal)}</span></label>`).join('')}</div></fieldset>
+        <div class="field full"><label for="primary_goal">Conte mais sobre seu objetivo (opcional)</label><textarea id="primary_goal" name="primary_goal" placeholder="Ex.: Quero correr minha primeira maratona em 2027 abaixo de 4h.">${value(goalDetails)}</textarea></div>
+        <fieldset class="field full choice-fieldset"><legend>Você já tem uma prova marcada?</legend><div class="goal-options"><label class="goal-option"><input type="radio" name="has_race" value="yes" ${hasRace ? 'checked' : ''}><span>Sim</span></label><label class="goal-option"><input type="radio" name="has_race" value="no" ${hasRace ? '' : 'checked'}><span>Ainda não</span></label></div></fieldset>
+        <div id="race-choice" class="field full ${hasRace ? '' : 'hidden'}">
+          ${profile.goal_event_name ? `<p class="field-help">Prova já cadastrada: ${escapeHtml(profile.goal_event_name)}</p>` : ''}
+          <a class="secondary-btn" href="index.html#eventos-oficiais" target="_blank" rel="noopener">Escolher prova</a>
+          <p class="field-help">O calendário abre em outra aba. Depois de escolher e avisar a Rio Saúde, volte aqui para continuar seu cadastro.</p>
+          <label for="goal_event_date">Data da prova (opcional)</label><input id="goal_event_date" name="goal_event_date" type="date" lang="pt-BR" value="${value(profile.goal_event_date)}">
+        </div>
         <div class="actions field full"><button class="secondary-btn" type="button" data-back="1">Voltar</button><button class="primary-btn" type="submit">Continuar</button></div>
       </form>`;
 
     document.querySelector('#sport-form').addEventListener('submit', saveSport);
+    document.querySelectorAll('[name="has_race"]').forEach(input => input.addEventListener('change', () => {
+      document.querySelector('#race-choice').classList.toggle('hidden', input.value !== 'yes');
+    }));
+    bindDatePickers();
     bindBackButtons();
   }
 
@@ -325,9 +341,9 @@
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     const modalities = form.getAll('modalities').map(String);
-    const eventName = clean(form.get('goal_event_name'));
-    const eventDate = clean(form.get('goal_event_date'));
-    const coach = eventName || eventDate ? 'Dum' : 'Pedrinho';
+    const eventName = profile.goal_event_name;
+    const eventDate = form.get('has_race') === 'yes' ? clean(form.get('goal_event_date')) : profile.goal_event_date;
+    const coach = eventName || eventDate || form.get('has_race') === 'yes' ? 'Dum' : 'Pedrinho';
 
     await updateProfile({
       modalities,
@@ -336,7 +352,7 @@
       training_days_current: clean(form.get('training_days_current')),
       training_days_available: clean(form.get('training_days_available')),
       base_preference: clean(form.get('base_preference')),
-      primary_goal: clean(form.get('primary_goal')),
+      primary_goal: [clean(form.get('quick_goal')), clean(form.get('primary_goal'))].filter(Boolean).join('\n'),
       goal_event_name: eventName || null,
       goal_event_date: eventDate || null,
       coach,
@@ -347,23 +363,22 @@
   function renderPayment() {
     const efiLink = String(config.efiPaymentUrl || '').trim();
     const paymentAction = efiLink
-      ? `<a class="primary-btn" href="${escapeAttr(efiLink)}" target="_blank" rel="noopener">Abrir cadastro no EFI</a>`
-      : '';
+      ? `<a class="primary-btn" href="${escapeAttr(efiLink)}" target="_blank" rel="noopener">Cadastrar pagamento</a>`
+      : '<button class="primary-btn" type="button" disabled aria-describedby="payment-note">Cadastrar pagamento</button>';
 
     stepRoot.innerHTML = `
       <div class="step-kicker">3 de 5 · Financeiro</div>
-      <h2>Cadastro de pagamento.</h2>
-      <p class="lead">Por enquanto essa etapa fica no EFI. O portal só registra o andamento para a equipe conseguir acompanhar seu onboarding.</p>
-      <div class="notice"><strong>Importante:</strong> o pagamento não vai travar seu primeiro acesso. Se o cadastro financeiro ainda estiver sendo resolvido, você pode continuar.</div>
-      ${paymentAction}
+      <h2>Cadastro financeiro</h2>
+      <p class="lead">Falta só deixar sua forma de pagamento cadastrada.</p>
       <div class="actions">
-        <button class="secondary-btn" type="button" data-back="2">Voltar</button>
-        <button id="payment-pending" class="secondary-btn" type="button">Continuar por enquanto</button>
-        <button id="payment-done" class="primary-btn" type="button">Já fiz essa etapa</button>
-      </div>`;
+        ${paymentAction}
+        <button id="payment-pending" class="secondary-btn" type="button">Fazer depois</button>
+      </div>
+      <p id="payment-note" class="field-help">Você pode concluir esta etapa posteriormente.${efiLink ? '' : ' O link de cadastro ainda não está disponível; solicite-o à equipe.'}</p>
+      <div class="actions"><button class="text-btn" type="button" data-back="2">Voltar</button><button id="payment-done" class="text-btn" type="button">Já cadastrei meu pagamento</button></div>`;
 
-    document.querySelector('#payment-pending').addEventListener('click', () => updateProfile({ payment_status: 'pending', onboarding_step: 4 }));
-    document.querySelector('#payment-done').addEventListener('click', () => updateProfile({ payment_status: 'submitted', onboarding_step: 4 }));
+    document.querySelector('#payment-pending').addEventListener('click', () => updateProfile({ payment_status: profile.payment_status || 'pending', onboarding_step: 4 }));
+    document.querySelector('#payment-done').addEventListener('click', () => updateProfile({ payment_status: profile.payment_status === 'confirmed' ? 'confirmed' : 'submitted', onboarding_step: 4 }));
     bindBackButtons();
   }
 
@@ -427,12 +442,17 @@
     stepRoot.innerHTML = `
       <div class="step-kicker">Cadastro concluído</div>
       <h2>${profile.first_name ? `Tudo certo, ${escapeHtml(profile.first_name)}.` : 'Tudo certo.'}</h2>
-      <p class="lead">Seu primeiro acesso foi concluído. A partir daqui, esse e-mail fica ligado ao seu cadastro da Rio Saúde.</p>
-      <div class="success-box"><strong>Responsável inicial:</strong> ${escapeHtml(profile.coach || 'Equipe Rio Saúde')}<br><strong>Financeiro:</strong> ${paymentLabel(profile.payment_status)}<br><strong>TrainingPeaks:</strong> ${profile.trainingpeaks_status === 'completed' ? 'concluído' : 'pendente'}</div>
-      <div class="dashboard-grid">
-        <a class="dashboard-card" href="index.html"><small>Provas</small><strong>Calendário de eventos</strong><span>Veja provas, marque interesse e avise o que vai competir.</span></a>
-        <div class="dashboard-card"><small>Perfil</small><strong>Seus dados estão salvos</strong><span>Na próxima versão, essa área também poderá ser usada para editar o cadastro.</span></div>
-      </div>`;
+      <p class="lead">Seu cadastro está salvo. Agora escolha suas próximas provas e avise a Rio Saúde.</p>
+      <a class="primary-btn" href="index.html#eventos-oficiais">Escolher minhas provas</a>`;
+  }
+
+  function bindDatePickers() {
+    stepRoot.querySelectorAll('input[type="date"]').forEach(input => {
+      input.lang = 'pt-BR';
+      input.addEventListener('click', () => {
+        try { input.showPicker?.(); } catch (_) { /* Native input remains editable. */ }
+      });
+    });
   }
 
   async function updateProfile(values) {
