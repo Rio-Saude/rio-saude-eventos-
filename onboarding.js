@@ -35,6 +35,7 @@
   let editStep = 1;
   let updated = false;
   let saving = false;
+  let checkoutBusy = false;
 
   loginForm.addEventListener('submit', (event) => {
     event.preventDefault();
@@ -398,25 +399,92 @@
   }
 
   function renderPayment() {
-    const efiLink = String(config.efiPaymentUrl || '').trim();
-    const paymentAction = efiLink
-      ? `<a class="primary-btn" href="${escapeAttr(efiLink)}" target="_blank" rel="noopener">Cadastrar pagamento</a>`
-      : '<button class="primary-btn" type="button" disabled aria-describedby="payment-note">Cadastrar pagamento</button>';
-
     stepRoot.innerHTML = `
       <div class="step-kicker">3 de 6 · Financeiro</div>
       <h2>Cadastro financeiro</h2>
       <p class="lead">Falta só deixar sua forma de pagamento cadastrada.</p>
+      <p class="notice">Ambiente de homologação: este fluxo ainda está em teste.</p>
+      <form id="billing-form" class="grid">
+        <fieldset class="field full choice-fieldset"><legend>Escolha seu plano mensal</legend>
+          <div id="billing-plans" class="goal-options">Carregando planos...</div>
+        </fieldset>
       <div class="actions">
-        ${paymentAction}
+        <button id="billing-checkout" class="primary-btn" type="submit" disabled>Cadastrar pagamento</button>
         <button id="payment-pending" class="secondary-btn" type="button">Fazer depois</button>
       </div>
-      <p id="payment-note" class="field-help">Você pode concluir esta etapa posteriormente.${efiLink ? '' : ' O link de cadastro ainda não está disponível; solicite-o à equipe.'}</p>
+      </form>
+      <p id="billing-status" class="status" role="status" aria-live="polite"></p>
+      <p id="payment-note" class="field-help">Você pode concluir esta etapa posteriormente. O pagamento acontece na página segura da Efí. O Portal não recebe dados de cartão.</p>
       <div class="actions"><button class="text-btn" type="button" data-back="2">Voltar</button><button id="payment-done" class="text-btn" type="button">Já cadastrei meu pagamento</button></div>`;
 
+    document.querySelector('#billing-form').addEventListener('submit', startCheckout);
+    loadBillingPlans();
     document.querySelector('#payment-pending').addEventListener('click', () => updateProfile({ payment_status: profile.payment_status || 'pending', onboarding_step: 4 }));
     document.querySelector('#payment-done').addEventListener('click', () => updateProfile({ payment_status: profile.payment_status === 'confirmed' ? 'confirmed' : 'submitted', onboarding_step: 4 }));
     bindBackButtons();
+  }
+
+  async function loadBillingPlans() {
+    const root = document.querySelector('#billing-plans');
+    const checkout = document.querySelector('#billing-checkout');
+    try {
+      const { data, error } = await client.from('billing_plans').select('code,name,price_cents,currency')
+        .eq('active', true).in('code', ['single_monthly', 'multi_monthly']).order('price_cents');
+      if (error || !data?.length) throw error || new Error('Planos indisponíveis');
+      if (!root.isConnected) return;
+      root.innerHTML = data.map(plan => `<label class="goal-option"><input type="radio" name="plan_code" value="${escapeAttr(plan.code)}" required><span>${escapeHtml(plan.name)} · ${escapeHtml(new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(plan.price_cents / 100))}/mês</span></label>`).join('');
+      checkout.disabled = false;
+    } catch {
+      if (root.isConnected) root.textContent = 'Não foi possível carregar os planos. Recarregue a página ou faça esta etapa depois.';
+    }
+  }
+
+  async function startCheckout(event) {
+    event.preventDefault();
+    if (checkoutBusy || saving || !session?.user) return;
+    const planCode = new FormData(event.currentTarget).get('plan_code');
+    if (!planCode) return;
+    const userId = session.user.id;
+    const status = document.querySelector('#billing-status');
+    checkoutBusy = true;
+    stepRoot.querySelectorAll('button').forEach(button => { button.disabled = true; });
+    logoutButton.disabled = true;
+    status.className = 'status';
+    status.textContent = 'Preparando seu pagamento na Efí...';
+    try {
+      const { data, error } = await client.functions.invoke('efi-create-subscription', { body: { plan_code: planCode } });
+      if (session?.user.id !== userId) return;
+      let result = data;
+      if (error) {
+        try { result = await error.context?.json(); } catch { /* Network errors have no JSON body. */ }
+        throw new Error(result?.error || 'checkout_unavailable');
+      }
+      const url = new URL(data?.payment_url);
+      const hosts = ['pagamento.gerencianet.com.br', 'pagamento-h.gerencianet.com.br', 'pagamento.efipay.com.br', 'pagamento-h.efipay.com.br'];
+      if (data?.environment !== 'homologation' || url.protocol !== 'https:' || url.username || url.password || url.port || !hosts.includes(url.hostname)) throw new Error('checkout_unavailable');
+      // Keep the saved onboarding step. Returning from checkout resumes Financeiro.
+      location.assign(url.href);
+    } catch (error) {
+      const messages = {
+        profile_missing: 'Complete seus dados pessoais antes de cadastrar o pagamento.',
+        profile_incomplete: 'Confira nome, sobrenome, CPF e data de nascimento em “Voltar” antes de continuar.',
+        authentication_required: 'Sua sessão expirou. Recarregue a página para entrar novamente.',
+        checkout_in_progress: 'Seu pagamento está sendo preparado. Aguarde e tente novamente.',
+        checkout_requires_review: 'Esta solicitação precisa ser conferida pela equipe. Uma nova assinatura não será criada.',
+        existing_subscription_other_plan: 'Você já tem uma assinatura ou pagamento pendente em outro plano. Fale com a equipe para trocar.',
+        subscription_exists: 'Você já possui uma assinatura. Fale com a equipe para alterar seu plano.',
+        homologation_only: 'O cadastro de pagamento está disponível somente em homologação.',
+        plan_unavailable: 'Este plano não está disponível no momento.'
+      };
+      if (status.isConnected) {
+        status.className = 'status error';
+        status.textContent = messages[error.message] || 'Não foi possível preparar o pagamento. Tente novamente; cliques repetidos não criam outra assinatura.';
+      }
+    } finally {
+      checkoutBusy = false;
+      logoutButton.disabled = false;
+      if (status.isConnected) stepRoot.querySelectorAll('button').forEach(button => { button.disabled = false; });
+    }
   }
 
   function renderRaces() {
@@ -570,8 +638,8 @@
     } finally {
       saving = false;
       stepRoot.querySelectorAll('button').forEach(button => { button.disabled = false; });
-      // An unconfigured EFI link remains unavailable.
-      if (!config.efiPaymentUrl) stepRoot.querySelector('.primary-btn[aria-describedby="payment-note"]')?.setAttribute('disabled', '');
+      // Plan loading controls checkout availability independently of profile saves.
+      if (document.querySelector('#billing-plans') && !document.querySelector('[name="plan_code"]')) document.querySelector('#billing-checkout').disabled = true;
     }
   }
 

@@ -1,0 +1,4 @@
+project_id = "rio-saude-eventos"
+
+[functions.efi-create-subscription]
+verify_jwt = true

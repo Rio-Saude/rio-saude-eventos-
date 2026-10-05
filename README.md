@@ -25,7 +25,7 @@ Não alterar o conteúdo das provas nem o funcionamento atual do calendário sem
 ### Onboarding V1.1
 As opções rápidas e o texto complementar usam o campo existente `primary_goal` (opção e texto separados por uma quebra de linha). Textos antigos continuam disponíveis. `goal_event_name` é preservado. A resposta “Sim” também direciona o responsável inicial para Dum; sem prova ou data, permanece Pedrinho. A V1.1 não exigiu migração de banco.
 
-O formulário de aviso preenche campos vazios a partir de `athlete_profiles` do usuário da sessão, respeitando as políticas existentes e sem sobrescrever digitação manual. O botão financeiro usa apenas `efiPaymentUrl`; enquanto vazio, fica indisponível com orientação e opção “Fazer depois”.
+O formulário de aviso preenche campos vazios a partir de `athlete_profiles` do usuário da sessão, respeitando as políticas existentes e sem sobrescrever digitação manual. A integração financeira atual usa a Edge Function de homologação documentada em [EFI-HOMOLOG-V1.md](EFI-HOMOLOG-V1.md); “Fazer depois” continua disponível. `efiPaymentUrl` permanece como configuração legada e não é usado pelo fluxo atual.
 
 ### Onboarding V2
 O perfil é único por `user_id` e as edições atualizam a mesma linha, preservando a data de conclusão. A home mostra **Meu cadastro** para sessões com cadastro concluído (`onboarding.html?edit=1`). O cadastro incompleto retoma do passo salvo. A saída limpa a sessão para permitir outro e-mail.
