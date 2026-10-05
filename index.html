@@ -2597,8 +2597,19 @@ Rio Saúde • Corrida • Trail Run • Triathlon
 </footer>
 
     
+<script>
+(() => {
+  function openOfficialEvents() {
+    if (location.hash !== '#eventos-oficiais') return;
+    document.querySelector('#view-official').checked = true;
+    document.querySelector('.official-area').scrollIntoView();
+  }
+  window.addEventListener('hashchange', openOfficialEvents);
+  openOfficialEvents();
+})();
+</script>
 <script src="race-config-20260930.js?v=portal-20261005"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="race-app-20261001.js"></script>
+<script src="race-app-20261001.js?v=onboarding-1.1"></script>
 </body>
 </html>
