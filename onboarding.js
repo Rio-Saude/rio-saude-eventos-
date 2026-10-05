@@ -6,6 +6,10 @@
   const appView = document.querySelector('#app-view');
   const loginForm = document.querySelector('#login-form');
   const loginStatus = document.querySelector('#login-status');
+  const otpForm = document.querySelector('#otp-form');
+  const codeInput = document.querySelector('#login-code');
+  const resendButton = document.querySelector('#resend-code');
+  const changeEmailButton = document.querySelector('#change-email');
   const appStatus = document.querySelector('#app-status');
   const stepRoot = document.querySelector('#step-root');
   const progressRoot = document.querySelector('#progress');
@@ -20,14 +24,36 @@
   const client = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey);
   let session = null;
   let profile = null;
+  let pendingEmail = '';
+  let authBusy = false;
+  let resendAt = 0;
+  let resendTimer = null;
+  let authenticatedBoot = null;
 
-  loginForm.addEventListener('submit', sendMagicLink);
+  loginForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+    sendCode(false);
+  });
+  otpForm.addEventListener('submit', verifyCode);
+  resendButton.addEventListener('click', () => sendCode(true));
+  changeEmailButton.addEventListener('click', () => {
+    if (authBusy) return;
+    resetCodeForm();
+    document.querySelector('#login-email').focus();
+  });
+  codeInput.addEventListener('input', () => {
+    codeInput.value = codeInput.value.replace(/[^0-9]/g, '').slice(0, 6);
+  });
   logoutButton.addEventListener('click', logout);
 
-  client.auth.onAuthStateChange((_event, nextSession) => {
+  client.auth.onAuthStateChange((event, nextSession) => {
+    if (event === 'INITIAL_SESSION') return; // boot() restores the existing session.
     session = nextSession;
     if (session?.user) {
-      bootAuthenticated().catch(showAppError);
+      // Run database calls after Supabase releases its auth callback lock.
+      setTimeout(() => {
+        if (session === nextSession) enterOnboarding().catch(showAuthLoadError);
+      }, 0);
     } else {
       showLogin();
     }
@@ -42,37 +68,128 @@
     const { data, error } = await client.auth.getSession();
     if (error) throw error;
     session = data.session;
-    if (session?.user) await bootAuthenticated();
+    if (session?.user) await enterOnboarding();
     else showLogin();
   }
 
-  async function sendMagicLink(event) {
-    event.preventDefault();
-    const button = loginForm.querySelector('button[type="submit"]');
-    const email = String(new FormData(loginForm).get('email') || '').trim().toLowerCase();
-    if (!email) return;
-
-    button.disabled = true;
+  async function sendCode(resend) {
+    if (authBusy || (resend && Date.now() < resendAt)) return;
+    const email = resend ? pendingEmail : String(new FormData(loginForm).get('email') || '').trim().toLowerCase();
+    if (!email || (!resend && !loginForm.reportValidity())) return;
+    setAuthBusy(true);
     loginStatus.className = 'status';
-    loginStatus.textContent = 'Enviando link de acesso...';
+    loginStatus.textContent = 'Enviando código...';
+    try {
+      const { error } = await client.auth.signInWithOtp({
+        email,
+        options: { shouldCreateUser: true }
+      });
+      if (error) throw error;
+      pendingEmail = email;
+      loginForm.classList.add('hidden');
+      otpForm.classList.remove('hidden');
+      document.querySelector('#otp-destination').textContent = `Enviamos um código para ${email}`;
+      codeInput.value = '';
+      loginStatus.textContent = resend ? 'Código reenviado. Use o código mais recente.' : 'Confira sua caixa de entrada e o spam.';
+      startResendCooldown();
+      codeInput.focus();
+    } catch (error) {
+      const rateLimited = error.status === 429 || error.code === 'over_email_send_rate_limit';
+      if (resend && rateLimited) startResendCooldown();
+      showLoginError(rateLimited
+        ? 'Aguarde um minuto antes de solicitar outro código.'
+        : 'Não foi possível enviar o código. Confira o e-mail e tente novamente.');
+    } finally {
+      setAuthBusy(false);
+    }
+  }
 
-    const redirectTo = window.location.href.split('#')[0].split('?')[0];
-    const { error } = await client.auth.signInWithOtp({
-      email,
-      options: {
-        shouldCreateUser: true,
-        emailRedirectTo: redirectTo
-      }
-    });
-
-    button.disabled = false;
-    if (error) {
-      console.error(error);
-      showLoginError('Não foi possível enviar o link. Confira o e-mail e tente de novo.');
+  async function verifyCode(event) {
+    event.preventDefault();
+    if (authBusy || !pendingEmail) return;
+    const token = codeInput.value.trim();
+    if (!/^[0-9]{6}$/.test(token)) {
+      showLoginError('Digite o código de 6 dígitos.');
+      codeInput.focus();
       return;
     }
+    setAuthBusy(true);
+    loginStatus.className = 'status';
+    loginStatus.textContent = 'Validando código...';
+    try {
+      const { data, error } = await client.auth.verifyOtp({ email: pendingEmail, token, type: 'email' });
+      if (error) throw error;
+      if (!data.session?.user) throw new Error('Sessão indisponível');
+      session = data.session;
+      try {
+        await enterOnboarding();
+      } catch (error) {
+        showAuthLoadError(error);
+      }
+    } catch (error) {
+      showLoginError(error.status === 429
+        ? 'Muitas tentativas. Aguarde um pouco antes de tentar novamente.'
+        : error.code === 'otp_expired' || error.status === 403
+          ? 'Código incorreto ou expirado. Confira o código mais recente ou solicite um novo.'
+          : 'Não foi possível validar o código. Tente novamente.');
+      codeInput.focus();
+      codeInput.select();
+    } finally {
+      setAuthBusy(false);
+    }
+  }
 
-    loginStatus.textContent = 'Link enviado. Abra seu e-mail e toque no link para continuar.';
+  function setAuthBusy(busy) {
+    authBusy = busy;
+    loginForm.querySelector('button').disabled = busy;
+    document.querySelector('#login-email').disabled = busy;
+    otpForm.querySelector('button[type="submit"]').disabled = busy;
+    changeEmailButton.disabled = busy;
+    updateResendButton();
+  }
+
+  function startResendCooldown() {
+    clearInterval(resendTimer);
+    resendAt = Date.now() + 60000;
+    resendTimer = setInterval(updateResendButton, 1000);
+    updateResendButton();
+  }
+
+  function updateResendButton() {
+    const seconds = Math.max(0, Math.ceil((resendAt - Date.now()) / 1000));
+    resendButton.disabled = authBusy || seconds > 0;
+    resendButton.textContent = seconds ? `Reenviar código (${seconds}s)` : 'Reenviar código';
+    if (!seconds) clearInterval(resendTimer);
+  }
+
+  function resetCodeForm() {
+    pendingEmail = '';
+    codeInput.value = '';
+    resendAt = 0;
+    clearInterval(resendTimer);
+    otpForm.classList.add('hidden');
+    loginForm.classList.remove('hidden');
+    loginStatus.className = 'status';
+    loginStatus.textContent = '';
+    document.querySelector('#otp-destination').textContent = '';
+    updateResendButton();
+  }
+
+  async function enterOnboarding() {
+    if (!session?.user) return;
+    if (authenticatedBoot) return authenticatedBoot;
+    if (profile && !appView.classList.contains('hidden')) return;
+    authenticatedBoot = bootAuthenticated();
+    try {
+      await authenticatedBoot;
+      resetCodeForm();
+    } finally {
+      authenticatedBoot = null;
+    }
+  }
+
+  function showAuthLoadError() {
+    showLoginError('Seu acesso foi validado, mas não foi possível carregar o cadastro. Recarregue a página para tentar novamente.');
   }
 
   async function bootAuthenticated() {
@@ -357,6 +474,7 @@
   function showLogin() {
     session = null;
     profile = null;
+    resetCodeForm();
     loginView.classList.remove('hidden');
     appView.classList.add('hidden');
     logoutButton.classList.add('hidden');
