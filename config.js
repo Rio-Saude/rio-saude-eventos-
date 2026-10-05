@@ -1,5 +1,6 @@
 window.RIO_SAUDE_CONFIG = {
   registrationEnabled: true,
+  onboardingEnabled: false,
   supabaseUrl: "https://zzxveirmtgnrokgjthhy.supabase.co",
   supabaseAnonKey: "sb_publishable_glBPSbIG1ov2_vn8vPyJMw_0OvaAILs",
   fallbackFormUrl: "https://docs.google.com/forms/d/e/1FAIpQLScYh8rlUCamcUXrg4LwRzcYryLLTPWekAfwxBovOlrK40X9LQ/viewform",
@@ -10,6 +11,7 @@ window.RIO_SAUDE_CONFIG = {
 };
 
 (() => {
+  if (!window.RIO_SAUDE_CONFIG.onboardingEnabled) return;
   if (/onboarding\.html$/i.test(window.location.pathname)) return;
   document.addEventListener('DOMContentLoaded', () => {
     if (document.querySelector('.rs-portal-entry')) return;
