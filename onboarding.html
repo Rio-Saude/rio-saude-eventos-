@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#07110d">
+  <title>Rio Saúde • Primeiro acesso</title>
+  <link rel="stylesheet" href="portal.css">
+</head>
+<body>
+  <main class="shell">
+    <div class="topbar">
+      <div class="brand">RIO SAÚDE • ÁREA DO ALUNO</div>
+      <div class="toplinks">
+        <a href="index.html">Provas e eventos</a>
+        <button id="logout-btn" class="ghost-btn hidden" type="button">Sair</button>
+      </div>
+    </div>
+
+    <section class="hero">
+      <small>Primeiro acesso</small>
+      <h1>Seu início na Rio Saúde, em poucos passos.</h1>
+      <p>Cadastre seus dados, conte um pouco do seu momento esportivo e deixe o básico pronto para começar.</p>
+    </section>
+
+    <section id="login-view" class="card login-card">
+      <div class="step-kicker">Acesso por e-mail</div>
+      <h2>Entre com seu e-mail.</h2>
+      <p class="lead">Sem senha. Você recebe um link de acesso no e-mail e volta para continuar de onde parou.</p>
+      <form id="login-form">
+        <div class="field">
+          <label for="login-email">E-mail</label>
+          <input id="login-email" name="email" type="email" autocomplete="email" placeholder="voce@email.com" required>
+        </div>
+        <div class="actions">
+          <button class="primary-btn" type="submit">Enviar link de acesso</button>
+        </div>
+        <div id="login-status" class="status" aria-live="polite"></div>
+      </form>
+    </section>
+
+    <section id="app-view" class="card hidden">
+      <div id="progress" class="progress" aria-label="Progresso do primeiro acesso"></div>
+      <div id="step-root"></div>
+      <div id="app-status" class="status" aria-live="polite"></div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.min.js"></script>
+  <script src="config.js"></script>
+  <script src="onboarding.js"></script>
+</body>
+</html>
