@@ -26,6 +26,27 @@
   hydrateCalendar().catch((error) => {
     console.error("Rio Saúde calendar load", error);
   });
+  const onboardingCard = document.querySelector('.rs-onboarding-card');
+  const originalCard = onboardingCard ? { href: onboardingCard.getAttribute('href'), title: onboardingCard.querySelector('strong').textContent, text: onboardingCard.querySelector('p').textContent } : null;
+  let homeVersion = 0;
+  async function updateHomeAccount() {
+    if (!onboardingCard) return;
+    const version = ++homeVersion;
+    try {
+      const { data: { session } } = await client.auth.getSession();
+      const { data: athlete } = session?.user ? await client.from('athlete_profiles')
+        .select('onboarding_completed_at').eq('user_id', session.user.id).maybeSingle() : { data: null };
+      if (version !== homeVersion) return;
+      const completed = Boolean(athlete?.onboarding_completed_at);
+      onboardingCard.href = completed ? 'onboarding.html?edit=1' : originalCard.href;
+      onboardingCard.querySelector('strong').textContent = completed ? 'Meu cadastro' : originalCard.title;
+      onboardingCard.querySelector('p').textContent = completed ? 'Confira e atualize seus dados na Rio Saúde.' : originalCard.text;
+    } catch (_) { /* The public home remains usable when profile lookup fails. */ }
+  }
+  client.auth.onAuthStateChange(() => { setTimeout(updateHomeAccount, 0); });
+  window.addEventListener('pageshow', updateHomeAccount);
+  window.addEventListener('focus', updateHomeAccount);
+  updateHomeAccount();
 
   function bindFilters() {
     document.querySelectorAll(".filter-card[data-filter]").forEach((button) => {
@@ -516,6 +537,7 @@
       ".rs-submit:disabled{opacity:.55;cursor:not-allowed}",
       ".rs-cancel{background:rgba(255,255,255,.10);color:white}",
       ".rs-feedback{margin-top:14px;font-size:14px}",
+      ".rs-continue{display:block;text-align:center;margin-top:16px;background:#a8e0be;color:#07110d;padding:13px 20px;border-radius:999px;font-weight:900;text-decoration:none}",
       "@media(max-width:700px){.event-actions{grid-template-columns:1fr!important}.event-actions .rs-official-link,.rs-group{grid-column:auto}.rs-window{align-items:flex-start;flex-direction:column}.rs-modal-actions{flex-direction:column}}"
     ].join("");
     document.head.appendChild(style);
@@ -728,7 +750,15 @@
         console.warn("Cadastro salvo; falha apenas ao atualizar os contadores", refreshError);
       });
 
-      setTimeout(closeModal, 1500);
+      if (new URLSearchParams(location.search).get('source') === 'onboarding') {
+        const resume = document.createElement('a');
+        resume.className = 'rs-continue';
+        resume.textContent = 'Continuar cadastro';
+        resume.href = 'onboarding.html?from=provas' + (new URLSearchParams(location.search).get('edit') === '1' ? '&edit=1' : '');
+        feedback.appendChild(resume);
+      } else {
+        setTimeout(closeModal, 1500);
+      }
     }
   }
 
