@@ -33,9 +33,8 @@ export function allowedPlanCodes(profile, today = new Date()) {
   const under26 = age < 26;
   const single = under26 || ['Barra','Aterro','Online'].includes(base) ?
     'single_290_monthly' : 'single_monthly';
-  const studentTri = under26 && Array.isArray(profile?.modalities) &&
-    profile.modalities.includes('triathlon');
-  const multi = studentTri ? 'multi_tri_u26_monthly' : 'multi_monthly';
+  // Contracted multi-sport tier is distinct from sports the athlete happens to practice.
+  const multi = under26 ? 'multi_tri_u26_monthly' : 'multi_monthly';
   return [single,multi];
 }
 
