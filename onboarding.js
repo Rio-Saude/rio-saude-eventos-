@@ -658,13 +658,13 @@
   function pricingForProfile(athlete) {
     const discountedSingle = ['Barra','Aterro','Online'].includes(athlete.base_preference) ||
       isUnder26(athlete.birth_date);
-    const studentTri = isUnder26(athlete.birth_date) &&
-      Array.isArray(athlete.modalities) && athlete.modalities.includes('triathlon');
+    // Modalidades praticadas não determinam a contratação. A opção 2+ é o plano multiesporte.
+    const studentMulti = isUnder26(athlete.birth_date);
     return [
       {code:discountedSingle ? 'single_290_monthly' : 'single_monthly',
        label:'1 modalidade',price:discountedSingle ? 29000 : 39000},
-      {code:studentTri ? 'multi_tri_u26_monthly' : 'multi_monthly',
-       label:'2 ou mais modalidades',price:studentTri ? 39000 : 49000}
+      {code:studentMulti ? 'multi_tri_u26_monthly' : 'multi_monthly',
+       label:'2 ou mais modalidades',price:studentMulti ? 39000 : 49000}
     ];
   }
 
