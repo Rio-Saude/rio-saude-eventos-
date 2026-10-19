@@ -37,6 +37,7 @@
   let saving = false;
   let checkoutBusy = false;
   let availableRaceOptions = [];
+  let pendingRaceEntries = [];
 
   loginForm.addEventListener('submit', (event) => {
     event.preventDefault();
@@ -204,13 +205,7 @@
     await loadOrCreateProfile();
     const params = new URLSearchParams(location.search);
     editing = Boolean(profile.onboarding_completed_at && params.get('edit') === '1');
-    editStep = params.get('from') === 'provas' ? 5 : 1;
-    if (params.get('from') === 'provas' && !profile.onboarding_completed_at && Number(profile.onboarding_step) === 4) {
-      const { data, error } = await client.from('athlete_profiles').update({ onboarding_step: 5 })
-        .eq('user_id', session.user.id).select('*').single();
-      if (error) throw error;
-      profile = data;
-    }
+    editStep = params.get('edit') === '1' ? 1 : 1;
     history.replaceState(null, '', location.pathname);
     loginView.classList.add('hidden');
     appView.classList.remove('hidden');
@@ -259,26 +254,23 @@
   function render() {
     appStatus.textContent = '';
     appStatus.className = 'status';
-
     if (profile.onboarding_completed_at && !editing) {
-      renderProgress(6);
+      renderProgress(5);
       renderDashboard();
       return;
     }
-
-    const step = editing ? editStep : Math.min(Math.max(Number(profile.onboarding_step || 1), 1), 6);
+    const step = editing ? editStep : Math.min(Math.max(Number(profile.onboarding_step || 1), 1), 5);
     renderProgress(step);
     if (step === 1) renderPersonal();
     if (step === 2) renderSport();
     if (step === 3) renderPayment();
-    if (step === 4) renderRaces();
-    if (step === 5) renderTrainingPeaks();
-    if (step === 6) renderWhatsApp();
+    if (step === 4) renderTrainingPeaks();
+    if (step === 5) renderWhatsApp();
   }
 
   function renderProgress(step) {
     progressRoot.innerHTML = '';
-    for (let i = 1; i <= 6; i += 1) {
+    for (let i = 1; i <= 5; i += 1) {
       const item = document.createElement('span');
       if (i <= step) item.classList.add('active');
       progressRoot.appendChild(item);
@@ -330,26 +322,32 @@
   }
 
   function renderSport() {
-    const goals = ['Performance', 'Consistência', '5 km', '10 km', 'Meia maratona', 'Maratona', 'Triathlon', '70.3', 'Ironman', 'Trail', 'Voltar a treinar', 'Outro'];
-    const savedGoal = String(profile.primary_goal || '');
-    const quickGoal = goals.find(goal => savedGoal === goal || savedGoal.startsWith(goal + '\n')) || '';
-    const goalDetails = quickGoal ? savedGoal.slice(quickGoal.length).replace(/^\n/, '') : savedGoal;
-    const hasRace = Boolean(profile.goal_event_name || profile.goal_event_date || profile.coach === 'Dum');
+    const goals = ['Melhorar minha performance', 'Ter mais consistência nos treinos', 'Preparar para uma prova', 'Voltar a treinar'];
+    const legacyText = String(profile.primary_goal || '');
+    const firstLegacy = legacyText.split('\n')[0];
+    const inferred = /^(performance)$/i.test(firstLegacy) ? 'Melhorar minha performance'
+      : /^(consistência)$/i.test(firstLegacy) ? 'Ter mais consistência nos treinos'
+      : /^(maratona|meia maratona|5 km|10 km|trail|triathlon|70.3|ironman)$/i.test(firstLegacy) ? 'Preparar para uma prova'
+      : firstLegacy === 'Voltar a treinar' ? 'Voltar a treinar' : null;
+    const selectedGoals = Array.isArray(profile.training_goals) && profile.training_goals.length
+      ? profile.training_goals : (inferred ? [inferred] : []);
+    const goalDetails = inferred ? legacyText.split('\n').slice(1).join('\n') : legacyText;
+    const oldRace = profile.goal_event_name
+      ? [{name:profile.goal_event_name, event_date:profile.goal_event_date || null, custom:true}] : [];
+    pendingRaceEntries = (Array.isArray(profile.goal_events) && profile.goal_events.length ? profile.goal_events : oldRace)
+      .filter(entry => entry && typeof entry.name === 'string').slice(0,15).map(entry=>({
+        name:entry.name, event_date:entry.event_date || null, custom:entry.custom !== false
+      }));
+    const hasRace = pendingRaceEntries.length > 0;
     const selected = new Set(Array.isArray(profile.modalities) ? profile.modalities : []);
-    const modal = [
-      ['corrida','Corrida'],
-      ['triathlon','Triathlon'],
-      ['trail','Trail run'],
-      ['natacao','Natação'],
-      ['ciclismo','Ciclismo']
-    ];
+    const modal = [['corrida','Corrida'],['triathlon','Triathlon'],['trail','Trail run'],
+      ['natacao','Natação'],['ciclismo','Ciclismo']];
     const checks = modal.map(([key,label]) => `
       <label class="check"><input type="checkbox" name="modalities" value="${key}" ${selected.has(key) ? 'checked' : ''}>${label}</label>`).join('');
-
     stepRoot.innerHTML = `
-      <div class="step-kicker">2 de 6 · Perfil esportivo</div>
+      <div class="step-kicker">2 de 5 · Perfil esportivo e provas</div>
       <h2>Onde você está e onde quer chegar.</h2>
-      <p class="lead">Isso funciona como nossa avaliação inicial para direcionar seu começo e definir quem acompanha sua entrada.</p>
+      <p class="lead">Essas informações ajudam a equipe a organizar seu acompanhamento.</p>
       <form id="sport-form" class="grid">
         <div class="field full"><label>Modalidades</label><div class="checks">${checks}</div></div>
         <div class="field"><label for="running_experience">Há quanto tempo você treina/corre?</label><select id="running_experience" name="running_experience" required><option value="">Selecione</option>${['Nunca treinei','Menos de 6 meses','6 meses a 1 ano','1 a 2 anos','2 anos ou mais'].map(choice => option(choice, choice, profile.running_experience)).join('')}</select></div>
@@ -358,16 +356,23 @@
         <div class="field"><label for="training_days_available">Quantos dias você tem disponíveis para treinar?</label><select id="training_days_available" name="training_days_available" required><option value="">Selecione</option>${['1–2 dias','3 dias','4 dias ou mais'].map(choice => option(choice, choice, profile.training_days_available)).join('')}</select></div>
         <div class="field full"><label for="base_preference">Em qual base você vai treinar?</label><select id="base_preference" name="base_preference" required><option value="">Selecione</option>${['Barra','Aterro','Lagoa','Online'].map(choice => option(choice, choice, profile.base_preference)).join('')}</select></div>
         <fieldset class="field full choice-fieldset"><legend>Já teve alguma lesão relacionada aos treinos?</legend><div class="goal-options"><label class="goal-option"><input type="radio" name="had_training_injury" value="yes" ${profile.had_training_injury === true ? 'checked' : ''} required><span>Sim</span></label><label class="goal-option"><input type="radio" name="had_training_injury" value="no" ${profile.had_training_injury === false ? 'checked' : ''} required><span>Não</span></label></div></fieldset>
-        <div id="training-injury-details-wrap" class="field full ${profile.had_training_injury === true ? '' : 'hidden'}"><label for="training_injury_details">Conte mais sobre a lesão</label><textarea id="training_injury_details" name="training_injury_details" maxlength="1000" placeholder="Ex.: Tive dor no joelho treinando para minha primeira meia maratona. Fiz fisioterapia e voltei a correr.">${value(profile.training_injury_details)}</textarea><p class="field-help">Essas informações serão usadas pela equipe técnica para adaptar seu acompanhamento.</p></div>
-        <fieldset class="field full choice-fieldset"><legend>Qual é seu principal objetivo agora?</legend><div class="goal-options">${goals.map(goal => `<label class="goal-option"><input type="radio" name="quick_goal" value="${escapeAttr(goal)}" ${quickGoal === goal ? 'checked' : ''}><span>${escapeHtml(goal)}</span></label>`).join('')}</div></fieldset>
-        <div class="field full"><label for="primary_goal">Conte mais sobre seu objetivo (opcional)</label><textarea id="primary_goal" name="primary_goal" placeholder="Ex.: Quero correr minha primeira maratona em 2027 abaixo de 4h.">${value(goalDetails)}</textarea></div>
-        <fieldset class="field full choice-fieldset"><legend>Você já tem uma prova marcada?</legend><div class="goal-options"><label class="goal-option"><input type="radio" name="has_race" value="yes" ${hasRace ? 'checked' : ''}><span>Sim</span></label><label class="goal-option"><input type="radio" name="has_race" value="no" ${hasRace ? '' : 'checked'}><span>Ainda não</span></label></div></fieldset>
+        <div id="training-injury-details-wrap" class="field full ${profile.had_training_injury === true ? '' : 'hidden'}"><label for="training_injury_details">Conte mais sobre a lesão</label><textarea id="training_injury_details" name="training_injury_details" maxlength="1000" placeholder="Ex.: Tive dor no joelho ao preparar minha primeira meia maratona. Fiz fisioterapia e voltei a correr.">${value(profile.training_injury_details)}</textarea><p class="field-help">Somente o aluno e a equipe autorizada devem acessar essas informações.</p></div>
+        <fieldset class="field full choice-fieldset"><legend>O que você busca com os treinos? (pode marcar mais de um)</legend><div class="goal-options">${goals.map(goal => `<label class="goal-option"><input type="checkbox" name="quick_goal" value="${escapeAttr(goal)}" ${selectedGoals.includes(goal) ? 'checked' : ''}><span>${escapeHtml(goal)}</span></label>`).join('')}</div></fieldset>
+        <div class="field full"><label for="primary_goal">Quer contar algo mais sobre seu objetivo? (opcional)</label><textarea id="primary_goal" name="primary_goal" maxlength="2000" placeholder="Ex.: Quero fazer a minha primeira maratona em 2027 abaixo de 4h.">${value(goalDetails)}</textarea></div>
+        <fieldset class="field full choice-fieldset"><legend>Você já tem alguma prova marcada?</legend><div class="goal-options"><label class="goal-option"><input type="radio" name="has_race" value="yes" ${hasRace ? 'checked' : ''}><span>Sim</span></label><label class="goal-option"><input type="radio" name="has_race" value="no" ${hasRace ? '' : 'checked'}><span>Ainda não</span></label></div></fieldset>
         <div id="race-choice" class="field full ${hasRace ? '' : 'hidden'}">
-          <label for="goal_event_name">Qual é a prova?</label>
-          <input id="goal_event_name" name="goal_event_name" type="search" list="race-suggestions" autocomplete="off" placeholder="Busque uma prova ou digite outra" value="${value(profile.goal_event_name)}">
+          <label for="goal_event_name">Adicione suas próximas provas</label>
+          <p class="field-help">Digite o nome e selecione uma prova da lista. Se não encontrar, escreva o nome para cadastrar a sua.</p>
+          <input id="goal_event_name" type="search" list="race-suggestions" autocomplete="off" placeholder="Ex.: Maratona do Rio">
           <datalist id="race-suggestions"></datalist>
-          <p class="field-help">Escolha uma prova do calendário ou digite outra. Para provas cadastradas, a data será preenchida automaticamente.</p>
-          <label for="goal_event_date">Data da prova</label><input id="goal_event_date" name="goal_event_date" type="date" lang="pt-BR" value="${value(profile.goal_event_date)}">
+          <div id="custom-race-date-wrap" class="field hidden" style="margin-top:12px">
+            <label for="custom_race_date">Não encontrou? Informe a data da prova que você digitou</label>
+            <input id="custom_race_date" type="date" lang="pt-BR">
+          </div>
+          <div class="actions" style="margin:12px 0"><button id="add-race" class="secondary-btn" type="button">+ Adicionar prova</button></div>
+          <p class="field-help">Provas selecionadas (você pode remover no X):</p>
+          <div id="selected-race-list"></div>
+          <p id="race-feedback" class="field-help" role="status" aria-live="polite"></p>
         </div>
         <div class="actions field full"><button class="secondary-btn" type="button" data-back="1">Voltar</button><button class="primary-btn" type="submit">Continuar</button></div>
       </form>`;
@@ -376,22 +381,90 @@
     document.querySelectorAll('[name="has_race"]').forEach(input => input.addEventListener('change', () => {
       const yes = document.querySelector('[name="has_race"]:checked')?.value === 'yes';
       document.querySelector('#race-choice').classList.toggle('hidden', !yes);
-      document.querySelector('#goal_event_name').required = yes;
+      if (yes) renderSelectedRaces();
     }));
-    document.querySelector('#goal_event_name').required = hasRace;
-    document.querySelector('#goal_event_name').addEventListener('input', event => {
-      const chosen = availableRaceOptions.find(item => item.name.toLowerCase() === event.target.value.trim().toLowerCase());
-      if (chosen) document.querySelector('#goal_event_date').value = chosen.event_date || '';
-    });
+    document.querySelector('#goal_event_name').addEventListener('input', updateCustomRaceDate);
+    document.querySelector('#add-race').addEventListener('click', addSelectedRace);
     document.querySelectorAll('[name="had_training_injury"]').forEach(input => input.addEventListener('change', () => {
       const yes = document.querySelector('[name="had_training_injury"]:checked')?.value === 'yes';
       document.querySelector('#training-injury-details-wrap').classList.toggle('hidden', !yes);
       document.querySelector('#training_injury_details').required = yes;
     }));
     document.querySelector('#training_injury_details').required = profile.had_training_injury === true;
+    renderSelectedRaces();
     loadRaceSuggestions();
     bindDatePickers();
     bindBackButtons();
+  }
+
+  function renderSelectedRaces() {
+    const list = document.querySelector('#selected-race-list');
+    if (!list) return;
+    list.replaceChildren();
+    if (!pendingRaceEntries.length) {
+      const p = document.createElement('p');
+      p.className = 'field-help';
+      p.textContent = 'Nenhuma prova adicionada ainda.';
+      list.appendChild(p);
+      return;
+    }
+    pendingRaceEntries.forEach((race,index) => {
+      const line = document.createElement('div');
+      line.className = 'race-selected-item';
+      line.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;border:1px solid rgba(255,255,255,.17);border-radius:12px;margin:8px 0;';
+      const name = document.createElement('span');
+      name.textContent = race.name;
+      const remove = document.createElement('button');
+      remove.type = 'button';
+      remove.textContent = '×';
+      remove.className = 'secondary-btn';
+      remove.setAttribute('aria-label','Remover ' + race.name);
+      remove.style.cssText = 'padding:5px 12px;font-size:20px;';
+      remove.addEventListener('click', () => {
+        pendingRaceEntries.splice(index, 1);
+        renderSelectedRaces();
+      });
+      line.append(name, remove);
+      list.appendChild(line);
+    });
+  }
+
+  function updateCustomRaceDate() {
+    const entered = clean(document.querySelector('#goal_event_name')?.value).toLocaleLowerCase('pt-BR');
+    const listed = availableRaceOptions.some(item => item.name.toLocaleLowerCase('pt-BR') === entered);
+    const wrap = document.querySelector('#custom-race-date-wrap');
+    if (wrap) wrap.classList.toggle('hidden', !entered || listed);
+  }
+
+  function addSelectedRace() {
+    const input = document.querySelector('#goal_event_name');
+    const feedback = document.querySelector('#race-feedback');
+    const name = clean(input.value);
+    feedback.textContent = '';
+    if (name.length < 3 || name.length > 180) {
+      feedback.textContent = 'Digite o nome completo da prova (3 a 180 caracteres).';
+      return;
+    }
+    if (pendingRaceEntries.some(entry => entry.name.toLocaleLowerCase('pt-BR') === name.toLocaleLowerCase('pt-BR'))) {
+      feedback.textContent = 'Essa prova já está na sua lista.';
+      return;
+    }
+    if (pendingRaceEntries.length >= 15) {
+      feedback.textContent = 'Você pode selecionar até 15 provas.';
+      return;
+    }
+    const listed = availableRaceOptions.find(item => item.name.toLocaleLowerCase('pt-BR') === name.toLocaleLowerCase('pt-BR'));
+    const date = listed?.event_date || clean(document.querySelector('#custom_race_date').value) || null;
+    if (!listed && !date) {
+      feedback.textContent = 'Para cadastrar uma prova fora da lista, informe a data dela.';
+      document.querySelector('#custom_race_date').focus();
+      return;
+    }
+    pendingRaceEntries.push({name:listed?.name || name, event_date:date, custom:!listed});
+    input.value = '';
+    document.querySelector('#custom_race_date').value = '';
+    updateCustomRaceDate();
+    renderSelectedRaces();
   }
 
   async function loadRaceSuggestions() {
@@ -400,21 +473,22 @@
     try {
       const { data, error } = await client.from('events')
         .select('name,event_date')
-        .eq('active', true)
-        .gte('event_date', new Date().toISOString().slice(0, 10))
-        .order('event_date', { ascending: true })
+        .eq('active',true)
+        .gte('event_date',new Date().toISOString().slice(0,10))
+        .order('event_date',{ascending:true})
         .limit(300);
       if (error) throw error;
       availableRaceOptions = data || [];
       if (!datalist.isConnected) return;
       datalist.replaceChildren();
-      for (const item of availableRaceOptions) {
+      availableRaceOptions.forEach(item => {
         const option = document.createElement('option');
         option.value = item.name;
         datalist.appendChild(option);
-      }
-    } catch (error) {
-      console.warn('Falha ao carregar sugestões de provas', error);
+      });
+      updateCustomRaceDate();
+    } catch(error) {
+      console.warn('Não foi possível carregar a lista de provas',error);
     }
   }
 
@@ -423,60 +497,113 @@
     const form = new FormData(event.currentTarget);
     const modalities = form.getAll('modalities').map(String);
     const hasRaceSelected = form.get('has_race') === 'yes';
-    const eventName = hasRaceSelected ? clean(form.get('goal_event_name')) : '';
-    const eventDate = hasRaceSelected ? clean(form.get('goal_event_date')) : '';
-    const coach = hasRaceSelected ? 'Dum' : 'Pedrinho';
+    if (hasRaceSelected && !pendingRaceEntries.length) {
+      document.querySelector('#race-feedback').textContent = 'Adicione pelo menos uma prova ou marque “Ainda não”.';
+      return;
+    }
+    const races = hasRaceSelected ? pendingRaceEntries.slice(0,15) : [];
     const hadTrainingInjury = form.get('had_training_injury') === 'yes';
-
     await updateProfile({
       modalities,
-      running_experience: clean(form.get('running_experience')),
-      current_level: clean(form.get('current_level')),
-      training_days_current: clean(form.get('training_days_current')),
-      training_days_available: clean(form.get('training_days_available')),
-      base_preference: clean(form.get('base_preference')),
-      had_training_injury: hadTrainingInjury,
-      training_injury_details: hadTrainingInjury ? clean(form.get('training_injury_details')) : null,
-      primary_goal: [clean(form.get('quick_goal')), clean(form.get('primary_goal'))].filter(Boolean).join('\n'),
-      goal_event_name: eventName || null,
-      goal_event_date: eventDate || null,
-      coach,
-      onboarding_step: 3
+      running_experience:clean(form.get('running_experience')),
+      current_level:clean(form.get('current_level')),
+      training_days_current:clean(form.get('training_days_current')),
+      training_days_available:clean(form.get('training_days_available')),
+      base_preference:clean(form.get('base_preference')),
+      had_training_injury:hadTrainingInjury,
+      training_injury_details:hadTrainingInjury ? clean(form.get('training_injury_details')) : null,
+      training_goals:form.getAll('quick_goal').map(String),
+      primary_goal:clean(form.get('primary_goal')),
+      goal_events:races,
+      goal_event_name:races[0]?.name || null,
+      goal_event_date:races[0]?.event_date || null,
+      coach:races.length ? 'Dum' : 'Pedrinho',
+      onboarding_step:3
     });
   }
 
   function renderPayment() {
     stepRoot.innerHTML = `
-      <div class="step-kicker">3 de 6 · Financeiro</div>
+      <div class="step-kicker">3 de 5 · Financeiro</div>
       <h2>Cadastro financeiro</h2>
-      <p class="lead">Falta só deixar sua forma de pagamento cadastrada.</p>
-      <p class="notice">Ambiente de homologação: este fluxo ainda está em teste.</p>
+      <p class="lead">Escolha o plano e preencha seus dados na página segura da Efí.</p>
+      <p class="notice">Ambiente de homologação: esse fluxo ainda está em teste. Nenhum pagamento real deve ser feito.</p>
       <form id="billing-form" class="grid">
         <fieldset class="field full choice-fieldset"><legend>Escolha seu plano mensal</legend>
           <div id="billing-plans" class="goal-options">Carregando planos...</div>
         </fieldset>
-      <div class="actions">
-        <button id="billing-checkout" class="primary-btn" type="submit" disabled>Cadastrar pagamento</button>
-      </div>
+        <div class="actions"><button id="billing-checkout" class="primary-btn" type="submit" disabled>Abrir cadastro na Efí</button></div>
       </form>
       <p id="billing-status" class="status" role="status" aria-live="polite"></p>
-      <p id="payment-note" class="field-help">A Efí abre em outra aba para você não perder o cadastro. O Portal não recebe dados de cartão e a inscrição só ficará ativa após a confirmação financeira.</p>
+      <div id="efi-return" class="hidden">
+        <h3>Conseguiu preencher seus dados na Efí?</h3>
+        <p class="field-help">Essa resposta informa somente que você concluiu o preenchimento. Não confirma pagamento.</p>
+        <div class="actions">
+          <button id="efi-done" class="primary-btn" type="button">Já fiz meu cadastro na Efí</button>
+          <button id="efi-later" class="secondary-btn" type="button">Ainda não fiz — ir ao TrainingPeaks</button>
+        </div>
+      </div>
+      <p class="field-help">O link da Efí abre em outra aba. Sua página da Rio Saúde continua aberta.</p>
       <div class="actions"><button class="text-btn" type="button" data-back="2">Voltar</button></div>`;
 
     document.querySelector('#billing-form').addEventListener('submit', startCheckout);
+    document.querySelector('#efi-done').addEventListener('click', () => updateProfile({
+      payment_status:'submitted',payment_followup_needed:false,onboarding_step:4
+    }));
+    document.querySelector('#efi-later').addEventListener('click', () => updateProfile({
+      payment_status:'pending',payment_followup_needed:true,onboarding_step:4
+    }));
     loadBillingPlans();
+    loadExistingCheckout();
     bindBackButtons();
+  }
+
+  function showEfiReturnChoices(paymentUrl = '') {
+    const options = document.querySelector('#efi-return');
+    if (!options) return;
+    options.classList.remove('hidden');
+    const status = document.querySelector('#billing-status');
+    if (status && paymentUrl) {
+      status.className = 'status';
+      status.innerHTML = 'Link preparado. <a target="_blank" rel="noopener noreferrer" href="' +
+        escapeAttr(paymentUrl) + '">Abrir a Efí novamente</a> se precisar.';
+    }
+  }
+
+  function validEfiLink(urlString) {
+    try {
+      const url = new URL(urlString);
+      const hosts = ['pagamento.gerencianet.com.br', 'pagamento-h.gerencianet.com.br',
+        'pagamento.efipay.com.br', 'pagamento-h.efipay.com.br', 'pagamento.sejaefi.com.br',
+        'pagamento-h.sejaefi.com.br'];
+      return url.protocol === 'https:' && !url.username && !url.password && !url.port &&
+        hosts.includes(url.hostname) ? url.href : '';
+    } catch { return ''; }
+  }
+
+  async function loadExistingCheckout() {
+    try {
+      const { data,error } = await client.from('billing_subscriptions')
+        .select('payment_url,creation_state,environment,status')
+        .eq('environment','homologation').order('created_at',{ascending:false}).limit(1);
+      if (error) throw error;
+      const existing = data?.[0];
+      const url = existing?.creation_state === 'ready' ? validEfiLink(existing?.payment_url) : '';
+      if (url) showEfiReturnChoices(url);
+    } catch(err) {
+      console.warn('Não foi possível consultar o link existente da Efí',err);
+    }
   }
 
   async function loadBillingPlans() {
     const root = document.querySelector('#billing-plans');
     const checkout = document.querySelector('#billing-checkout');
     try {
-      const { data, error } = await client.from('billing_plans').select('code,name,price_cents,currency')
-        .eq('active', true).in('code', ['single_monthly', 'multi_monthly']).order('price_cents');
+      const { data,error } = await client.from('billing_plans').select('code,name,price_cents,currency')
+        .eq('active',true).in('code',['single_monthly','multi_monthly']).order('price_cents');
       if (error || !data?.length) throw error || new Error('Planos indisponíveis');
       if (!root.isConnected) return;
-      root.innerHTML = data.map(plan => `<label class="goal-option"><input type="radio" name="plan_code" value="${escapeAttr(plan.code)}" required><span>${escapeHtml(plan.name)} · ${escapeHtml(new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(plan.price_cents / 100))}/mês</span></label>`).join('');
+      root.innerHTML = data.map(plan => `<label class="goal-option"><input type="radio" name="plan_code" value="${escapeAttr(plan.code)}" required><span>${escapeHtml(plan.name)} · ${escapeHtml(new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(plan.price_cents/100))}/mês</span></label>`).join('');
       checkout.disabled = false;
     } catch {
       if (root.isConnected) root.textContent = 'Não foi possível carregar os planos. Recarregue a página ou fale com a equipe.';
@@ -491,54 +618,42 @@
     const userId = session.user.id;
     const status = document.querySelector('#billing-status');
     checkoutBusy = true;
-    const paymentTab = window.open('about:blank', '_blank');
+    const paymentTab = window.open('about:blank','_blank');
     if (paymentTab) paymentTab.opener = null;
     stepRoot.querySelectorAll('button').forEach(button => { button.disabled = true; });
     logoutButton.disabled = true;
     status.className = 'status';
-    status.textContent = 'Preparando seu pagamento na Efí...';
+    status.textContent = 'Preparando seu cadastro na Efí...';
     try {
-      const { data, error } = await client.functions.invoke('efi-create-subscription', { body: { plan_code: planCode } });
+      const { data,error } = await client.functions.invoke('efi-create-subscription',{body:{plan_code:planCode}});
       if (session?.user.id !== userId) return;
       let result = data;
       if (error) {
-        try { result = await error.context?.json(); } catch { /* Network errors have no JSON body. */ }
+        try { result = await error.context?.json(); } catch { /* Network errors */ }
         throw new Error(result?.error || 'checkout_unavailable');
       }
-      const url = new URL(data?.payment_url);
-      const hosts = ['pagamento.gerencianet.com.br', 'pagamento-h.gerencianet.com.br', 'pagamento.efipay.com.br', 'pagamento-h.efipay.com.br'];
-      if (data?.environment !== 'homologation' || url.protocol !== 'https:' || url.username || url.password || url.port || !hosts.includes(url.hostname)) throw new Error('checkout_unavailable');
-      // A página da Rio Saúde continua aberta. O link confirmado pela função é reutilizável.
-      if (paymentTab && !paymentTab.closed) {
-        paymentTab.location.replace(url.href);
-        await updateProfile({ payment_status: profile.payment_status === 'confirmed' ? 'confirmed' : 'submitted', onboarding_step: 4 });
-      } else {
-        // Fallback explícito caso o navegador bloqueie a nova aba.
-        status.className = 'status';
-        status.innerHTML = 'Seu navegador bloqueou a aba da Efí. <a href="' + escapeAttr(url.href) + '" target="_blank" rel="noopener noreferrer">Abrir pagamento</a>. Depois de abrir, clique em Continuar cadastro.';
-        const advance = document.createElement('button');
-        advance.type = 'button';
-        advance.className = 'secondary-btn';
-        advance.textContent = 'Continuar cadastro';
-        advance.addEventListener('click', () => updateProfile({ payment_status: profile.payment_status === 'confirmed' ? 'confirmed' : 'submitted', onboarding_step: 4 }));
-        status.append(' ', advance);
-      }
+      const url = data?.environment === 'homologation' ? validEfiLink(data?.payment_url) : '';
+      if (!url) throw new Error('checkout_unavailable');
+      if (paymentTab && !paymentTab.closed) paymentTab.location.replace(url);
+      showEfiReturnChoices(url);
+      // Não avançar automaticamente. Esperar o aluno indicar se preencheu seus dados.
     } catch (error) {
       if (paymentTab && !paymentTab.closed) paymentTab.close();
       const messages = {
-        profile_missing: 'Complete seus dados pessoais antes de cadastrar o pagamento.',
-        profile_incomplete: 'Confira nome, sobrenome, CPF e data de nascimento em “Voltar” antes de continuar.',
-        authentication_required: 'Sua sessão expirou. Recarregue a página para entrar novamente.',
-        checkout_in_progress: 'Seu pagamento está sendo preparado. Aguarde e tente novamente.',
-        checkout_requires_review: 'Esta solicitação precisa ser conferida pela equipe. Uma nova assinatura não será criada.',
-        existing_subscription_other_plan: 'Você já tem uma assinatura ou pagamento pendente em outro plano. Fale com a equipe para trocar.',
-        subscription_exists: 'Você já possui uma assinatura. Fale com a equipe para alterar seu plano.',
-        homologation_only: 'O cadastro de pagamento está disponível somente em homologação.',
-        plan_unavailable: 'Este plano não está disponível no momento.'
+        profile_missing:'Complete seus dados pessoais antes de cadastrar o pagamento.',
+        profile_incomplete:'Confira nome, sobrenome, CPF e data de nascimento em “Voltar” antes de continuar.',
+        authentication_required:'Sua sessão expirou. Recarregue a página para entrar novamente.',
+        checkout_in_progress:'Seu pagamento está sendo preparado. Aguarde e tente novamente.',
+        checkout_requires_review:'Esta solicitação precisa ser conferida pela equipe. Uma nova assinatura não será criada.',
+        existing_subscription_other_plan:'Você já tem uma assinatura ou pagamento pendente em outro plano. Fale com a equipe para trocar.',
+        subscription_exists:'Você já possui uma assinatura. Fale com a equipe para alterar seu plano.',
+        homologation_only:'O cadastro de pagamento está disponível somente em homologação.',
+        plan_unavailable:'Este plano não está disponível no momento.'
       };
       if (status.isConnected) {
         status.className = 'status error';
-        status.textContent = messages[error.message] || 'Não foi possível preparar o pagamento. Tente novamente; cliques repetidos não criam outra assinatura.';
+        status.textContent = messages[error.message] ||
+          'Não foi possível preparar o cadastro na Efí. Tente novamente, sem repetir várias vezes.';
       }
     } finally {
       checkoutBusy = false;
@@ -547,24 +662,12 @@
     }
   }
 
-  function renderRaces() {
-    stepRoot.innerHTML = `
-      <div class="step-kicker">4 de 6 · Suas provas</div>
-      <h2>Escolha suas próximas provas.</h2>
-      <p class="lead">Use o calendário de Eventos Oficiais e avise a Rio Saúde. Após confirmar o aviso, toque em “Continuar cadastro” para configurar o TrainingPeaks.</p>
-      <div class="actions"><a class="primary-btn" href="index.html?source=onboarding${editing ? '&edit=1' : ''}#eventos-oficiais">Escolher prova</a>
-      <button id="skip-races" class="secondary-btn" type="button">Escolher depois</button></div>
-      <div class="actions"><button class="text-btn" type="button" data-back="3">Voltar</button></div>`;
-    document.querySelector('#skip-races').addEventListener('click', () => updateProfile({ onboarding_step: 5 }));
-    bindBackButtons();
-  }
-
   function renderTrainingPeaks() {
     const brands = ['Garmin', 'COROS', 'Apple Watch', 'Polar', 'Suunto', 'Amazfit', 'Outro', 'Não uso'];
     const storedBrand = profile.watch_brand === 'Coros' ? 'COROS' : profile.watch_brand;
     if (storedBrand && !brands.includes(storedBrand)) brands.push(storedBrand);
     stepRoot.innerHTML = `
-      <div class="step-kicker">5 de 6 · TrainingPeaks e relógio</div>
+      <div class="step-kicker">4 de 5 · TrainingPeaks e relógio</div>
       <h2>Deixe seus treinos conectados.</h2>
       <p class="lead">Você pode fazer essas conexões agora ou terminar depois.</p>
       <form id="tp-form" class="grid">
@@ -578,7 +681,7 @@
         <div class="field full"><label for="watch_brand">Relógio</label><select id="watch_brand" name="watch_brand"><option value="">Selecione</option>${brands.map(brand => option(brand, brand, storedBrand)).join('')}</select></div>
         <div id="watch-guide" class="notice field full hidden" aria-live="polite"></div>
         <div id="watch-connection" class="field full"><label class="check"><input id="watch_connected" name="watch_connected" type="checkbox" ${profile.watch_connected ? 'checked' : ''}>Meu relógio já está conectado</label></div>
-        <div class="actions field full"><button class="primary-btn" type="submit" name="tp_action" value="completed">Tudo pronto</button><button class="secondary-btn" type="submit" name="tp_action" value="pending">Terminar depois</button><button class="text-btn" type="button" data-back="4">Voltar</button></div>
+        <div class="actions field full"><button class="primary-btn" type="submit" name="tp_action" value="completed">Tudo pronto</button><button class="secondary-btn" type="submit" name="tp_action" value="pending">Terminar depois</button><button class="text-btn" type="button" data-back="3">Voltar</button></div>
       </form>`;
 
     document.querySelector('#tp-form').addEventListener('submit', saveTrainingPeaks);
@@ -611,11 +714,15 @@
   async function saveTrainingPeaks(event) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
+    const needsPayment = profile.payment_followup_needed ||
+      (profile.payment_status !== 'submitted' && profile.payment_status !== 'confirmed');
     await updateProfile({
-      watch_brand: clean(form.get('watch_brand')) || null,
-      watch_connected: form.get('watch_brand') && form.get('watch_brand') !== 'Não uso' && form.get('watch_connected') === 'on' ? true : false,
-      trainingpeaks_status: event.submitter?.value === 'completed' ? 'completed' : (profile.trainingpeaks_status || 'pending'),
-      onboarding_step: 6
+      watch_brand:clean(form.get('watch_brand')) || null,
+      watch_connected:form.get('watch_brand') && form.get('watch_brand') !== 'Não uso' &&
+        form.get('watch_connected') === 'on' ? true : false,
+      trainingpeaks_status:event.submitter?.value === 'completed' ? 'completed' :
+        (profile.trainingpeaks_status || 'pending'),
+      onboarding_step:needsPayment ? 3 : 5
     });
   }
 
@@ -626,13 +733,13 @@
       : '';
 
     stepRoot.innerHTML = `
-      <div class="step-kicker">6 de 6 · Finalização</div>
+      <div class="step-kicker">5 de 5 · Finalização</div>
       <h2>Último passo.</h2>
       <p class="lead">Depois do cadastro e do TrainingPeaks, falta só entrar no canal de comunicação da Rio Saúde.</p>
       ${linkButton}
       ${whatsappLink ? '' : '<div class="notice">O link do grupo ainda não está configurado neste portal. A equipe pode enviar esse acesso diretamente sem impedir a conclusão do seu cadastro.</div>'}
       <div class="actions">
-        <button class="secondary-btn" type="button" data-back="5">Voltar</button>
+        <button class="secondary-btn" type="button" data-back="4">Voltar</button>
         <button id="finish-onboarding" class="primary-btn" type="button">${editing ? 'Salvar edição' : 'Concluir primeiro acesso'}</button>
       </div>`;
 
@@ -641,18 +748,24 @@
   }
 
   async function finishOnboarding() {
+    if (profile.payment_followup_needed ||
+      (profile.payment_status !== 'submitted' && profile.payment_status !== 'confirmed')) {
+      await updateProfile({onboarding_step:3});
+      return;
+    }
     await updateProfile({
-      whatsapp_group_status: profile.whatsapp_group_status === 'completed' || config.whatsappGroupUrl ? 'completed' : 'pending',
-      onboarding_step: 6,
-      onboarding_completed_at: profile.onboarding_completed_at || new Date().toISOString()
-    }, { finishEdit: editing });
+      whatsapp_group_status:profile.whatsapp_group_status === 'completed' || config.whatsappGroupUrl ?
+        'completed' : 'pending',
+      onboarding_step:5,
+      onboarding_completed_at:profile.onboarding_completed_at || new Date().toISOString()
+    },{finishEdit:editing});
   }
 
   function renderDashboard() {
     stepRoot.innerHTML = `
       <div class="step-kicker">${updated ? 'Cadastro atualizado' : 'Cadastro concluído'}</div>
       <h2>${profile.first_name ? `Tudo certo, ${escapeHtml(profile.first_name)}.` : 'Tudo certo.'}</h2>
-      <p class="lead">Seu cadastro está salvo. Agora escolha suas próximas provas e avise a Rio Saúde.</p>
+      <p class="lead">Seu cadastro foi salvo. A confirmação financeira depende do processamento da Efí; provas informadas no perfil ficam disponíveis para a equipe.</p>
       <div class="actions"><a class="primary-btn" href="index.html#eventos-oficiais">Escolher minhas provas</a>
       <button id="edit-profile" class="secondary-btn" type="button">Editar meu cadastro</button>
       <button id="switch-account" class="text-btn" type="button">Sair / entrar com outro e-mail</button></div>`;
