@@ -876,7 +876,12 @@
     document.querySelectorAll('[data-back]').forEach((button) => {
       button.addEventListener('click', async () => {
         const step = Number(button.dataset.back || 1);
-        await updateProfile({ onboarding_step: step });
+        if (editing) {
+          editStep = step;
+          render();
+        } else {
+          await updateProfile({ onboarding_step: step });
+        }
       });
     });
   }
