@@ -401,6 +401,9 @@
       if (!wrap.classList.contains('hidden')) document.querySelector('#manual_race_name').focus();
     });
     document.querySelector('#add-manual-race').addEventListener('click', addManualRace);
+    document.querySelectorAll('#manual_race_name, #manual_race_date').forEach(field => field.addEventListener('keydown', event => {
+      if (event.key === 'Enter') { event.preventDefault(); addManualRace(); }
+    }));
     document.querySelectorAll('[name="had_training_injury"]').forEach(input => input.addEventListener('change', () => {
       const yes = document.querySelector('[name="had_training_injury"]:checked')?.value === 'yes';
       document.querySelector('#training-injury-details-wrap').classList.toggle('hidden', !yes);
@@ -531,6 +534,10 @@
     const form = new FormData(event.currentTarget);
     const modalities = form.getAll('modalities').map(String);
     const hasRaceSelected = form.get('has_race') === 'yes';
+    if (hasRaceSelected && (clean(document.querySelector('#goal_event_name')?.value) || clean(document.querySelector('#manual_race_name')?.value))) {
+      document.querySelector('#race-feedback').textContent = 'Você digitou uma prova que ainda não foi adicionada. Clique em Adicionar antes de continuar.';
+      return;
+    }
     if (hasRaceSelected && !pendingRaceEntries.length) {
       document.querySelector('#race-feedback').textContent = 'Adicione pelo menos uma prova ou marque “Ainda não”.';
       return;
