@@ -780,41 +780,6 @@
     }, {finishEdit:editing && !needsPayment});
   }
 
-  function renderWhatsApp() {
-    const whatsappLink = String(config.whatsappGroupUrl || '').trim();
-    const linkButton = whatsappLink
-      ? `<a class="primary-btn" href="${escapeAttr(whatsappLink)}" target="_blank" rel="noopener">Entrar no grupo da Rio Saúde</a>`
-      : '';
-
-    stepRoot.innerHTML = `
-      <div class="step-kicker">5 de 5 · Finalização</div>
-      <h2>Último passo.</h2>
-      <p class="lead">Depois do cadastro e do TrainingPeaks, falta só entrar no canal de comunicação da Rio Saúde.</p>
-      ${linkButton}
-      ${whatsappLink ? '' : '<div class="notice">O link do grupo ainda não está configurado neste portal. A equipe pode enviar esse acesso diretamente sem impedir a conclusão do seu cadastro.</div>'}
-      <div class="actions">
-        <button class="secondary-btn" type="button" data-back="4">Voltar</button>
-        <button id="finish-onboarding" class="primary-btn" type="button">${editing ? 'Salvar edição' : 'Concluir primeiro acesso'}</button>
-      </div>`;
-
-    document.querySelector('#finish-onboarding').addEventListener('click', finishOnboarding);
-    bindBackButtons();
-  }
-
-  async function finishOnboarding() {
-    if (profile.payment_followup_needed ||
-      (profile.payment_status !== 'submitted' && profile.payment_status !== 'confirmed')) {
-      await updateProfile({onboarding_step:3});
-      return;
-    }
-    await updateProfile({
-      whatsapp_group_status:profile.whatsapp_group_status === 'completed' || config.whatsappGroupUrl ?
-        'completed' : 'pending',
-      onboarding_step:5,
-      onboarding_completed_at:profile.onboarding_completed_at || new Date().toISOString()
-    },{finishEdit:editing});
-  }
-
   function renderDashboard() {
     const firstName = profile.first_name ? escapeHtml(profile.first_name) : '';
     const numRaces = Array.isArray(profile.goal_events) ? profile.goal_events.length : 0;
