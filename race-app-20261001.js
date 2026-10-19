@@ -728,7 +728,9 @@
       saved = true;
     } catch (error) {
       console.error("Erro real ao registrar prova", error);
-      feedback.textContent = "Não foi possível salvar agora. Tente novamente.";
+      feedback.textContent = error?.code === '42501'
+        ? 'Para alterar uma participação já registrada, entre em Primeiro acesso com esse mesmo e-mail e tente novamente.'
+        : 'Não foi possível salvar agora. Tente novamente.';
       submit.disabled = false;
       return;
     }
