@@ -548,7 +548,7 @@
 
     document.querySelector('#billing-form').addEventListener('submit', startCheckout);
     document.querySelector('#efi-done').addEventListener('click', () => updateProfile({
-      payment_status:'submitted',payment_followup_needed:false,onboarding_step:4
+      payment_status:'submitted',payment_followup_needed:false,onboarding_step:profile.trainingpeaks_step_seen ? 5 : 4
     }));
     document.querySelector('#efi-later').addEventListener('click', () => updateProfile({
       payment_status:'pending',payment_followup_needed:true,onboarding_step:4
@@ -720,6 +720,7 @@
       watch_brand:clean(form.get('watch_brand')) || null,
       watch_connected:form.get('watch_brand') && form.get('watch_brand') !== 'Não uso' &&
         form.get('watch_connected') === 'on' ? true : false,
+      trainingpeaks_step_seen:true,
       trainingpeaks_status:event.submitter?.value === 'completed' ? 'completed' :
         (profile.trainingpeaks_status || 'pending'),
       onboarding_step:needsPayment ? 3 : 5
