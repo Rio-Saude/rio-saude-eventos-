@@ -361,16 +361,17 @@
         <div class="field full"><label for="primary_goal">Quer contar algo mais sobre seu objetivo? (opcional)</label><textarea id="primary_goal" name="primary_goal" maxlength="2000" placeholder="Ex.: Quero fazer a minha primeira maratona em 2027 abaixo de 4h.">${value(goalDetails)}</textarea></div>
         <fieldset class="field full choice-fieldset"><legend>Você já tem alguma prova marcada?</legend><div class="goal-options"><label class="goal-option"><input type="radio" name="has_race" value="yes" ${hasRace ? 'checked' : ''}><span>Sim</span></label><label class="goal-option"><input type="radio" name="has_race" value="no" ${hasRace ? '' : 'checked'}><span>Ainda não</span></label></div></fieldset>
         <div id="race-choice" class="field full ${hasRace ? '' : 'hidden'}">
-          <label for="goal_event_name">Adicione suas próximas provas</label>
-          <p class="field-help">Digite o nome e selecione uma prova da lista. Se não encontrar, escreva o nome para cadastrar a sua.</p>
-          <input id="goal_event_name" type="search" list="race-suggestions" autocomplete="off" placeholder="Ex.: Maratona do Rio">
+          <label for="goal_event_name">Escolha uma prova do calendário</label>
+          <input id="goal_event_name" type="search" list="race-suggestions" autocomplete="off" placeholder="Busque pelo nome da prova">
           <datalist id="race-suggestions"></datalist>
-          <div id="custom-race-date-wrap" class="field hidden" style="margin-top:12px">
-            <label for="custom_race_date">Não encontrou? Informe a data da prova que você digitou</label>
-            <input id="custom_race_date" type="date" lang="pt-BR">
+          <div class="actions" style="margin:8px 0 12px"><button id="add-race" class="secondary-btn" type="button">+ Adicionar prova selecionada</button></div>
+          <button id="show-manual-race" class="text-btn" type="button" aria-expanded="false" aria-controls="manual-race-entry">Minha prova não está na lista</button>
+          <div id="manual-race-entry" class="hidden" style="border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:18px;margin-top:12px">
+            <div class="field"><label for="manual_race_name">Nome da sua prova</label><input id="manual_race_name" maxlength="180" placeholder="Ex.: Corrida do meu bairro"></div>
+            <div class="field" style="margin-top:12px"><label for="manual_race_date">Data da prova</label><input id="manual_race_date" type="date" lang="pt-BR"></div>
+            <div class="actions" style="margin:12px 0 0"><button id="add-manual-race" class="secondary-btn" type="button">+ Adicionar minha prova</button></div>
           </div>
-          <div class="actions" style="margin:12px 0"><button id="add-race" class="secondary-btn" type="button">+ Adicionar prova</button></div>
-          <p class="field-help">Provas selecionadas (você pode remover no X):</p>
+          <p class="field-help" style="margin-top:18px">Suas provas (toque no X para remover):</p>
           <div id="selected-race-list"></div>
           <p id="race-feedback" class="field-help" role="status" aria-live="polite"></p>
         </div>
@@ -383,11 +384,21 @@
       document.querySelector('#race-choice').classList.toggle('hidden', !yes);
       if (yes) renderSelectedRaces();
     }));
-    document.querySelector('#goal_event_name').addEventListener('input', updateCustomRaceDate);
     document.querySelector('#goal_event_name').addEventListener('keydown', event => {
       if (event.key === 'Enter') { event.preventDefault(); addSelectedRace(); }
     });
+    document.querySelector('#goal_event_name').addEventListener('change', event => {
+      const typed = clean(event.target.value).toLocaleLowerCase('pt-BR');
+      if (availableRaceOptions.some(item => item.name.toLocaleLowerCase('pt-BR') === typed)) addSelectedRace();
+    });
     document.querySelector('#add-race').addEventListener('click', addSelectedRace);
+    document.querySelector('#show-manual-race').addEventListener('click', () => {
+      const wrap = document.querySelector('#manual-race-entry');
+      wrap.classList.toggle('hidden');
+      document.querySelector('#show-manual-race').setAttribute('aria-expanded', String(!wrap.classList.contains('hidden')));
+      if (!wrap.classList.contains('hidden')) document.querySelector('#manual_race_name').focus();
+    });
+    document.querySelector('#add-manual-race').addEventListener('click', addManualRace);
     document.querySelectorAll('[name="had_training_injury"]').forEach(input => input.addEventListener('change', () => {
       const yes = document.querySelector('[name="had_training_injury"]:checked')?.value === 'yes';
       document.querySelector('#training-injury-details-wrap').classList.toggle('hidden', !yes);
@@ -432,41 +443,60 @@
     });
   }
 
-  function updateCustomRaceDate() {
-    const entered = clean(document.querySelector('#goal_event_name')?.value).toLocaleLowerCase('pt-BR');
-    const listed = availableRaceOptions.some(item => item.name.toLocaleLowerCase('pt-BR') === entered);
-    const wrap = document.querySelector('#custom-race-date-wrap');
-    if (wrap) wrap.classList.toggle('hidden', !entered || listed);
-  }
-
   function addSelectedRace() {
     const input = document.querySelector('#goal_event_name');
     const feedback = document.querySelector('#race-feedback');
-    const name = clean(input.value);
+    const name = clean(input.value).toLocaleLowerCase('pt-BR');
     feedback.textContent = '';
-    if (name.length < 3 || name.length > 180) {
-      feedback.textContent = 'Digite o nome completo da prova (3 a 180 caracteres).';
-      return;
-    }
-    if (pendingRaceEntries.some(entry => entry.name.toLocaleLowerCase('pt-BR') === name.toLocaleLowerCase('pt-BR'))) {
-      feedback.textContent = 'Essa prova já está na sua lista.';
+    if (!name) { feedback.textContent = 'Selecione uma prova do calendário.'; return; }
+    const listed = availableRaceOptions.find(item => item.name.toLocaleLowerCase('pt-BR') === name);
+    if (!listed) {
+      feedback.textContent = 'Não encontrou essa prova? Clique em “Minha prova não está na lista” e preencha o nome e a data.';
       return;
     }
     if (pendingRaceEntries.length >= 15) {
-      feedback.textContent = 'Você pode selecionar até 15 provas.';
+      feedback.textContent = 'Você pode adicionar até 15 provas.';
       return;
     }
-    const listed = availableRaceOptions.find(item => item.name.toLocaleLowerCase('pt-BR') === name.toLocaleLowerCase('pt-BR'));
-    const date = listed?.event_date || clean(document.querySelector('#custom_race_date').value) || null;
-    if (!listed && !date) {
-      feedback.textContent = 'Para cadastrar uma prova fora da lista, informe a data dela.';
-      document.querySelector('#custom_race_date').focus();
+    if (pendingRaceEntries.some(entry => entry.name.toLocaleLowerCase('pt-BR') === name)) {
+      feedback.textContent = 'Essa prova já foi adicionada.';
       return;
     }
-    pendingRaceEntries.push({name:listed?.name || name, event_date:date, custom:!listed});
+    pendingRaceEntries.push({name:listed.name,event_date:listed.event_date || null,custom:false});
     input.value = '';
-    document.querySelector('#custom_race_date').value = '';
-    updateCustomRaceDate();
+    renderSelectedRaces();
+  }
+
+  function addManualRace() {
+    const feedback = document.querySelector('#race-feedback');
+    const nameInput = document.querySelector('#manual_race_name');
+    const dateInput = document.querySelector('#manual_race_date');
+    const name = clean(nameInput.value);
+    const date = clean(dateInput.value);
+    feedback.textContent = '';
+    if (name.length < 3 || name.length > 180) {
+      feedback.textContent = 'Informe o nome completo da prova (de 3 a 180 caracteres).';
+      nameInput.focus();
+      return;
+    }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !dateInput.validity.valid) {
+      feedback.textContent = 'Informe a data da sua prova.';
+      dateInput.focus();
+      return;
+    }
+    if (pendingRaceEntries.length >= 15) {
+      feedback.textContent = 'Você pode adicionar até 15 provas.';
+      return;
+    }
+    if (pendingRaceEntries.some(entry => entry.name.toLocaleLowerCase('pt-BR') === name.toLocaleLowerCase('pt-BR'))) {
+      feedback.textContent = 'Essa prova já foi adicionada.';
+      return;
+    }
+    pendingRaceEntries.push({name,event_date:date,custom:true});
+    nameInput.value = '';
+    dateInput.value = '';
+    document.querySelector('#manual-race-entry').classList.add('hidden');
+    document.querySelector('#show-manual-race').setAttribute('aria-expanded','false');
     renderSelectedRaces();
   }
 
@@ -489,7 +519,6 @@
         option.value = item.name;
         datalist.appendChild(option);
       });
-      updateCustomRaceDate();
     } catch(error) {
       console.warn('Não foi possível carregar a lista de provas',error);
     }
