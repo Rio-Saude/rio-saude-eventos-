@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createHandler, safePaymentUrl, EFI_BASE } from './core.mjs';
+import { createHandler, safePaymentUrl, EFI_BASE, allowedPlanCodes } from './core.mjs';
 
-const profile = { id: 'profile-1', first_name: 'Aluno', last_name: 'Teste', cpf: '52998224725', email: 'aluno@example.com', birth_date: '1990-01-01' };
+const profile = { id: 'profile-1', first_name: 'Aluno', last_name: 'Teste', cpf: '52998224725', email: 'aluno@example.com', birth_date: '1990-01-01', base_preference:'Lagoa',modalities:['corrida'] };
 const plan = { id: 'plan-1', code: 'single_monthly', name: '1 modalidade', price_cents: 39000, currency: 'BRL', interval_months: 1, active: true, efi_plan_id_homolog: '72116' };
 const paymentUrl = 'https://pagamento-h.gerencianet.com.br/test-checkout';
 function fixture(options = {}) {
@@ -97,4 +97,31 @@ test('expired links and active subscriptions do not create replacements', async 
 test('redirect allowlist rejects credentials, insecure URLs and deceptive domains', () => {
   assert(safePaymentUrl(paymentUrl));
   for (const url of ['http://pagamento.efipay.com.br/a', 'https://pagamento.efipay.com.br.evil.example/a', 'https://user@pagamento.efipay.com.br/a', 'javascript:alert(1)']) assert.equal(safePaymentUrl(url), false);
+});
+
+test('base, age and contracted modality price matrix', () => {
+  const date = new Date('2026-10-05T12:00:00Z');
+  assert.deepEqual(allowedPlanCodes({...profile,base_preference:'Lagoa'},date), ['single_monthly','multi_monthly']);
+  assert.deepEqual(allowedPlanCodes({...profile,base_preference:'Barra',modalities:['triathlon']},date), ['single_290_monthly','multi_monthly']);
+  assert.deepEqual(allowedPlanCodes({...profile,base_preference:'Aterro'},date), ['single_290_monthly','multi_monthly']);
+  assert.deepEqual(allowedPlanCodes({...profile,base_preference:'Online'},date), ['single_290_monthly','multi_monthly']);
+  assert.deepEqual(allowedPlanCodes({...profile,birth_date:'2001-10-06',modalities:['triathlon']},date), ['single_290_monthly','multi_tri_u26_monthly']);
+  assert.deepEqual(allowedPlanCodes({...profile,birth_date:'2001-10-05',modalities:['triathlon']},date), ['single_290_monthly','multi_tri_u26_monthly']);
+  assert.deepEqual(allowedPlanCodes({...profile,birth_date:'2000-10-05',modalities:['triathlon']},date), ['single_monthly','multi_monthly']);
+  assert.deepEqual(allowedPlanCodes({...profile,birth_date:'2001-10-05',modalities:['corrida']},date), ['single_290_monthly','multi_monthly']);
+});
+test('forged discounted or wrong base plan is rejected before external calls', async () => {
+  const base = fixture();
+  assert.equal((await base.invoke({plan_code:'single_290_monthly'})).status,422);
+  assert.equal((await base.invoke({plan_code:'multi_tri_u26_monthly'})).status,422);
+  assert.equal(base.calls.length,0);
+  const young = fixture({ profile:{...profile,birth_date:'2001-10-05',modalities:['triathlon'],base_preference:'Barra'} });
+  assert.equal((await young.invoke({plan_code:'single_monthly'})).status,422);
+  assert.equal((await young.invoke({plan_code:'multi_monthly'})).status,422);
+  assert.equal(young.calls.length,0);
+});
+test('altered plan price in database cannot be charged', async () => {
+  const f=fixture({plan:{price_cents:1}});
+  assert.equal((await f.invoke()).status,422);
+  assert.equal(f.calls.length,0);
 });
