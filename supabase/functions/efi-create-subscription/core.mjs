@@ -1,6 +1,6 @@
 // No production URL or production credentials are used by this checkout.
 export const EFI_BASE = 'https://cobrancas-h.api.efipay.com.br';
-const PLAN_CODES = ['single_monthly', 'multi_monthly'];
+const PLAN_CODES = ['single_monthly', 'single_290_monthly', 'multi_monthly', 'multi_tri_u26_monthly'];
 const ORIGINS = ['https://rio-saude.github.io', 'http://127.0.0.1:8766', 'http://localhost:8766'];
 const PAYMENT_HOSTS = ['pagamento.gerencianet.com.br', 'pagamento-h.gerencianet.com.br', 'pagamento.efipay.com.br', 'pagamento-h.efipay.com.br'];
 
@@ -19,6 +19,24 @@ function validCpf(cpf) {
     if ((sum * 10) % 11 % 10 !== Number(cpf[size])) return false;
   }
   return true;
+}
+
+export function allowedPlanCodes(profile, today = new Date()) {
+  const birth = String(profile?.birth_date || '');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(birth)) return [];
+  const [year,month,day] = birth.split('-').map(Number);
+  const age = today.getUTCFullYear() - year -
+    (today.getUTCMonth()+1 < month || (today.getUTCMonth()+1 === month && today.getUTCDate() < day) ? 1 : 0);
+  if (age < 0) return [];
+  const base = profile?.base_preference;
+  if (!['Lagoa','Barra','Aterro','Online'].includes(base)) return [];
+  const under26 = age < 26;
+  const single = under26 || ['Barra','Aterro','Online'].includes(base) ?
+    'single_290_monthly' : 'single_monthly';
+  const studentTri = under26 && Array.isArray(profile?.modalities) &&
+    profile.modalities.includes('triathlon');
+  const multi = studentTri ? 'multi_tri_u26_monthly' : 'multi_monthly';
+  return [single,multi];
 }
 
 export function createHandler({ env, authenticate, db, fetchEfi = fetch, now = () => new Date() }) {
@@ -52,6 +70,9 @@ export function createHandler({ env, authenticate, db, fetchEfi = fetch, now = (
           !/^\d{4}-\d{2}-\d{2}$/.test(profile.birth_date || '') || !Number.isFinite(Date.parse(profile.birth_date)) ||
           profile.birth_date > now().toISOString().slice(0, 10) || profile.email?.toLowerCase() !== user.email.toLowerCase()) {
         return reply(422, { error: 'profile_incomplete' });
+      }
+      if (!allowedPlanCodes(profile,now()).includes(body.plan_code)) {
+        return reply(422,{error:'plan_not_eligible'});
       }
       const plan = await db.plan(body.plan_code);
       if (!plan?.active || plan.currency !== 'BRL' || plan.interval_months !== 1 ||
