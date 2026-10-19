@@ -770,8 +770,9 @@
       trainingpeaks_step_seen:true,
       trainingpeaks_status:event.submitter?.value === 'completed' ? 'completed' :
         (profile.trainingpeaks_status || 'pending'),
-      onboarding_step:needsPayment ? 3 : 5
-    });
+      onboarding_step:needsPayment ? 3 : 4,
+      ...(needsPayment ? {} : { onboarding_completed_at: profile.onboarding_completed_at || new Date().toISOString() })
+    }, {finishEdit:editing && !needsPayment});
   }
 
   function renderWhatsApp() {
