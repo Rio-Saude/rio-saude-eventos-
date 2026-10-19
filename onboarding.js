@@ -567,7 +567,7 @@
       <div class="step-kicker">3 de 5 · Financeiro</div>
       <h2>Cadastro financeiro</h2>
       <div id="efi-first-access">
-        <p class="lead">Escolha seu plano e faça o primeiro acesso na Efí.</p>
+        <p class="lead">Escolha quantas modalidades vai contratar com a Rio Saúde.</p>
         <form id="billing-form" class="grid">
           <fieldset class="field full choice-fieldset"><legend>Plano mensal</legend>
             <div id="billing-plans" class="goal-options">Carregando planos...</div>
@@ -647,18 +647,63 @@
     }
   }
 
+  function isUnder26(birthDate, today = new Date()) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(birthDate || '')) return false;
+    const [year,month,day] = birthDate.split('-').map(Number);
+    const age = today.getFullYear() - year -
+      (today.getMonth() + 1 < month || (today.getMonth() + 1 === month && today.getDate() < day) ? 1 : 0);
+    return age >= 0 && age < 26;
+  }
+
+  function pricingForProfile(athlete) {
+    const discountedSingle = ['Barra','Aterro','Online'].includes(athlete.base_preference) ||
+      isUnder26(athlete.birth_date);
+    const studentTri = isUnder26(athlete.birth_date) &&
+      Array.isArray(athlete.modalities) && athlete.modalities.includes('triathlon');
+    return [
+      {code:discountedSingle ? 'single_290_monthly' : 'single_monthly',
+       label:'1 modalidade',price:discountedSingle ? 29000 : 39000},
+      {code:studentTri ? 'multi_tri_u26_monthly' : 'multi_monthly',
+       label:'2 ou mais modalidades',price:studentTri ? 39000 : 49000}
+    ];
+  }
+
   async function loadBillingPlans() {
     const root = document.querySelector('#billing-plans');
     const checkout = document.querySelector('#billing-checkout');
+    const options = pricingForProfile(profile);
+    const money = amount => new Intl.NumberFormat('pt-BR',
+      {style:'currency',currency:'BRL'}).format(amount / 100);
+    checkout.disabled = true;
     try {
-      const { data,error } = await client.from('billing_plans').select('code,name,price_cents,currency')
-        .eq('active',true).in('code',['single_monthly','multi_monthly']).order('price_cents');
-      if (error || !data?.length) throw error || new Error('Planos indisponíveis');
+      const codes = ['single_monthly','single_290_monthly','multi_monthly','multi_tri_u26_monthly'];
+      const { data,error } = await client.from('billing_plans')
+        .select('code,name,price_cents,currency,active').eq('active',true).in('code',codes);
+      if (error) throw error;
       if (!root.isConnected) return;
-      root.innerHTML = data.map(plan => `<label class="goal-option"><input type="radio" name="plan_code" value="${escapeAttr(plan.code)}" required><span>${escapeHtml(plan.name)} · ${escapeHtml(new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(plan.price_cents/100))}/mês</span></label>`).join('');
-      checkout.disabled = false;
-    } catch {
-      if (root.isConnected) root.textContent = 'Não foi possível carregar os planos. Recarregue a página ou fale com a equipe.';
+      const available = new Map((data || []).map(plan => [plan.code,plan]));
+      root.innerHTML = options.map(opt => {
+        const plan = available.get(opt.code);
+        const ready = Boolean(plan && plan.active && plan.currency === 'BRL' &&
+          plan.price_cents === opt.price);
+        return `<label class="goal-option"><input type="radio" name="plan_code"
+          value="${escapeAttr(opt.code)}" ${ready ? '' : 'disabled'}>
+          <span>${escapeHtml(opt.label)} · ${escapeHtml(money(opt.price))}/mês${ready ? '' : ' · Em configuração'}</span></label>`;
+      }).join('');
+      root.querySelectorAll('input[name="plan_code"]').forEach(input => {
+        input.addEventListener('change', () => { checkout.disabled = !root.querySelector('input[name="plan_code"]:checked'); });
+      });
+      const anyReady = options.some(opt => {
+        const plan = available.get(opt.code);
+        return plan && plan.active && plan.currency === 'BRL' && plan.price_cents === opt.price;
+      });
+      if (!anyReady) {
+        const status = document.querySelector('#billing-initial-status');
+        if (status) status.textContent = 'Esses planos ainda estão sendo configurados na Efí. Nenhuma cobrança será iniciada.';
+      }
+    } catch(error) {
+      if (root.isConnected) root.textContent = 'Não foi possível carregar os planos. Tente novamente.';
+      console.error('Falha ao carregar planos',error);
     }
   }
 
