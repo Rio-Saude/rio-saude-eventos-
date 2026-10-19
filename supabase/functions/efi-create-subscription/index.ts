@@ -8,7 +8,7 @@ const admin = createClient(supabaseUrl, serviceKey, { auth: { persistSession: fa
 const db = {
   async profile(userId: string) {
     const { data, error } = await admin.from('athlete_profiles')
-      .select('id,first_name,last_name,email,cpf,birth_date').eq('user_id', userId).maybeSingle();
+      .select('id,first_name,last_name,email,cpf,birth_date,base_preference,modalities').eq('user_id', userId).maybeSingle();
     if (error) throw error;
     return data;
   },
