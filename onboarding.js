@@ -261,18 +261,17 @@
       renderDashboard();
       return;
     }
-    const step = editing ? editStep : Math.min(Math.max(Number(profile.onboarding_step || 1), 1), 5);
+    const step = editing ? editStep : Math.min(Math.max(Number(profile.onboarding_step || 1), 1), 4);
     renderProgress(step);
     if (step === 1) renderPersonal();
     if (step === 2) renderSport();
     if (step === 3) renderPayment();
     if (step === 4) renderTrainingPeaks();
-    if (step === 5) renderWhatsApp();
   }
 
   function renderProgress(step) {
     progressRoot.innerHTML = '';
-    for (let i = 1; i <= 5; i += 1) {
+    for (let i = 1; i <= 4; i += 1) {
       const item = document.createElement('span');
       if (i <= step) item.classList.add('active');
       progressRoot.appendChild(item);
@@ -715,7 +714,7 @@
     const storedBrand = profile.watch_brand === 'Coros' ? 'COROS' : profile.watch_brand;
     if (storedBrand && !brands.includes(storedBrand)) brands.push(storedBrand);
     stepRoot.innerHTML = `
-      <div class="step-kicker">4 de 5 · TrainingPeaks e relógio</div>
+      <div class="step-kicker">4 de 4 · TrainingPeaks e relógio</div>
       <h2>Deixe seus treinos conectados.</h2>
       <p class="lead">Você pode fazer essas conexões agora ou terminar depois.</p>
       <form id="tp-form" class="grid">
