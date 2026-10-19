@@ -590,9 +590,14 @@
       <div class="actions"><button class="text-btn" type="button" data-back="2">Voltar</button></div>`;
 
     document.querySelector('#billing-form').addEventListener('submit', startCheckout);
-    document.querySelector('#efi-done').addEventListener('click', () => updateProfile({
-      payment_status:'submitted',payment_followup_needed:false,onboarding_step:4
-    }));
+    document.querySelector('#efi-done').addEventListener('click', () => {
+      const afterTrainingPeaks = profile.payment_followup_needed && profile.trainingpeaks_step_seen;
+      const next = {payment_status:'submitted',payment_followup_needed:false,onboarding_step:4};
+      if (afterTrainingPeaks) {
+        next.onboarding_completed_at = profile.onboarding_completed_at || new Date().toISOString();
+      }
+      updateProfile(next,{finishEdit:editing && afterTrainingPeaks});
+    });
     document.querySelector('#efi-later').addEventListener('click', () => updateProfile({
       payment_status:'pending',payment_followup_needed:true,onboarding_step:4
     }));
