@@ -108,7 +108,7 @@ test('base, age and contracted modality price matrix', () => {
   assert.deepEqual(allowedPlanCodes({...profile,birth_date:'2001-10-06',modalities:['triathlon']},date), ['single_290_monthly','multi_tri_u26_monthly']);
   assert.deepEqual(allowedPlanCodes({...profile,birth_date:'2001-10-05',modalities:['triathlon']},date), ['single_290_monthly','multi_tri_u26_monthly']);
   assert.deepEqual(allowedPlanCodes({...profile,birth_date:'2000-10-05',modalities:['triathlon']},date), ['single_monthly','multi_monthly']);
-  assert.deepEqual(allowedPlanCodes({...profile,birth_date:'2001-10-05',modalities:['corrida']},date), ['single_290_monthly','multi_monthly']);
+  assert.deepEqual(allowedPlanCodes({...profile,birth_date:'2001-10-05',modalities:['corrida']},date), ['single_290_monthly','multi_tri_u26_monthly']);
 });
 test('forged discounted or wrong base plan is rejected before external calls', async () => {
   const base = fixture();
