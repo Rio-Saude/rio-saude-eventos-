@@ -293,7 +293,7 @@
       <form id="personal-form" class="grid" style="margin-top:20px">
         <div class="field"><label for="first_name">Nome</label><input id="first_name" name="first_name" value="${value(profile.first_name)}" autocomplete="given-name" required></div>
         <div class="field"><label for="last_name">Sobrenome</label><input id="last_name" name="last_name" value="${value(profile.last_name)}" autocomplete="family-name" required></div>
-        <div class="field full"><label for="cpf">CPF (opcional)</label><input id="cpf" name="cpf" inputmode="numeric" maxlength="14" placeholder="000.000.000-00" value="${value(formatCpf(profile.cpf))}" aria-describedby="cpf-note"><p id="cpf-note" class="field-help">Seu e-mail continua sendo o login. O CPF será a referência para o cadastro financeiro.</p></div>
+        <div class="field full"><label for="cpf">CPF</label><input id="cpf" name="cpf" inputmode="numeric" maxlength="14" required placeholder="000.000.000-00" value="${value(formatCpf(profile.cpf))}" aria-describedby="cpf-note"><p id="cpf-note" class="field-help">Seu e-mail continua sendo o login. O CPF será a referência para o cadastro financeiro.</p></div>
         <div class="field"><label for="whatsapp">WhatsApp</label><input id="whatsapp" name="whatsapp" value="${value(profile.whatsapp)}" autocomplete="tel" placeholder="(21) 99999-9999" required></div>
         <div class="field"><label for="birth_date">Data de nascimento</label><input id="birth_date" name="birth_date" type="date" value="${value(profile.birth_date)}" required></div>
         <div class="field full"><label for="city">Cidade</label><input id="city" name="city" value="${value(profile.city)}" autocomplete="address-level2" placeholder="Rio de Janeiro" required></div>
@@ -311,7 +311,7 @@
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     const cpf = clean(form.get('cpf')).replace(/\D/g, '');
-    if (cpf && !validCpf(cpf)) {
+    if (!validCpf(cpf)) {
       const input = document.querySelector('#cpf');
       input.setCustomValidity('Confira os 11 dígitos do CPF.');
       input.reportValidity();
@@ -351,11 +351,11 @@
       <p class="lead">Isso funciona como nossa avaliação inicial para direcionar seu começo e definir quem acompanha sua entrada.</p>
       <form id="sport-form" class="grid">
         <div class="field full"><label>Modalidades</label><div class="checks">${checks}</div></div>
-        <div class="field"><label for="running_experience">Há quanto tempo você treina/corre?</label><input id="running_experience" name="running_experience" value="${value(profile.running_experience)}" placeholder="Ex.: 2 anos"></div>
+        <div class="field"><label for="running_experience">Há quanto tempo você treina/corre?</label><select id="running_experience" name="running_experience" required><option value="">Selecione</option>${['Nunca treinei','Menos de 6 meses','6 meses a 1 ano','1 a 2 anos','2 anos ou mais'].map(choice => option(choice, choice, profile.running_experience)).join('')}</select></div>
         <div class="field"><label for="current_level">Como você define seu nível atual?</label><select id="current_level" name="current_level"><option value="">Selecione</option>${option('iniciante','Iniciante',profile.current_level)}${option('intermediario','Intermediário',profile.current_level)}${option('avancado','Avançado',profile.current_level)}</select></div>
         <div class="field"><label for="training_days_current">Quantos dias por semana você treina hoje?</label><input id="training_days_current" name="training_days_current" value="${value(profile.training_days_current)}" placeholder="Ex.: 4 dias"></div>
-        <div class="field"><label for="training_days_available">Quantos dias você tem disponíveis?</label><input id="training_days_available" name="training_days_available" value="${value(profile.training_days_available)}" placeholder="Ex.: 5 dias"></div>
-        <div class="field full"><label for="base_preference">Onde você costuma ou prefere treinar?</label><input id="base_preference" name="base_preference" value="${value(profile.base_preference)}" placeholder="Ex.: Lagoa, Aterro, Ipanema"></div>
+        <div class="field"><label for="training_days_available">Quantos dias você tem disponíveis para treinar?</label><select id="training_days_available" name="training_days_available" required><option value="">Selecione</option>${['1–2 dias','3 dias','4 dias ou mais'].map(choice => option(choice, choice, profile.training_days_available)).join('')}</select></div>
+        <div class="field full"><label for="base_preference">Em qual base você vai treinar?</label><select id="base_preference" name="base_preference" required><option value="">Selecione</option>${['Barra','Aterro','Lagoa','Online'].map(choice => option(choice, choice, profile.base_preference)).join('')}</select></div>
         <fieldset class="field full choice-fieldset"><legend>Qual é seu principal objetivo agora?</legend><div class="goal-options">${goals.map(goal => `<label class="goal-option"><input type="radio" name="quick_goal" value="${escapeAttr(goal)}" ${quickGoal === goal ? 'checked' : ''}><span>${escapeHtml(goal)}</span></label>`).join('')}</div></fieldset>
         <div class="field full"><label for="primary_goal">Conte mais sobre seu objetivo (opcional)</label><textarea id="primary_goal" name="primary_goal" placeholder="Ex.: Quero correr minha primeira maratona em 2027 abaixo de 4h.">${value(goalDetails)}</textarea></div>
         <fieldset class="field full choice-fieldset"><legend>Você já tem uma prova marcada?</legend><div class="goal-options"><label class="goal-option"><input type="radio" name="has_race" value="yes" ${hasRace ? 'checked' : ''}><span>Sim</span></label><label class="goal-option"><input type="radio" name="has_race" value="no" ${hasRace ? '' : 'checked'}><span>Ainda não</span></label></div></fieldset>
@@ -410,17 +410,14 @@
         </fieldset>
       <div class="actions">
         <button id="billing-checkout" class="primary-btn" type="submit" disabled>Cadastrar pagamento</button>
-        <button id="payment-pending" class="secondary-btn" type="button">Fazer depois</button>
       </div>
       </form>
       <p id="billing-status" class="status" role="status" aria-live="polite"></p>
-      <p id="payment-note" class="field-help">Você pode concluir esta etapa posteriormente. O pagamento acontece na página segura da Efí. O Portal não recebe dados de cartão.</p>
-      <div class="actions"><button class="text-btn" type="button" data-back="2">Voltar</button><button id="payment-done" class="text-btn" type="button">Já cadastrei meu pagamento</button></div>`;
+      <p id="payment-note" class="field-help">A Efí abre em outra aba para você não perder o cadastro. O Portal não recebe dados de cartão e a inscrição só ficará ativa após a confirmação financeira.</p>
+      <div class="actions"><button class="text-btn" type="button" data-back="2">Voltar</button></div>`;
 
     document.querySelector('#billing-form').addEventListener('submit', startCheckout);
     loadBillingPlans();
-    document.querySelector('#payment-pending').addEventListener('click', () => updateProfile({ payment_status: profile.payment_status || 'pending', onboarding_step: 4 }));
-    document.querySelector('#payment-done').addEventListener('click', () => updateProfile({ payment_status: profile.payment_status === 'confirmed' ? 'confirmed' : 'submitted', onboarding_step: 4 }));
     bindBackButtons();
   }
 
@@ -435,7 +432,7 @@
       root.innerHTML = data.map(plan => `<label class="goal-option"><input type="radio" name="plan_code" value="${escapeAttr(plan.code)}" required><span>${escapeHtml(plan.name)} · ${escapeHtml(new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(plan.price_cents / 100))}/mês</span></label>`).join('');
       checkout.disabled = false;
     } catch {
-      if (root.isConnected) root.textContent = 'Não foi possível carregar os planos. Recarregue a página ou faça esta etapa depois.';
+      if (root.isConnected) root.textContent = 'Não foi possível carregar os planos. Recarregue a página ou fale com a equipe.';
     }
   }
 
@@ -447,6 +444,8 @@
     const userId = session.user.id;
     const status = document.querySelector('#billing-status');
     checkoutBusy = true;
+    const paymentTab = window.open('about:blank', '_blank');
+    if (paymentTab) paymentTab.opener = null;
     stepRoot.querySelectorAll('button').forEach(button => { button.disabled = true; });
     logoutButton.disabled = true;
     status.className = 'status';
@@ -462,9 +461,23 @@
       const url = new URL(data?.payment_url);
       const hosts = ['pagamento.gerencianet.com.br', 'pagamento-h.gerencianet.com.br', 'pagamento.efipay.com.br', 'pagamento-h.efipay.com.br'];
       if (data?.environment !== 'homologation' || url.protocol !== 'https:' || url.username || url.password || url.port || !hosts.includes(url.hostname)) throw new Error('checkout_unavailable');
-      // Keep the saved onboarding step. Returning from checkout resumes Financeiro.
-      location.assign(url.href);
+      // A página da Rio Saúde continua aberta. O link confirmado pela função é reutilizável.
+      if (paymentTab && !paymentTab.closed) {
+        paymentTab.location.replace(url.href);
+        await updateProfile({ payment_status: profile.payment_status === 'confirmed' ? 'confirmed' : 'submitted', onboarding_step: 4 });
+      } else {
+        // Fallback explícito caso o navegador bloqueie a nova aba.
+        status.className = 'status';
+        status.innerHTML = 'Seu navegador bloqueou a aba da Efí. <a href="' + escapeAttr(url.href) + '" target="_blank" rel="noopener noreferrer">Abrir pagamento</a>. Depois de abrir, clique em Continuar cadastro.';
+        const advance = document.createElement('button');
+        advance.type = 'button';
+        advance.className = 'secondary-btn';
+        advance.textContent = 'Continuar cadastro';
+        advance.addEventListener('click', () => updateProfile({ payment_status: profile.payment_status === 'confirmed' ? 'confirmed' : 'submitted', onboarding_step: 4 }));
+        status.append(' ', advance);
+      }
     } catch (error) {
+      if (paymentTab && !paymentTab.closed) paymentTab.close();
       const messages = {
         profile_missing: 'Complete seus dados pessoais antes de cadastrar o pagamento.',
         profile_incomplete: 'Confira nome, sobrenome, CPF e data de nascimento em “Voltar” antes de continuar.',
