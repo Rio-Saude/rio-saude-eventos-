@@ -254,8 +254,10 @@
   function render() {
     appStatus.textContent = '';
     appStatus.className = 'status';
-    if (profile.onboarding_completed_at && !editing) {
-      renderProgress(5);
+    const completed = Boolean(profile.onboarding_completed_at && !editing);
+    document.querySelector('.hero')?.classList.toggle('hidden', completed);
+    progressRoot.classList.toggle('hidden', completed);
+    if (completed) {
       renderDashboard();
       return;
     }
@@ -558,24 +560,27 @@
     stepRoot.innerHTML = `
       <div class="step-kicker">3 de 5 · Financeiro</div>
       <h2>Cadastro financeiro</h2>
-      <p class="lead">Escolha o plano e preencha seus dados na página segura da Efí.</p>
-      <p class="notice">Ambiente de homologação: esse fluxo ainda está em teste. Nenhum pagamento real deve ser feito.</p>
-      <form id="billing-form" class="grid">
-        <fieldset class="field full choice-fieldset"><legend>Escolha seu plano mensal</legend>
-          <div id="billing-plans" class="goal-options">Carregando planos...</div>
-        </fieldset>
-        <div class="actions"><button id="billing-checkout" class="primary-btn" type="submit" disabled>Abrir cadastro na Efí</button></div>
-      </form>
-      <p id="billing-status" class="status" role="status" aria-live="polite"></p>
+      <div id="efi-first-access">
+        <p class="lead">Escolha seu plano e faça o primeiro acesso na Efí.</p>
+        <form id="billing-form" class="grid">
+          <fieldset class="field full choice-fieldset"><legend>Plano mensal</legend>
+            <div id="billing-plans" class="goal-options">Carregando planos...</div>
+          </fieldset>
+          <div class="actions field full"><button id="billing-checkout" class="primary-btn" type="submit" disabled>Primeiro acesso na Efí</button></div>
+        </form>
+        <p class="field-help">A Efí abre em outra aba. Você continua com o cadastro da Rio Saúde aberto.</p>
+      </div>
       <div id="efi-return" class="hidden">
-        <h3>Conseguiu preencher seus dados na Efí?</h3>
-        <p class="field-help">Essa resposta informa somente que você concluiu o preenchimento. Não confirma pagamento.</p>
+        <p class="lead">Agora que você abriu a Efí, conseguiu terminar o preenchimento?</p>
+        <p id="billing-status" class="status" role="status" aria-live="polite"></p>
         <div class="actions">
           <button id="efi-done" class="primary-btn" type="button">Já fiz meu cadastro na Efí</button>
-          <button id="efi-later" class="secondary-btn" type="button">Ainda não fiz — ir ao TrainingPeaks</button>
+          <button id="efi-later" class="secondary-btn" type="button">Ainda não fiz — seguir para o TrainingPeaks</button>
         </div>
+        <p class="field-help">Isso não confirma o pagamento. Se ainda não terminou, você poderá voltar à Efí depois do TrainingPeaks.</p>
       </div>
-      <p class="field-help">O link da Efí abre em outra aba. Sua página da Rio Saúde continua aberta.</p>
+      <p id="billing-initial-status" class="status" role="status" aria-live="polite"></p>
+      <p class="field-help">Ambiente de teste: não efetue pagamentos reais.</p>
       <div class="actions"><button class="text-btn" type="button" data-back="2">Voltar</button></div>`;
 
     document.querySelector('#billing-form').addEventListener('submit', startCheckout);
@@ -586,19 +591,23 @@
       payment_status:'pending',payment_followup_needed:true,onboarding_step:4
     }));
     loadBillingPlans();
-    loadExistingCheckout();
+    if (profile.payment_followup_needed === true) loadExistingCheckout();
     bindBackButtons();
   }
 
   function showEfiReturnChoices(paymentUrl = '') {
     const options = document.querySelector('#efi-return');
-    if (!options) return;
+    const firstAccess = document.querySelector('#efi-first-access');
+    if (!options || !firstAccess) return;
+    firstAccess.classList.add('hidden');
     options.classList.remove('hidden');
+    const initialStatus = document.querySelector('#billing-initial-status');
+    if (initialStatus) initialStatus.textContent = '';
     const status = document.querySelector('#billing-status');
     if (status && paymentUrl) {
       status.className = 'status';
-      status.innerHTML = 'Link preparado. <a target="_blank" rel="noopener noreferrer" href="' +
-        escapeAttr(paymentUrl) + '">Abrir a Efí novamente</a> se precisar.';
+      status.innerHTML = '<a target="_blank" rel="noopener noreferrer" href="' +
+        escapeAttr(paymentUrl) + '">Abrir a Efí novamente</a>';
     }
   }
 
@@ -648,7 +657,7 @@
     const planCode = new FormData(event.currentTarget).get('plan_code');
     if (!planCode) return;
     const userId = session.user.id;
-    const status = document.querySelector('#billing-status');
+    const status = document.querySelector('#billing-initial-status');
     checkoutBusy = true;
     const paymentTab = window.open('about:blank','_blank');
     if (paymentTab) paymentTab.opener = null;
@@ -795,15 +804,22 @@
   }
 
   function renderDashboard() {
+    const firstName = profile.first_name ? escapeHtml(profile.first_name) : '';
+    const numRaces = Array.isArray(profile.goal_events) ? profile.goal_events.length : 0;
+    const raceSummary = numRaces ? `Você adicionou ${numRaces} ${numRaces === 1 ? 'prova' : 'provas'} ao seu perfil.` : '';
     stepRoot.innerHTML = `
-      <div class="step-kicker">${updated ? 'Cadastro atualizado' : 'Cadastro concluído'}</div>
-      <h2>${profile.first_name ? `Tudo certo, ${escapeHtml(profile.first_name)}.` : 'Tudo certo.'}</h2>
-      <p class="lead">Seu cadastro foi salvo. A confirmação financeira depende do processamento da Efí; provas informadas no perfil ficam disponíveis para a equipe.</p>
-      <div class="actions"><a class="primary-btn" href="index.html#eventos-oficiais">Escolher minhas provas</a>
-      <button id="edit-profile" class="secondary-btn" type="button">Editar meu cadastro</button>
-      <button id="switch-account" class="text-btn" type="button">Sair / entrar com outro e-mail</button></div>`;
-    document.querySelector('#edit-profile').addEventListener('click', () => { editing = true; editStep = 1; updated = false; render(); });
-    document.querySelector('#switch-account').addEventListener('click', logout);
+      <div class="step-kicker">${updated ? 'Informações atualizadas' : 'Cadastro concluído'}</div>
+      <h2>${firstName ? 'Pronto, ' + firstName + '.' : 'Cadastro salvo.'}</h2>
+      <p class="lead">Seus dados estão salvos na Rio Saúde. A equipe poderá consultar suas informações e acompanhar seu início nos treinos.</p>
+      ${raceSummary ? `<p class="field-help">${escapeHtml(raceSummary)}</p>` : ''}
+      <p class="field-help">O cadastro na Efí não é confirmação de pagamento. A situação financeira será verificada separadamente.</p>
+      <div class="actions">
+        <a class="primary-btn" href="index.html">Voltar ao portal</a>
+        <button id="edit-profile" class="secondary-btn" type="button">Editar minhas informações</button>
+      </div>`;
+    document.querySelector('#edit-profile').addEventListener('click', () => {
+      editing = true; editStep = 1; updated = false; render();
+    });
   }
 
   function bindDatePickers() {
@@ -866,6 +882,8 @@
   }
 
   function showLogin() {
+    document.querySelector('.hero')?.classList.remove('hidden');
+    progressRoot.classList.remove('hidden');
     session = null;
     profile = null;
     editing = false;
