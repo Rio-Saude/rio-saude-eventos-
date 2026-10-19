@@ -384,6 +384,9 @@
       if (yes) renderSelectedRaces();
     }));
     document.querySelector('#goal_event_name').addEventListener('input', updateCustomRaceDate);
+    document.querySelector('#goal_event_name').addEventListener('keydown', event => {
+      if (event.key === 'Enter') { event.preventDefault(); addSelectedRace(); }
+    });
     document.querySelector('#add-race').addEventListener('click', addSelectedRace);
     document.querySelectorAll('[name="had_training_injury"]').forEach(input => input.addEventListener('change', () => {
       const yes = document.querySelector('[name="had_training_injury"]:checked')?.value === 'yes';
