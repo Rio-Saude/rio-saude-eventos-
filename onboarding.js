@@ -592,7 +592,7 @@
 
     document.querySelector('#billing-form').addEventListener('submit', startCheckout);
     document.querySelector('#efi-done').addEventListener('click', () => updateProfile({
-      payment_status:'submitted',payment_followup_needed:false,onboarding_step:profile.trainingpeaks_step_seen ? 5 : 4
+      payment_status:'submitted',payment_followup_needed:false,onboarding_step:4
     }));
     document.querySelector('#efi-later').addEventListener('click', () => updateProfile({
       payment_status:'pending',payment_followup_needed:true,onboarding_step:4
