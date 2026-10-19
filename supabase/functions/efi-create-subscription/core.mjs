@@ -75,7 +75,10 @@ export function createHandler({ env, authenticate, db, fetchEfi = fetch, now = (
         return reply(422,{error:'plan_not_eligible'});
       }
       const plan = await db.plan(body.plan_code);
-      if (!plan?.active || plan.currency !== 'BRL' || plan.interval_months !== 1 ||
+      const exactPrices = { single_monthly:39000, single_290_monthly:29000,
+        multi_monthly:49000, multi_tri_u26_monthly:39000 };
+      if (!plan?.active || plan.price_cents !== exactPrices[body.plan_code] ||
+          plan.currency !== 'BRL' || plan.interval_months !== 1 ||
           !Number.isInteger(plan.price_cents) || plan.price_cents <= 0 || !/^\d+$/.test(plan.efi_plan_id_homolog || '')) {
         return reply(422, { error: 'plan_unavailable' });
       }
