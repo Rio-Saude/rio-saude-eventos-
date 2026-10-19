@@ -36,6 +36,7 @@
   let updated = false;
   let saving = false;
   let checkoutBusy = false;
+  let availableRaceOptions = [];
 
   loginForm.addEventListener('submit', (event) => {
     event.preventDefault();
@@ -356,32 +357,76 @@
         <div class="field"><label for="training_days_current">Quantos dias por semana você treina hoje?</label><input id="training_days_current" name="training_days_current" value="${value(profile.training_days_current)}" placeholder="Ex.: 4 dias"></div>
         <div class="field"><label for="training_days_available">Quantos dias você tem disponíveis para treinar?</label><select id="training_days_available" name="training_days_available" required><option value="">Selecione</option>${['1–2 dias','3 dias','4 dias ou mais'].map(choice => option(choice, choice, profile.training_days_available)).join('')}</select></div>
         <div class="field full"><label for="base_preference">Em qual base você vai treinar?</label><select id="base_preference" name="base_preference" required><option value="">Selecione</option>${['Barra','Aterro','Lagoa','Online'].map(choice => option(choice, choice, profile.base_preference)).join('')}</select></div>
+        <fieldset class="field full choice-fieldset"><legend>Já teve alguma lesão relacionada aos treinos?</legend><div class="goal-options"><label class="goal-option"><input type="radio" name="had_training_injury" value="yes" ${profile.had_training_injury === true ? 'checked' : ''} required><span>Sim</span></label><label class="goal-option"><input type="radio" name="had_training_injury" value="no" ${profile.had_training_injury === false ? 'checked' : ''} required><span>Não</span></label></div></fieldset>
+        <div id="training-injury-details-wrap" class="field full ${profile.had_training_injury === true ? '' : 'hidden'}"><label for="training_injury_details">Conte mais sobre a lesão</label><textarea id="training_injury_details" name="training_injury_details" maxlength="1000" placeholder="Ex.: Tive dor no joelho treinando para minha primeira meia maratona. Fiz fisioterapia e voltei a correr.">${value(profile.training_injury_details)}</textarea><p class="field-help">Essas informações serão usadas pela equipe técnica para adaptar seu acompanhamento.</p></div>
         <fieldset class="field full choice-fieldset"><legend>Qual é seu principal objetivo agora?</legend><div class="goal-options">${goals.map(goal => `<label class="goal-option"><input type="radio" name="quick_goal" value="${escapeAttr(goal)}" ${quickGoal === goal ? 'checked' : ''}><span>${escapeHtml(goal)}</span></label>`).join('')}</div></fieldset>
         <div class="field full"><label for="primary_goal">Conte mais sobre seu objetivo (opcional)</label><textarea id="primary_goal" name="primary_goal" placeholder="Ex.: Quero correr minha primeira maratona em 2027 abaixo de 4h.">${value(goalDetails)}</textarea></div>
         <fieldset class="field full choice-fieldset"><legend>Você já tem uma prova marcada?</legend><div class="goal-options"><label class="goal-option"><input type="radio" name="has_race" value="yes" ${hasRace ? 'checked' : ''}><span>Sim</span></label><label class="goal-option"><input type="radio" name="has_race" value="no" ${hasRace ? '' : 'checked'}><span>Ainda não</span></label></div></fieldset>
         <div id="race-choice" class="field full ${hasRace ? '' : 'hidden'}">
-          ${profile.goal_event_name ? `<p class="field-help">Prova já cadastrada: ${escapeHtml(profile.goal_event_name)}</p>` : ''}
-          <p class="field-help">Você poderá escolher sua prova no calendário após a etapa financeira.</p>
-          <label for="goal_event_date">Data da prova (opcional)</label><input id="goal_event_date" name="goal_event_date" type="date" lang="pt-BR" value="${value(profile.goal_event_date)}">
+          <label for="goal_event_name">Qual é a prova?</label>
+          <input id="goal_event_name" name="goal_event_name" type="search" list="race-suggestions" autocomplete="off" placeholder="Busque uma prova ou digite outra" value="${value(profile.goal_event_name)}">
+          <datalist id="race-suggestions"></datalist>
+          <p class="field-help">Escolha uma prova do calendário ou digite outra. Para provas cadastradas, a data será preenchida automaticamente.</p>
+          <label for="goal_event_date">Data da prova</label><input id="goal_event_date" name="goal_event_date" type="date" lang="pt-BR" value="${value(profile.goal_event_date)}">
         </div>
         <div class="actions field full"><button class="secondary-btn" type="button" data-back="1">Voltar</button><button class="primary-btn" type="submit">Continuar</button></div>
       </form>`;
 
     document.querySelector('#sport-form').addEventListener('submit', saveSport);
     document.querySelectorAll('[name="has_race"]').forEach(input => input.addEventListener('change', () => {
-      document.querySelector('#race-choice').classList.toggle('hidden', input.value !== 'yes');
+      const yes = document.querySelector('[name="has_race"]:checked')?.value === 'yes';
+      document.querySelector('#race-choice').classList.toggle('hidden', !yes);
+      document.querySelector('#goal_event_name').required = yes;
     }));
+    document.querySelector('#goal_event_name').required = hasRace;
+    document.querySelector('#goal_event_name').addEventListener('input', event => {
+      const chosen = availableRaceOptions.find(item => item.name.toLowerCase() === event.target.value.trim().toLowerCase());
+      if (chosen) document.querySelector('#goal_event_date').value = chosen.event_date || '';
+    });
+    document.querySelectorAll('[name="had_training_injury"]').forEach(input => input.addEventListener('change', () => {
+      const yes = document.querySelector('[name="had_training_injury"]:checked')?.value === 'yes';
+      document.querySelector('#training-injury-details-wrap').classList.toggle('hidden', !yes);
+      document.querySelector('#training_injury_details').required = yes;
+    }));
+    document.querySelector('#training_injury_details').required = profile.had_training_injury === true;
+    loadRaceSuggestions();
     bindDatePickers();
     bindBackButtons();
+  }
+
+  async function loadRaceSuggestions() {
+    const datalist = document.querySelector('#race-suggestions');
+    if (!datalist) return;
+    try {
+      const { data, error } = await client.from('events')
+        .select('name,event_date')
+        .eq('active', true)
+        .gte('event_date', new Date().toISOString().slice(0, 10))
+        .order('event_date', { ascending: true })
+        .limit(300);
+      if (error) throw error;
+      availableRaceOptions = data || [];
+      if (!datalist.isConnected) return;
+      datalist.replaceChildren();
+      for (const item of availableRaceOptions) {
+        const option = document.createElement('option');
+        option.value = item.name;
+        datalist.appendChild(option);
+      }
+    } catch (error) {
+      console.warn('Falha ao carregar sugestões de provas', error);
+    }
   }
 
   async function saveSport(event) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     const modalities = form.getAll('modalities').map(String);
-    const eventName = profile.goal_event_name;
-    const eventDate = form.get('has_race') === 'yes' ? clean(form.get('goal_event_date')) : profile.goal_event_date;
-    const coach = eventName || eventDate || form.get('has_race') === 'yes' ? 'Dum' : 'Pedrinho';
+    const hasRaceSelected = form.get('has_race') === 'yes';
+    const eventName = hasRaceSelected ? clean(form.get('goal_event_name')) : '';
+    const eventDate = hasRaceSelected ? clean(form.get('goal_event_date')) : '';
+    const coach = hasRaceSelected ? 'Dum' : 'Pedrinho';
+    const hadTrainingInjury = form.get('had_training_injury') === 'yes';
 
     await updateProfile({
       modalities,
@@ -390,6 +435,8 @@
       training_days_current: clean(form.get('training_days_current')),
       training_days_available: clean(form.get('training_days_available')),
       base_preference: clean(form.get('base_preference')),
+      had_training_injury: hadTrainingInjury,
+      training_injury_details: hadTrainingInjury ? clean(form.get('training_injury_details')) : null,
       primary_goal: [clean(form.get('quick_goal')), clean(form.get('primary_goal'))].filter(Boolean).join('\n'),
       goal_event_name: eventName || null,
       goal_event_date: eventDate || null,
