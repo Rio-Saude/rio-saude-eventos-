@@ -9,9 +9,9 @@ const TARGETS = [
   { code: "single_290_monthly", name: "Rio Saúde - 1 modalidade R$290 - Mensal - Homologação", price: 29000 },
   { code: "multi_tri_u26_monthly", name: "Rio Saúde - 2+ modalidades até 25 anos R$390 - Mensal - Homologação", price: 39000 }
 ] as const;
-const URL = Deno.env.get("SUPABASE_URL") || "";
+const supabaseProjectUrl = Deno.env.get("SUPABASE_URL") || "";
 const KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
-const db = createClient(URL, KEY, { auth: { persistSession: false, autoRefreshToken: false } });
+const db = createClient(supabaseProjectUrl, KEY, { auth: { persistSession: false, autoRefreshToken: false } });
 
 Deno.serve(async (req: Request) => {
   const origin = req.headers.get("origin");
