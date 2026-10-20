@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Rio Saúde • Situação do PAR-Q</title><link rel="stylesheet" href="portal.css?v=parq-five-steps-20261020-v1">
+<style>main{max-width:1000px;margin:0 auto;padding:30px 18px 80px}.list{display:grid;gap:10px}
+.item{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;padding:15px;border:1px solid rgba(255,255,255,.15);border-radius:14px;background:rgba(255,255,255,.03)}
+.status-pill{font-size:13px;font-weight:750;border-radius:999px;padding:8px 12px;background:rgba(255,255,255,.09)}
+.meta{color:#c9decf;font-size:13px}.nav{display:flex;gap:16px;margin-bottom:24px}a{color:#a8e0be}</style></head>
+<body><main><nav class="nav"><a href="admin-cadastros.html">Provas dos alunos</a><a href="index.html">Voltar ao site</a></nav>
+<div class="step-kicker">Rio Saúde • Administração</div><h1>Situação do PAR-Q</h1>
+<p class="lead">Acompanhamento reservado à equipe autorizada. Este painel mostra apenas o status, sem revelar respostas de saúde.</p>
+<button id="refresh" class="secondary-btn" type="button">Atualizar</button>
+<p id="message" class="status" role="status"></p><section id="results" class="list"></section>
+<p class="field-help">Resposta Sim: solicitar atestado médico de aptidão antes de liberar o treino. Nenhuma liberação é feita automaticamente por este painel.</p>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script><script>
+(async()=>{
+const config=window.RIO_SAUDE_CONFIG||{}, status=document.querySelector('#message'), results=document.querySelector('#results');
+const btn=document.querySelector('#refresh');
+if(!config.supabaseUrl||!config.supabaseAnonKey||!window.supabase){status.textContent='Configuração indisponível';return;}
+const db=window.supabase.createClient(config.supabaseUrl,config.supabaseAnonKey);
+async function load(){
+btn.disabled=true;status.textContent='Carregando registros...';results.replaceChildren();
+try{
+const {data:user,error:loginError}=await db.auth.getUser();
+if(loginError||!user?.user){status.textContent='Entre com sua conta autorizada pelo cadastro e volte aqui.';return;}
+const {data:allowed,error:adminError}=await db.rpc('is_admin');
+if(adminError||allowed!==true){status.textContent='Acesso restrito à equipe autorizada.';return;}
+const {data,error}=await db.rpc('admin_parq_status');
+if(error)throw error;
+const rows=data||[];
+status.textContent=rows.length+' atletas no cadastro.';
+const labels={not_submitted:'Não respondeu',expired:'Renovação necessária',
+medical_review_required:'Exige avaliação médica',no_positive_responses:'Sem resposta positiva'};
+for(const row of rows){
+const item=document.createElement('article');item.className='item';
+const detail=document.createElement('div');const name=document.createElement('strong');
+name.textContent=row.athlete_name||'Atleta';
+const line=document.createElement('div');line.className='meta';line.textContent=row.athlete_email||'';
+detail.append(name,line);
+const label=document.createElement('span');label.className='status-pill';
+label.textContent=labels[row.triage_status]||'Pendente';
+const date=document.createElement('div');date.className='meta';
+date.textContent=row.signed_at ? new Date(row.signed_at).toLocaleDateString('pt-BR') : '';
+item.append(detail,label,date);results.append(item);
+}
+}catch(e){console.error(e);status.textContent='Não foi possível consultar os status. Tente novamente.';}
+finally{btn.disabled=false;}
+}
+btn.addEventListener('click',load);await load();
+})();
+</script></body></html>
