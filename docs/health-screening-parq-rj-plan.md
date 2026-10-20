@@ -1,3 +1,24 @@
+# Rio Saúde — PAR-Q RJ (implementado em 20/10/2026)
+
+- Questionário: 10 itens Sim/Não do Anexo I da Lei RJ nº 6.765/2014.
+- Termo: Anexo II, declaração e nome digitado no fluxo autenticado.
+- Etapas: dados pessoais → perfil esportivo → PAR-Q → financeiro → TrainingPeaks.
+- Código: `parq.js`, `onboarding.js`, `portal.css` e `onboarding.html`.
+- Histórico privado: `public.health_screenings`, incluindo assinatura, localidade e data do servidor.
+- Menores de 18 anos: o sistema solicita assinatura do responsável e declaração de autorização.
+- Resultado com resposta positiva: exigência de atestado médico informada; nenhuma liberação automática para treinamento.
+- Painel restrito: `admin-parq.html`, com `admin_parq_status()` mostrando somente status, sem respostas.
+- Proteções: RLS, ausência de acesso anônimo, respostas imutáveis para usuários comuns e assinatura adulta conferida no banco.
+- Reavaliação: renovação após 365 dias ou quando a condição de saúde mudar.
+
+## Ainda a validar antes de liberar para todos os alunos
+- Teste completo no navegador de uma conta nova e de uma conta já concluída.
+- Conferência jurídica da assinatura eletrônica adotada para o termo e da autorização de responsável legal.
+- Procedimento administrativo para receber, analisar e arquivar atestado quando houver alguma resposta positiva.
+- Política de privacidade e registros de tratamento de dados sensíveis; acesso mínimo por função.
+- Processo de notificar os alunos quando a triagem vencer.
+
+## Histórico de concepção
 # Rio Saúde — Triagem PAR-Q (rascunho técnico, NÃO PUBLICADO)
 
 Estado em 2026-10-20: **apenas banco preparado**. Não inserir esta etapa no fluxo público
