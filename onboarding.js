@@ -631,17 +631,16 @@
     document.querySelector('#billing-form').addEventListener('submit', startCheckout);
     document.querySelector('#efi-done').addEventListener('click', () => {
       const afterTrainingPeaks = profile.payment_followup_needed && profile.trainingpeaks_step_seen;
-      const next = {payment_status:'submitted',payment_followup_needed:false,onboarding_step:5};
+      const next = {payment_status:profile.payment_status === 'confirmed' ? 'confirmed' : 'submitted',payment_followup_needed:false,onboarding_step:5};
       if (afterTrainingPeaks) {
         next.onboarding_completed_at = profile.onboarding_completed_at || new Date().toISOString();
       }
       updateProfile(next,{finishEdit:editing && afterTrainingPeaks});
     });
     document.querySelector('#efi-later').addEventListener('click', () => updateProfile({
-      payment_status:'pending',payment_followup_needed:true,onboarding_step:5
+      payment_status:profile.payment_status === 'confirmed' ? 'confirmed' : 'pending',payment_followup_needed:profile.payment_status !== 'confirmed',onboarding_step:5
     }));
-    loadBillingPlans();
-    if (profile.payment_followup_needed === true) loadExistingCheckout();
+    loadExistingCheckout();
     bindBackButtons();
   }
 
@@ -654,6 +653,7 @@
     const initialStatus = document.querySelector('#billing-initial-status');
     if (initialStatus) initialStatus.textContent = '';
     const status = document.querySelector('#billing-status');
+    if (status) status.textContent = '';
     if (status && paymentUrl) {
       status.className = 'status';
       status.innerHTML = '<a target="_blank" rel="noopener noreferrer" href="' +
@@ -672,17 +672,49 @@
     } catch { return ''; }
   }
 
-  async function loadExistingCheckout() {
+  async function loadExistingCheckout({ preparePlans = true } = {}) {
+    const root = document.querySelector('#efi-first-access');
+    const userId = session?.user.id;
+    const profileId = profile?.id;
+    if (!root || !userId || !profileId) return true;
     try {
+      // Read through the authenticated client and the existing read-own RLS policy.
       const { data,error } = await client.from('billing_subscriptions')
-        .select('payment_url,creation_state,environment,status')
-        .eq('environment','homologation').order('created_at',{ascending:false}).limit(1);
+        .select('payment_url,payment_expires_at,efi_subscription_id,creation_state,environment,status')
+        .eq('athlete_profile_id',profileId).eq('environment','homologation')
+        .in('status',['pending','active','past_due'])
+        .order('created_at',{ascending:false}).limit(1);
       if (error) throw error;
+      if (!root.isConnected || session?.user.id !== userId || profile?.id !== profileId) return true;
       const existing = data?.[0];
-      const url = existing?.creation_state === 'ready' ? validEfiLink(existing?.payment_url) : '';
-      if (url) showEfiReturnChoices(url);
+      if (!existing && profile.payment_status !== 'confirmed') {
+        if (preparePlans) await loadBillingPlans();
+        return false;
+      }
+      const created = Boolean(existing?.efi_subscription_id || existing?.creation_state === 'ready' ||
+        ['active','past_due'].includes(existing?.status));
+      const url = existing?.creation_state === 'ready' &&
+        existing.payment_expires_at >= new Date().toISOString().slice(0,10) ?
+        validEfiLink(existing.payment_url) : '';
+      showEfiReturnChoices(url);
+      document.querySelector('#efi-return .lead').textContent = 'Situação do seu cadastro financeiro';
+      const status = document.querySelector('#billing-status');
+      const message = profile.payment_status === 'confirmed' ? 'Pagamento confirmado pela Rio Saúde.' :
+        created ? 'Assinatura já criada na Efí. Isso não confirma o pagamento. Você pode continuar sem criar outra assinatura.' :
+        'Já existe uma solicitação em processamento ou conferência. Nenhuma nova assinatura será criada. Você pode seguir para o TrainingPeaks enquanto aguarda.';
+      status.insertAdjacentHTML('afterbegin','<p>' + escapeHtml(message) + '</p>');
+      const done = document.querySelector('#efi-done');
+      done.disabled = !created && profile.payment_status !== 'confirmed';
+      done.textContent = 'Continuar para o TrainingPeaks';
+      return true;
     } catch(err) {
-      console.warn('Não foi possível consultar o link existente da Efí',err);
+      console.warn('Não foi possível consultar a assinatura existente da Efí',err);
+      if (!root.isConnected || session?.user.id !== userId) return true;
+      showEfiReturnChoices();
+      document.querySelector('#efi-done').disabled = true;
+      document.querySelector('#billing-status').textContent =
+        'Não foi possível verificar sua assinatura. Recarregue para tentar novamente ou siga para o TrainingPeaks. Nenhuma cobrança foi iniciada.';
+      return true;
     }
   }
 
@@ -761,6 +793,11 @@
     status.className = 'status';
     status.textContent = 'Preparando seu cadastro na Efí...';
     try {
+      // Recheck before creation, including a subscription made in another tab.
+      if (await loadExistingCheckout({preparePlans:false})) {
+        if (paymentTab && !paymentTab.closed) paymentTab.close();
+        return;
+      }
       const { data,error } = await client.functions.invoke('efi-create-subscription',{body:{plan_code:planCode}});
       if (session?.user.id !== userId) return;
       let result = data;
@@ -775,6 +812,9 @@
       // Não avançar automaticamente. Esperar o aluno indicar se preencheu seus dados.
     } catch (error) {
       if (paymentTab && !paymentTab.closed) paymentTab.close();
+      if (['subscription_exists','existing_subscription_other_plan','checkout_in_progress','checkout_requires_review'].includes(error.message)) {
+        await loadExistingCheckout({preparePlans:false});
+      }
       const messages = {
         profile_missing:'Complete seus dados pessoais antes de cadastrar o pagamento.',
         profile_incomplete:'Confira nome, sobrenome, CPF e data de nascimento em “Voltar” antes de continuar.',
@@ -794,7 +834,10 @@
     } finally {
       checkoutBusy = false;
       logoutButton.disabled = false;
-      if (status.isConnected) stepRoot.querySelectorAll('button').forEach(button => { button.disabled = false; });
+      if (status.isConnected) {
+        stepRoot.querySelectorAll('button').forEach(button => { button.disabled = false; });
+        await loadExistingCheckout({preparePlans:false});
+      }
     }
   }
 
@@ -1028,3 +1071,4 @@
     return escapeHtml(input);
   }
 })();
+

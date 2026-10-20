@@ -43,24 +43,23 @@
           <h3>Termo de responsabilidade para prática de atividade física</h3>
           <p class="parq-term">${escape(TERM)}</p>
           ${minor?'<div class="notice">O responsável legal pelo menor deve preencher, assinar e autorizar sua participação por escrito.</div>':''}
-          <div class="field"><label for="parq-signer">${minor?'Nome completo do responsável legal':'Assinatura: digite seu nome completo'}</label>
-            <input id="parq-signer" name="signed_name" maxlength="160" autocomplete="name" required></div>
+          ${minor?'<div class="field"><label for="parq-signer">Nome completo do responsável legal</label><input id="parq-signer" name="signed_name" maxlength="160" autocomplete="name" required></div>':''}
           ${minor?'<label class="check parq-accept"><input type="checkbox" name="guardian_accept" required> Sou o responsável legal e autorizo por escrito a participação do menor, observadas as condições de saúde e segurança.</label>':''}
           <label class="check parq-accept"><input type="checkbox" name="term_accept" required> Li e aceito o termo e confirmo que respondi com sinceridade.</label>
-          <p class="field-help">Local da declaração: ${escape(profile.city||'Rio de Janeiro')}. A data e hora são registradas pelo servidor, e a assinatura fica vinculada à conta autenticada.</p>
+          <p class="field-help">Local da declaração: ${escape(profile.city||'Rio de Janeiro')}. A data e hora são registradas pelo servidor, e a confirmação fica vinculada à conta autenticada.</p>
           <p id="parq-status" class="status" role="status" aria-live="polite"></p>
-          <div class="actions"><button class="primary-btn" type="submit">Assinar e continuar</button></div>
+          <div class="actions"><button class="primary-btn" type="submit">Confirmar e continuar</button></div>
         </form>`;
       area.querySelector('#parq-form').addEventListener('submit',async event=>{
         event.preventDefault();
         if(saving) return;
         const form=event.currentTarget, fd=new FormData(form);
-        const name=String(fd.get('signed_name')||'').trim();
         const own=[profile.first_name,profile.last_name].map(x=>String(x||'').trim()).join(' ').trim();
+        const name=minor?String(fd.get('signed_name')||'').trim():own;
         const errorEl=form.querySelector('#parq-status');
         const setError=msg=>{errorEl.className='status error';errorEl.textContent=msg;};
-        if(name.length<3 || (!minor && name.toLocaleLowerCase('pt-BR')!==own.toLocaleLowerCase('pt-BR'))) {
-          setError('Digite seu nome completo conforme o cadastro para assinar.');
+        if(name.length<3) {
+          setError(minor?'Digite o nome completo do responsável legal.':'Confira seu nome completo nos dados pessoais antes de continuar.');
           return;
         }
         if(!fd.has('term_accept') || (minor&&!fd.has('guardian_accept'))){
@@ -121,3 +120,4 @@
   }
   window.RioSaudePARQ={render,questions:QUESTIONS,version};
 })();
+
