@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/><meta content="width=device-width, initial-scale=1" name="viewport"/><meta content="#f6f8f9" name="theme-color"/>
+<title>Rio Saúde — Consultoria Esportiva</title>
+<meta content="Conheça a Rio Saúde: modalidades, equipe, história, planos e contato." name="description"/>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+:root{--paper:#f7f5f0;--white:#ffffff;--ink:#242420;--muted:#6d6a64;--line:#dedbd4;--soft:#eae7e0;--accent:#365477;--accent2:#dddce3;--radius:3px}
+*,*:before,*:after{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:#e3e1dc;color:var(--ink);font-family:"DM Sans",Lato,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}button,a{font:inherit}a{color:inherit;text-decoration:none}button{cursor:pointer}button:focus-visible,a:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.page{max-width:456px;background:var(--paper);min-height:100vh;margin:0 auto;box-shadow:0 18px 65px #1615121c;overflow:hidden}
+.head{height:75px;padding:0 23px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line);position:relative;z-index:5;background:var(--paper)}
+.wordmark{font-family:"Barlow Condensed","Arial Narrow","Liberation Sans Narrow",Arial,sans-serif;font-size:20px;letter-spacing:-.065em;font-weight:850;line-height:1}.wordmark small{display:block;font-size:8px;letter-spacing:.23em;margin-top:5px;font-weight:600;color:var(--muted)}
+.menubtn{border:0;background:none;padding:10px 0;display:flex;align-items:center;gap:12px;font-family:monospace;letter-spacing:.07em;font-size:11px}.hamb{height:14px;width:23px;display:flex;flex-direction:column;justify-content:space-between}.hamb i{width:100%;height:1.5px;background:var(--ink)}
+.mobilemenu{display:none;padding:16px 23px 23px;background:var(--white);border-bottom:1px solid var(--line)}.mobilemenu.open{display:grid;gap:15px}.mobilemenu a{font-size:17px;font-weight:700}
+.hero{padding:28px 23px 22px}.tiny{font-family:monospace;font-size:10px;letter-spacing:.065em;text-transform:uppercase;color:var(--muted)}.tiny strong{color:var(--accent)}
+.hero-title{font-family:"Barlow Condensed","Arial Narrow","Liberation Sans Narrow",Arial,sans-serif;font-size:clamp(49px,13vw,63px);line-height:.965;letter-spacing:-.079em;font-weight:850;text-transform:uppercase;margin:30px 0 22px;max-width:411px}.hero-title .light{font-weight:450}.hero-title .underline{border-bottom:5px solid var(--accent)}
+.lead{font-size:15px;line-height:1.55;max-width:355px;margin:0 0 23px;letter-spacing:-.014em;color:#41403d}
+.ctarow{display:flex;align-items:center;gap:20px;flex-wrap:wrap}.cta{min-height:48px;display:inline-flex;align-items:center;justify-content:space-between;gap:22px;background:var(--ink);color:#fff;padding:13px 15px;font-size:12px;font-weight:750;letter-spacing:-.018em;border:1px solid var(--ink);border-radius:3px}.cta:hover{background:var(--accent)}.textlink{font-size:11px;text-decoration:underline;text-underline-offset:4px;font-weight:650}
+.hero-foot{display:flex;justify-content:space-between;align-items:center;margin-top:30px;border-top:1px solid var(--line);padding-top:10px;font-family:monospace;font-size:9px;letter-spacing:.025em;color:#625f59}.hero-foot .circle{color:var(--accent);font-size:18px;line-height:1}
+.band{height:80px;background:#d9ddd9;display:flex;align-items:center;padding:0 24px;overflow:hidden;border-top:1px solid #cdd1ca;border-bottom:1px solid #cdd1ca}.band span{font-size:26px;font-weight:800;letter-spacing:-.057em;white-space:nowrap;line-height:1}.band .outlined{-webkit-text-stroke:1px var(--ink);color:transparent}.band b{color:var(--accent);font-size:22px;font-weight:400;padding:0 14px}
+.section{padding:40px 23px 45px}.section-header{display:flex;justify-content:space-between;gap:15px;align-items:center;margin-bottom:20px}.section-num{font-family:monospace;font-size:11px;color:var(--accent)}.section-lbl{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase}
+h2{font-family:"Barlow Condensed","Arial Narrow","Liberation Sans Narrow",Arial,sans-serif;font-size:39px;line-height:.99;letter-spacing:-.068em;text-transform:uppercase;font-weight:850;margin:0 0 15px}.desc{font-size:13px;color:#625e58;line-height:1.55;margin:0 0 20px;max-width:350px}
+.acc{border-top:1px solid var(--ink)}.acc-item{border-bottom:1px solid var(--ink)}.acc-toggle{width:100%;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:23px 0 22px;border:0;background:transparent;color:var(--ink);text-align:left}.acc-copy{flex:1}.acc-title{font-family:"Barlow Condensed","Arial Narrow","Liberation Sans Narrow",Arial,sans-serif;font-size:30px;font-weight:800;letter-spacing:-.055em;line-height:1}.acc-sub{color:var(--muted);font-size:12px;display:block;margin-top:5px}.acc-index{font-size:10px;font-family:monospace;color:var(--accent);width:22px;align-self:flex-start}.acc-arrow{width:28px;height:28px;border:1px solid var(--ink);border-radius:100%;display:grid;place-items:center;flex:0 0 28px;font-size:19px;font-weight:300;transition:transform .15s}.acc-toggle[aria-expanded="true"] .acc-arrow{transform:rotate(45deg);background:var(--ink);color:white}
+.acc-body{padding:0 0 23px 34px}.acc-body[hidden]{display:none}.acc-body p{font-size:13px;line-height:1.6;color:#56514c;margin:0 0 14px}.tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}.tags span{border:1px solid #ccc7bf;padding:6px 8px;font-family:monospace;font-size:10px;color:#57524b}
+.subtoggle{width:100%;display:flex;justify-content:space-between;align-items:center;border:0;background:#eeeae3;padding:13px 12px;font-size:12px;font-weight:700;color:var(--ink)}.subbody{background:#eeeae3;padding:0 12px 11px}.subbody[hidden]{display:none}.subbody .minihead{font-family:monospace;text-transform:uppercase;color:#635e58;font-size:10px;letter-spacing:.09em;margin:12px 0 8px}.schedule{width:100%;border-collapse:collapse;font-size:12px}.schedule td{padding:8px 0;border-bottom:1px solid #d5d0c8;vertical-align:top}.schedule td:last-child{text-align:right;font-weight:680}.smallnote{font-size:11px!important;color:#6e6a62!important;line-height:1.5}
+.plans{background:#ebe8e2;padding:40px 23px 46px;border-top:1px solid var(--line)}.plan-tabs{display:flex;overflow-x:auto;gap:7px;padding-bottom:13px;margin-top:20px;scrollbar-width:none}.plan-tabs::-webkit-scrollbar{display:none}.plan-tab{border:1px solid #bfbab2;background:transparent;color:#5d5953;font-size:12px;font-weight:700;white-space:nowrap;padding:11px 14px;border-radius:30px}.plan-tab.active{background:var(--ink);color:#fff;border-color:var(--ink)}.plan-panel[hidden]{display:none}
+.plan-card{background:#fff;border:1px solid #d7d2ca;margin-top:11px;padding:19px 17px 18px;border-radius:3px}.plan-head{display:flex;justify-content:space-between;gap:10px;font-size:10px;font-family:monospace;letter-spacing:.05em;text-transform:uppercase;color:#73706b;margin-bottom:21px}.card-name{font-size:19px;font-weight:780;letter-spacing:-.045em}.price-line{display:flex;align-items:baseline;gap:6px;margin-top:8px}.price{font-family:"Barlow Condensed","Arial Narrow","Liberation Sans Narrow",Arial,sans-serif;font-size:47px;font-weight:850;letter-spacing:-.07em;line-height:1}.per{font-size:12px;color:#66615b}.card-description{font-size:12px;color:#6c665f;line-height:1.5;margin:9px 0 16px}.benefits{border-top:1px solid #dedbd5;padding-top:13px;display:grid;gap:10px}.benefit{display:flex;gap:9px;font-size:12px;line-height:1.3}.benefit .check{color:var(--accent);font-weight:900}.choose{margin-top:20px;width:100%;padding:13px 14px;display:flex;justify-content:space-between;background:var(--ink);border:0;border-radius:3px;color:white;font-size:13px;font-weight:750}.choose:hover{background:var(--accent)}.plan-intro{font-size:12px;color:#605b54;line-height:1.5;margin:0 0 12px}.contract-note{font-size:10px;color:#6b665f;line-height:1.6;margin-top:14px}
+.experience{padding:45px 23px 35px;background:var(--paper)}.experience h2{font-size:42px}.experience .body{font-size:14px;line-height:1.65;color:#4f4b45}.experience .stat{border-top:1px solid #cdc9c2;border-bottom:1px solid #cdc9c2;padding:13px 0;display:flex;align-items:center;gap:13px}.experience .stat b{font-size:37px;letter-spacing:-.08em}.experience .stat span{font-size:11px;line-height:1.4;color:#777169}
+.footer{padding:32px 23px 40px;background:var(--ink);color:#fff}.footer h2{font-size:42px}.footer p{font-size:13px;color:#c8c3bb;line-height:1.6}.footer .cta{background:#fff;color:var(--ink);border-color:#fff}.footer-bottom{border-top:1px solid #63615d;margin-top:38px;padding-top:15px;display:flex;justify-content:space-between;font-family:monospace;font-size:9px;color:#b5b1ad}
+@media(max-width:500px){body{background:var(--paper)}.page{max-width:none;box-shadow:none}}@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition-duration:0s!important}}
+
+/* V3 — clean running club visual, with more life through blue */
+:root{--paper:#F8FAFB;--white:#fff;--ink:#1D2B37;--muted:#627180;--line:#DCE5EC;--soft:#ECF3F7;--accent:#316A96;--accent2:#D8E8F2;--radius:8px}
+body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Arial,sans-serif;background:#E7EDF1;color:var(--ink)}
+.page{background:var(--paper)}
+.head{background:var(--paper);border-bottom-color:var(--line)}
+.wordmark{font-family:Inter,Arial,sans-serif;font-size:19px;font-weight:800;letter-spacing:-.045em;color:var(--accent)}
+.wordmark small{font-family:Inter,Arial,sans-serif;font-size:8px;letter-spacing:.17em;color:#5B6D7B;font-weight:600}
+.menubtn,.tiny,.section-num,.hero-foot,.acc-index,.tags span,.subbody .minihead,.plan-head,.footer-bottom{font-family:Inter,Arial,sans-serif}
+.menubtn{font-size:11px;font-weight:650;letter-spacing:0}
+.hero{padding:41px 24px 27px;background:linear-gradient(145deg,#F8FAFB 55%,#ECF4FA)}
+.tiny{font-size:10px;letter-spacing:.10em;color:#586F80}
+.hero-title{font-family:Inter,ui-sans-serif,system-ui,Arial,sans-serif;font-size:clamp(40px,10.7vw,51px);font-weight:750;line-height:1.075;letter-spacing:-.058em;text-transform:none;margin:30px 0 22px;max-width:422px}
+.hero-title .light{color:var(--accent);font-weight:750}
+.hero-title .underline{border-bottom:0;color:var(--accent)}
+.lead{font-size:14px;line-height:1.67;color:#4D6170;letter-spacing:-.012em;margin-bottom:26px}
+.cta{background:var(--accent);border-color:var(--accent);font-size:13px;border-radius:8px;padding:14px 17px;box-shadow:0 8px 18px #316A961a}
+.cta:hover{background:#245578}.textlink{color:var(--accent);text-decoration-thickness:1px}
+.hero-foot{font-size:9px;letter-spacing:.015em;color:#657787;border-top-color:#d7e3ed}
+.band{background:#E3EEF6;border-color:#d1e2ee;height:67px}
+.band span{font-size:21px;letter-spacing:-.065em;font-weight:750;color:#284A64}
+.band .outlined{color:#7691A6;-webkit-text-stroke:0}
+.band b{color:var(--accent)}
+.section{padding:41px 24px 48px}
+.section-num{font-weight:600;color:var(--accent)}
+h2{font-family:Inter,ui-sans-serif,system-ui,Arial,sans-serif;font-size:clamp(33px,9.1vw,41px);font-weight:760;letter-spacing:-.052em;line-height:1.085;text-transform:none;margin-bottom:16px}
+.desc{font-size:13px;color:#607181;line-height:1.66}
+.acc{border-top-color:#C8D6E0}.acc-item{border-bottom-color:#C8D6E0}
+.acc-toggle{padding:22px 0}
+.acc-title{font-family:Inter,Arial,sans-serif;font-weight:720;font-size:23px;letter-spacing:-.04em;line-height:1.15}
+.acc-sub{font-size:12px;margin-top:6px;color:#728290}
+.acc-index{font-weight:600;color:var(--accent)}
+.acc-arrow{border:1px solid #bfd2df;color:var(--accent);background:#EFF5F9;font-weight:500}
+.acc-toggle[aria-expanded="true"] .acc-arrow{background:var(--accent);border-color:var(--accent)}
+.acc-body p{color:#526574;font-size:13px}
+.tags span{border-color:#D0DDE7;color:#547086;background:#F2F7FA;font-size:10px;border-radius:5px;letter-spacing:0}
+.subtoggle{background:#EAF2F8;color:var(--accent);border-radius:6px}
+.subbody{background:#EAF2F8;color:var(--ink)}
+.subbody .minihead{color:#496B84}
+.schedule td{border-color:#cfdfeb}
+.plans{background:#E7F0F6;border-color:#D1E0EA;padding:43px 24px 50px}
+.plan-tabs{margin-top:22px;gap:7px}
+.plan-tab{border-color:#B8D0E0;color:#587388;background:#F3F8FB;border-radius:7px;font-size:12px;padding:11px 14px}
+.plan-tab.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.plan-intro{font-size:12px;color:#5F7280;line-height:1.6;margin:0 0 12px}
+.plan-card{border-color:#CEDCE6;border-radius:10px;padding:19px 18px;margin-top:12px;box-shadow:0 8px 20px #275b7c0b}
+.card-name{font-size:18px;font-weight:750;letter-spacing:-.035em}
+.plan-head{color:#628097;letter-spacing:.065em;font-size:10px;margin-bottom:17px}
+.price-line{align-items:baseline;gap:8px;margin-top:13px}
+.price{font-family:Inter,Arial,sans-serif;font-size:36px;font-weight:800;letter-spacing:-.06em;line-height:1.07;color:#285C82}
+.per{font-size:11px;color:#6B7E8E}
+.benefits{border-top-color:#D7E2EA}
+.choose{background:var(--accent);border-radius:7px;padding:14px 15px}
+.choose:hover{background:#224F72}
+.card-description{font-size:12px;color:#6A7A87}
+.experience{padding:49px 24px 39px;background:#F8FAFB}.experience h2{font-size:40px}.experience .body{color:#536573}.experience .stat{border-color:#D8E3EA}.experience .stat b{color:var(--accent);font-size:35px}.experience .stat span{color:#738593}
+.footer{background:#1E4A6A;color:#fff;padding:43px 24px 42px}.footer h2{font-size:38px}.footer p{color:#D5E3EF}.footer .cta{background:#fff;color:#1E4A6A;border-color:white;box-shadow:none}.footer-bottom{color:#B6CFDF;border-top-color:#52809E}
+.billing-wrap{margin:5px 0 15px;border:1px solid #C8DAE7;background:#F6FAFC;border-radius:10px;padding:15px 11px 10px}
+.billing-title{font-size:12px;font-weight:750;padding:0 3px 12px;color:#25465D}
+.billing-title span{display:block;font-weight:450;font-size:11px;color:#698093;margin-top:4px}
+.billing-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.billing-tab{display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:left;border:1px solid #CDDFEA;background:white;color:#32566E;border-radius:7px;padding:12px 11px;min-width:0}
+.billing-tab b{font-size:12px;letter-spacing:-.02em}
+.billing-tab small{font-size:10px;color:#6D8190}
+.billing-tab.active{background:#316A96;color:#fff;border-color:#316A96;box-shadow:0 3px 12px #316A9620}
+.billing-tab.active small{color:#DCECF6}
+.billing-context{font-size:11px;color:#617B8D;line-height:1.55;margin:13px 3px 2px}
+.term-meta{border:1px solid #DDE8F0;background:#F6FAFC;border-radius:7px;padding:12px;margin:13px 0 14px;display:grid;gap:7px}
+.term-meta[hidden]{display:none}.term-line{display:flex;align-items:baseline;justify-content:space-between;gap:9px;font-size:11px;color:#657A8B}.term-line b{font-size:12px;color:#234B69;text-align:right}.term-line.save b{color:#23735C}
+.term-note{font-size:10px;color:#6A8092;line-height:1.5;margin-top:2px}
+.term-recommended{font-size:10px;color:#286A91;display:inline-block;margin-top:7px;font-weight:650}
+#billingChooser[hidden]{display:none}
+@media(min-width:600px){.billing-tabs{grid-template-columns:repeat(4,minmax(0,1fr))}}
+
+
+/* V4 additions: compelling history, trainer cards, accurate enrollment pathways */
+.head{gap:10px}.head .wordmark{margin-right:auto}.athlete-head{font-size:10px;font-weight:700;color:var(--accent);white-space:nowrap;border:1px solid #C4D8E5;padding:8px 9px;border-radius:7px}
+.menubtn{padding-left:4px}.nav-private{color:var(--accent)!important}
+.hero{padding-top:29px}.hero-title{margin-top:20px}.ctarow{gap:12px}.hero-question{font-size:11px;font-weight:650;color:var(--accent)}
+.hero-signals{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding-top:19px;border-top:1px solid var(--line);margin-top:28px}.hero-signals>div{display:grid;gap:3px}.hero-signals strong{font-size:17px;letter-spacing:-.045em;color:var(--accent)}.hero-signals span{font-size:10px;color:#718696}
+.band-history{height:54px;gap:2px}.band-history span{font-size:13px;font-weight:770;letter-spacing:-.04em}.band-history b{padding:0 12px;font-size:14px}
+.legacy{background:linear-gradient(142deg,#1C4C70 0%,#2B6893 100%);color:white;padding:39px 24px 43px}.legacy .section-lbl,.legacy .section-num{color:#BFD8E7}.legacy-number{display:flex;align-items:center;gap:20px;border-top:1px solid #74A1BF;border-bottom:1px solid #74A1BF;padding:12px 0 15px;margin:16px 0 28px}.legacy-number>span{font-size:91px;font-weight:790;letter-spacing:-.105em;line-height:1}.legacy-number .plus{font-size:48px;vertical-align:top;margin-left:5px}.legacy-number small{font-size:12px;font-weight:700;letter-spacing:.08em;line-height:1.5;color:#D1E6F4}.legacy h2{font-size:34px;color:#fff;line-height:1.12;letter-spacing:-.05em;margin-bottom:17px}.legacy p{font-size:13px;line-height:1.72;color:#DFEAF3;margin:0 0 13px}.legacy p strong{color:#fff;font-weight:760}.legacy-link{display:flex;align-items:center;justify-content:space-between;border-top:1px solid #8BAFC8;padding-top:17px;margin-top:24px;font-size:12px;font-weight:700;color:#fff}
+.experience{padding:48px 24px;background:#F9FBFD}.experience-lead{color:#567084;line-height:1.65;font-size:14px;margin:0 0 23px}.experience-stack{border-top:1px solid #D1DFE8}.exp-item{display:grid;grid-template-columns:29px minmax(0,1fr);gap:12px;border-bottom:1px solid #D1DFE8;padding:19px 0}.exp-mark{font-size:10px;color:var(--accent);font-weight:750;margin-top:5px}.exp-item h3{font-size:18px;margin:0 0 6px;letter-spacing:-.035em}.exp-item p{font-size:12.5px;line-height:1.7;color:#596F81;margin:0}.experience-close{margin-top:24px;border-radius:9px;padding:16px 17px;background:#E8F2F9;color:#275A7B;font-weight:720;line-height:1.5;font-size:13px}
+.team{background:#ECF3F8;border-top:1px solid #D8E6EE}.team h2{margin-bottom:12px}.team-feature,.trainer-card{background:#fff;border:1px solid #D3E0EA;border-radius:11px;padding:17px;margin:15px 0;box-shadow:0 8px 25px #2457800b}.team-feature{border-top:4px solid var(--accent)}.trainer-head{display:grid;grid-template-columns:87px minmax(0,1fr);gap:14px;align-items:start}.trainer-photo{height:113px;display:flex;justify-content:center;align-items:center;background:#DDEBF4;color:#7D9EB5;font-size:24px;font-weight:780;letter-spacing:-.08em;border:1px solid #CBDFEC;border-radius:7px}.trainer-role{font-size:9px;font-weight:750;color:#52758D;letter-spacing:.06em;margin:1px 0 6px}.trainer-intro h3{font-size:19px;line-height:1.1;letter-spacing:-.045em;margin:0 0 8px}.trainer-intro p{font-size:11.5px;line-height:1.57;color:#5D7383;margin:0}.trainer-intro .trainer-nick{color:var(--accent);font-weight:750;margin:-5px 0 9px;font-size:12px}.trainer-philosophy{background:#F1F7FB;border-radius:6px;margin-top:16px;padding:14px 13px;border-left:3px solid #84B2CF}.trainer-philosophy span{display:block;font-size:9px;letter-spacing:.045em;color:#6E8BA1;font-weight:720;margin-bottom:8px}.trainer-philosophy p{font-size:12px;line-height:1.6;color:#2F5974;font-weight:570;margin:0}.team-details{border-top:1px solid #D9E4EC;margin-top:13px;padding-top:2px}.team-details + .team-details{margin-top:0}.team-details summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:13px 0;color:#285A7D;font-size:12px;font-weight:720}.team-details summary::-webkit-details-marker{display:none}.team-details summary span{font-size:18px;font-weight:400}.team-details[open] summary span{transform:rotate(45deg)}.team-details p{font-size:12px;line-height:1.7;color:#576E7E;margin:0 0 12px}.team-details small{font-size:10px;color:#8192A0;display:block;margin-bottom:10px;line-height:1.5}.team-note{font-size:11px;color:#657D8E;line-height:1.6;margin-top:18px}
+.footer-actions{display:grid;gap:11px;margin-top:22px}.footer-actions .cta{width:100%}.footer-wa{border:1px solid #B6D2E5;border-radius:8px;padding:13px 16px;font-size:12px;font-weight:720;color:#fff;display:flex;justify-content:space-between}.footer-athlete{display:inline-block;color:#C4E3F4;font-size:12px;margin-top:25px;text-decoration:underline;text-underline-offset:4px}
+.purchase-dialog{border:0;padding:0;border-radius:14px;max-width:min(400px,calc(100vw - 30px));width:100%;background:#fff;box-shadow:0 18px 85px #0e2d4a70;color:var(--ink)}.purchase-dialog::backdrop{background:#132B3Baa}.dialog-shell{position:relative;padding:27px 22px 25px}.dialog-shell h2{font-size:30px;margin-top:14px}.dialog-desc{font-size:12px;color:#627D8D}.dialog-summary{background:#E9F3F9;border:1px solid #CBDFEA;border-radius:9px;padding:15px;display:grid;gap:6px}.dialog-summary strong{font-size:18px;color:#255C82}.dialog-summary span{font-size:12px;color:#536F83}.dialog-shell>p:not(.dialog-desc){font-size:12px;line-height:1.6;color:#63798A}.close-dialog{border:0;background:transparent;color:#365D77;position:absolute;top:12px;right:14px;font-size:29px;line-height:1}.dialog-actions{display:grid;gap:11px;margin:18px 0}.dialog-primary{width:100%}.dialog-whatsapp{font-size:12px;color:#275E83;font-weight:690;text-decoration:underline;text-underline-offset:4px}.dialog-shell>small{font-size:10px;color:#7F91A0;line-height:1.4}
+@media(min-width:900px){.page{max-width:1050px}.head,.mobilemenu,.hero,.section,.plans,.experience,.legacy,.footer{padding-left:56px;padding-right:56px}.hero{padding-top:65px;padding-bottom:58px}.hero-title{max-width:700px;font-size:72px}.hero .lead{max-width:570px;font-size:17px}.hero-signals{max-width:680px}.legacy{padding-top:54px;padding-bottom:60px}.legacy h2{max-width:700px;font-size:47px}.legacy p{max-width:800px;font-size:15px}.section,.plans,.experience,.team{padding-top:65px;padding-bottom:70px}h2{font-size:48px}.acc-title{font-size:28px}.acc-body{max-width:760px}.plan-panel:not([hidden]){display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.plan-panel .plan-intro,.plan-panel>.contract-note{grid-column:1/-1}.trainer-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.trainer-head{grid-template-columns:75px 1fr}.trainer-photo{height:102px}.trainer-intro h3{font-size:17px}.team-feature{max-width:650px}.experience-stack{display:grid;grid-template-columns:repeat(3,1fr);gap:28px;border-top:0}.exp-item{grid-template-columns:1fr;border-top:1px solid #D1DFE8}.footer h2{max-width:700px;font-size:52px}.footer-actions{max-width:460px}}
+@media(max-width:350px){.head{padding-left:15px;padding-right:15px}.wordmark{font-size:16px}.athlete-head{font-size:9px;padding:7px}.menubtn{gap:6px}.trainer-head{grid-template-columns:73px minmax(0,1fr)}.trainer-photo{height:98px}}
+
+/* V5: more editorial, less decorated, adapted from MPR content clarity */
+.hero-title{max-width:440px;letter-spacing:-.058em;font-size:clamp(39px,10.2vw,50px);line-height:1.065;margin:22px 0 21px}
+.hero{padding-bottom:50px}
+.hero .lead{max-width:490px}
+.ctarow{margin-top:26px}
+.legacy{padding-top:36px;padding-bottom:39px;background:linear-gradient(140deg,#1F5075 0%,#2C6B98 100%)}
+.legacy .section-header{margin-bottom:31px}
+.legacy .section-lbl{font-weight:760;letter-spacing:.13em;color:#D6E8F4}
+.legacy h2{font-size:clamp(30px,8.4vw,40px);letter-spacing:-.049em;line-height:1.13;max-width:650px;margin:0 0 23px}
+.legacy p{font-size:13.5px;line-height:1.79;max-width:720px;margin-bottom:18px;color:#E8F2F8}
+.legacy p strong{font-weight:760;color:#fff}
+.legacy-link{margin-top:33px}
+.acc-body{padding-top:3px}
+.acc-body > p:first-child{margin:16px 0 18px;line-height:1.75}
+.acc-body .subtoggle{margin-top:12px}
+@media(min-width:900px){.hero-title{max-width:750px;font-size:clamp(62px,6.3vw,78px)}.legacy{padding-top:58px;padding-bottom:62px}.legacy h2{font-size:49px}.legacy p{font-size:16px}}
+</style>
+</head>
+<body>
+<main class="page" id="top">
+<header class="head"><a class="wordmark" href="#top">RIO SAÚDE<small>CONSULTORIA ESPORTIVA</small></a><a class="athlete-head" href="onboarding.html?edit=1" title="Acessar a área do atleta">Área do Atleta <span aria-hidden="true">↗</span></a><button aria-controls="mobileMenu" aria-expanded="false" class="menubtn" id="menuBtn">MENU <span aria-hidden="true" class="hamb"><i></i><i></i></span></button></header>
+<nav aria-label="Menu principal" class="mobilemenu" id="mobileMenu"><a href="#modalidades">Nossas Modalidades ↗</a><a href="#planos">Planos e valores ↗</a><a href="index.html#eventos-oficiais">Calendário de provas ↗</a><a href="#experiencia">A experiência ↗</a><a href="#equipe">Nossa equipe ↗</a><a href="#contato">Falar com a equipe ↗</a><a class="nav-private" href="onboarding.html?edit=1">Área do Atleta ↗</a></nav>
+<section class="hero">
+<div class="tiny"><strong>DESDE 2005</strong> · RIO DE JANEIRO</div>
+<h1 class="hero-title">Corrida e triathlon com <span class="light">acompanhamento de perto.</span></h1>
+<p class="lead">Planejamento individual, professores presentes, análise da evolução e uma comunidade que gosta de treinar junto.</p>
+<div class="ctarow"><a class="cta" href="#modalidades">Conheça nossos treinos <span>↗</span></a><a class="textlink" href="#planos">Ver planos</a><a class="hero-question" href="https://wa.me/5521999410202?text=Ol%C3%A1%21%20Vi%20a%20apresenta%C3%A7%C3%A3o%20da%20Rio%20Sa%C3%BAde%20e%20tenho%20interesse%20em%20conhecer%20melhor." rel="noopener noreferrer" target="_blank">Tirar dúvidas ↗</a></div>
+</section>
+
+<section class="legacy" id="historia">
+<div class="section-header"><span class="section-lbl">NOSSA HISTÓRIA · DESDE 2005</span><span class="section-num">01 / 06</span></div>
+
+<h2>Uma trajetória construída em cada treino.</h2>
+<p>Há mais de 20 anos, a Rio Saúde acompanha corredores e triatletas de diferentes níveis. Nessa trajetória, tivemos alunos em <strong>mundiais de triathlon, maratonas abaixo de 3 horas e com índices para Boston.</strong> Muitos começaram a correr com a gente.</p>
+<p>Acreditamos no <strong>planejamento, no acompanhamento próximo e na constância.</strong> Por isso, fazemos questão de um ambiente saudável, onde as pessoas gostem de estar e tenham vontade de treinar.</p>
+<a class="legacy-link" href="#experiencia">Conheça a experiência Rio Saúde <span>↘</span></a>
+</section>
+<section class="section" id="modalidades">
+<div class="section-header"><span class="section-lbl">O QUE FAZEMOS</span><span class="section-num">02 / 06</span></div>
+<h2>Nossas<br/>modalidades.</h2>
+<p class="desc">Cada pessoa tem uma rotina e um objetivo. Conheça as opções de treinamento da Rio Saúde.</p>
+<div class="acc">
+<article class="acc-item"><button aria-controls="acc-corrida" aria-expanded="true" class="acc-toggle" data-acc="corrida"><span class="acc-index">01</span><span class="acc-copy"><span class="acc-title">Corrida</span><span class="acc-sub">Do início à próxima maratona</span></span><span class="acc-arrow">+</span></button><div class="acc-body" id="acc-corrida"><p>Planejamento individual pelo TrainingPeaks, com análise da evolução e testes periódicos. Nos treinos presenciais, nossos professores organizam os pelotões, orientam os intervalos e ajustam as sessões quando necessário.</p><button aria-controls="more-corrida" aria-expanded="false" class="subtoggle">Horários e locais <span>+</span></button><div class="subbody" hidden="" id="more-corrida"><div class="minihead">Lagoa Rodrigo de Freitas</div><table class="schedule"><tr><td>Segunda / quarta</td><td>6h–8h30</td></tr><tr><td>Terça / quinta</td><td>6h–10h · 17h30–19h30</td></tr><tr><td>Sexta / sábado</td><td>6h–10h</td></tr></table><div class="minihead">Barra e Aterro</div><table class="schedule"><tr><td>Terça / quinta</td><td>6h–8h30</td></tr></table><p class="smallnote">Na Lagoa, 10h é o encerramento habitual.</p></div><p style="margin:13px 0 0"><a class="textlink pricejump" data-plan="corrida" href="#planos">Ver planos de corrida ↗</a></p></div></article>
+<article class="acc-item"><button aria-controls="acc-tri" aria-expanded="false" class="acc-toggle" data-acc="tri"><span class="acc-index">02</span><span class="acc-copy"><span class="acc-title">Triathlon</span><span class="acc-sub">Natação · ciclismo · corrida</span></span><span class="acc-arrow">+</span></button><div class="acc-body" hidden="" id="acc-tri"><p>Natação, ciclismo e corrida integrados em um planejamento individual, com análise de ritmo, potência, frequência cardíaca e testes periódicos. O treinador acompanha a evolução e a preparação para provas.</p><button aria-controls="more-tri" aria-expanded="false" class="subtoggle">Treinos da semana <span>+</span></button><div class="subbody" hidden="" id="more-tri"><div class="minihead">Ciclismo</div><table class="schedule"><tr><td>Terça · Lagoa → APCC</td><td>4h10 / 4h30</td></tr><tr><td>Quarta · Sport Lab indoor</td><td>A combinar com o treinador</td></tr><tr><td>Sexta · Vista Chinesa</td><td>6h</td></tr><tr><td>Sábado · longo da semana</td><td>5h</td></tr></table><div class="minihead">Natação · parceria Denise</div><p class="smallnote">Terça e quinta no Aterro; quarta e sexta no mar em Copacabana. Cobrança separada. Wellhub e TotalPass aceitos no Aterro conforme condições da parceira.</p><p class="smallnote">A corrida segue as bases e o planejamento integrado da assessoria.</p></div><p style="margin:13px 0 0"><a class="textlink pricejump" data-plan="tri" href="#planos">Ver plano de triathlon ↗</a></p></div></article>
+<article class="acc-item"><button aria-controls="acc-lab" aria-expanded="false" class="acc-toggle" data-acc="lab"><span class="acc-index">03</span><span class="acc-copy"><span class="acc-title">Sport Lab</span><span class="acc-sub">Força para corrida e triathlon</span></span><span class="acc-arrow">+</span></button><div class="acc-body" hidden="" id="acc-lab"><p>Treinamento de força para corrida e triathlon, com metodologia Rio Saúde. Aulas agendadas de 60 minutos, em small groups de até 4 pessoas ou com personal trainer.</p><p>Trabalhamos força específica, potência e estabilidade do core. Rua Visconde de Pirajá, 444, sala 209.</p><p><a class="textlink pricejump" data-plan="lab" href="#planos">Ver planos do Sport Lab ↗</a></p></div></article>
+<article class="acc-item"><button aria-controls="acc-online" aria-expanded="false" class="acc-toggle" data-acc="online"><span class="acc-index">04</span><span class="acc-copy"><span class="acc-title">Online</span><span class="acc-sub">Seu treinador, onde você estiver</span></span><span class="acc-arrow">+</span></button><div class="acc-body" hidden="" id="acc-online"><p>Planejamento de corrida ou triathlon pelo TrainingPeaks, análise da evolução e revisão semanal dos treinos. Contato semanal pelo WhatsApp, com resposta em até 24 horas em dias úteis.</p><p><a class="textlink pricejump" data-plan="online" href="#planos">Ver planos online ↗</a></p></div></article>
+</div>
+</section>
+<section class="plans" id="planos">
+<div class="section-header"><span class="section-lbl">INVESTIMENTO NO SEU TREINO</span><span class="section-num">03 / 06</span></div>
+<h2>Planos e<br/>valores.</h2>
+<p class="desc">Confira os valores mensais por modalidade.</p>
+<div aria-label="Modalidade dos planos" class="plan-tabs" role="tablist">
+<button aria-selected="true" class="plan-tab active" data-tab="corrida" role="tab">Corrida</button>
+<button aria-selected="false" class="plan-tab" data-tab="tri" role="tab">Triathlon</button>
+<button aria-selected="false" class="plan-tab" data-tab="lab" role="tab">Sport Lab</button>
+<button aria-selected="false" class="plan-tab" data-tab="online" role="tab">Online</button>
+</div>
+<div class="plan-panel" data-panel="corrida"><p class="plan-intro">Planejamento e acompanhamento são individuais em ambas as opções. O que muda é a disponibilidade de treinos presenciais.</p>
+<article class="plan-card"><div class="plan-head"><span>PRESENCIAL / LAGOA</span><span>01</span></div><div class="card-name">Corrida — Lagoa</div><div class="price-line"><div class="price">R$ 390</div><span class="per">/mês</span></div><div class="term-meta" hidden=""></div><p class="card-description">Para quem busca mais opções de dias e horários na Lagoa.</p><div class="benefits"><div class="benefit"><span class="check">✓</span>Planejamento individual pelo TrainingPeaks</div><div class="benefit"><span class="check">✓</span>Treinos com professores na Lagoa</div><div class="benefit"><span class="check">✓</span>Análise da evolução e testes periódicos</div></div><a class="choose" href="onboarding.html">Quero começar <span aria-hidden="true">↗</span></a></article>
+<article class="plan-card"><div class="plan-head"><span>PRESENCIAL / BARRA OU ATERRO</span><span>02</span></div><div class="card-name">Corrida — Barra / Aterro</div><div class="price-line"><div class="price">R$ 290</div><span class="per">/mês</span></div><div class="term-meta" hidden=""></div><p class="card-description">Terça e quinta na base escolhida, com treino de sábado na Lagoa.</p><div class="benefits"><div class="benefit"><span class="check">✓</span>Planejamento individual pelo TrainingPeaks</div><div class="benefit"><span class="check">✓</span>Treinamento presencial em grupo</div><div class="benefit"><span class="check">✓</span>Análise da evolução e testes periódicos</div></div><a class="choose" href="onboarding.html">Quero começar <span aria-hidden="true">↗</span></a></article></div>
+<div class="plan-panel" data-panel="tri" hidden=""><p class="plan-intro">Integração do treinamento das três modalidades, com acompanhamento técnico.</p><article class="plan-card"><div class="plan-head"><span>TRIATHLON / PRESENCIAL</span><span>01</span></div><div class="card-name">Triathlon</div><div class="price-line"><div class="price">R$ 490</div><span class="per">/mês</span></div><div class="term-meta" hidden=""></div><p class="card-description">Planejamento integrado e treinos organizados com a equipe.</p><div class="benefits"><div class="benefit"><span class="check">✓</span>Treinos das três modalidades pelo TrainingPeaks</div><div class="benefit"><span class="check">✓</span>Análise de métricas, testes e acompanhamento</div><div class="benefit"><span class="check">✓</span>Participação nos treinos presenciais previstos</div></div><p class="contract-note">Natação com Denise tem contratação e pagamento separados.</p><a class="choose" href="onboarding.html">Quero começar <span aria-hidden="true">↗</span></a></article></div>
+<div class="plan-panel" data-panel="lab" hidden=""><p class="plan-intro">Aulas agendadas de 60 minutos. Small groups com até quatro alunos.</p>
+<article class="plan-card"><div class="plan-head"><span>SPORT LAB / SMALL GROUP</span><span>01</span></div><div class="card-name">1 vez por semana</div><div class="price-line"><div class="price">R$ 240</div><span class="per">/mês</span></div><div class="term-meta" hidden=""></div><div class="benefits"><div class="benefit">✓Treinamento específico para corrida e triathlon</div><div class="benefit">✓Small groups de até 4 alunos</div></div><a class="choose" href="onboarding.html">Quero começar <span aria-hidden="true">↗</span></a></article>
+<article class="plan-card"><div class="plan-head"><span>SPORT LAB / SMALL GROUP</span><span>02</span></div><div class="card-name">2 vezes por semana</div><div class="price-line"><div class="price">R$ 390</div><span class="per">/mês</span></div><div class="term-meta" hidden=""></div><div class="benefits"><div class="benefit">✓Treinamento específico para corrida e triathlon</div><div class="benefit">✓Small groups de até 4 alunos</div></div><a class="choose" href="onboarding.html">Quero começar <span aria-hidden="true">↗</span></a></article>
+<article class="plan-card"><div class="plan-head"><span>SPORT LAB / SMALL GROUP</span><span>03</span></div><div class="card-name">3 vezes por semana</div><div class="price-line"><div class="price">R$ 490</div><span class="per">/mês</span></div><div class="term-meta" hidden=""></div><div class="benefits"><div class="benefit">✓Treinamento específico para corrida e triathlon</div><div class="benefit">✓Small groups de até 4 alunos</div></div><a class="choose" href="onboarding.html">Quero começar <span aria-hidden="true">↗</span></a></article><p class="contract-note">Personal trainer: horários e valores sob consulta.</p></div>
+<div class="plan-panel" data-panel="online" hidden=""><p class="plan-intro">Planejamento e revisão semanal com treinador responsável, sem participação nos treinos presenciais.</p>
+<article class="plan-card"><div class="plan-head"><span>ONLINE / CORRIDA</span><span>01</span></div><div class="card-name">Corrida Online</div><div class="price-line"><div class="price">R$ 290</div><span class="per">/mês</span></div><div class="term-meta" hidden=""></div><div class="benefits"><div class="benefit"><span class="check">✓</span>Planilha e revisão semanal</div><div class="benefit"><span class="check">✓</span>Análise de métricas e testes periódicos</div><div class="benefit"><span class="check">✓</span>Contato semanal · resposta até 24h úteis</div></div><a class="choose" href="onboarding.html">Quero começar <span aria-hidden="true">↗</span></a></article>
+<article class="plan-card"><div class="plan-head"><span>ONLINE / TRIATHLON</span><span>02</span></div><div class="card-name">Triathlon Online</div><div class="price-line"><div class="price">R$ 490</div><span class="per">/mês</span></div><div class="term-meta" hidden=""></div><div class="benefits"><div class="benefit"><span class="check">✓</span>Planejamento integrado das modalidades</div><div class="benefit"><span class="check">✓</span>Análise de métricas e testes periódicos</div><div class="benefit"><span class="check">✓</span>Contato semanal · resposta até 24h úteis</div></div><a class="choose" href="onboarding.html">Quero começar <span aria-hidden="true">↗</span></a></article></div>
+</section>
+<section class="experience" id="experiencia">
+<div class="section-header"><span class="section-lbl">A EXPERIÊNCIA RIO SAÚDE</span><span class="section-num">04 / 06</span></div>
+<h2>Mais do que um treino.</h2>
+<p class="experience-lead">Cada aluno tem seu planejamento, seus objetivos e seu ritmo. Mas ninguém precisa treinar sozinho.</p>
+<div class="experience-stack">
+<div class="exp-item"><div class="exp-mark">01</div><div><h3>Nos treinos</h3><p>Nossos professores acompanham os alunos, organizam pelotões por ritmos semelhantes, orientam os intervalos e ajustam o treino quando necessário.</p></div></div>
+<div class="exp-item"><div class="exp-mark">02</div><div><h3>Nas provas</h3><p>Ao longo do ano, acompanhamos nossos alunos desde a preparação até o dia da prova. Em eventos selecionados, temos professores e estrutura de apoio no local — um ponto de encontro antes e depois da competição.</p></div></div>
+<div class="exp-item"><div class="exp-mark">03</div><div><h3>Além dos treinos</h3><p>Organizamos viagens, eventos e encontros que aproximam os alunos. A Rio Saúde também é um lugar para conhecer pessoas e construir relações que vão além da corrida.</p></div></div>
+</div>
+<div class="experience-close">Queremos que o esporte continue fazendo parte da vida de quem passa pela Rio Saúde.</div>
+</section>
+<section class="team section" id="equipe">
+<div class="section-header"><span class="section-lbl">QUEM FAZ A RIO SAÚDE</span><span class="section-num">05 / 06</span></div>
+<h2>Nossa equipe.</h2>
+<p class="desc">Treinadores que participam do planejamento e estão presentes na rotina da assessoria. Conheça a trajetória e a visão de cada profissional.</p>
+<div class="team-feature">
+<div class="trainer-head"><div aria-label="Espaço reservado para foto de Roberto Tadao" class="trainer-photo">RT</div><div class="trainer-intro"><div class="trainer-role">FUNDADOR · DIRETOR TÉCNICO</div><h3>Roberto Tadao</h3><p class="trainer-nick">Dum</p><p>Ex-atleta profissional de triathlon e treinador com mais de 20 anos de experiência na modalidade. Fundou a Rio Saúde em 2005.</p></div></div>
+<div class="trainer-philosophy"><span>FILOSOFIA DE TREINO · FRASE A VALIDAR</span><p>“A evolução se constrói com consistência, planejamento e respeito ao processo.”</p></div>
+<details class="team-details"><summary>Biografia e trajetória <span>+</span></summary><p>Ex-atleta profissional de triathlon, Dum reúne experiência de competição e mais de duas décadas dedicadas ao treinamento. É responsável pela direção técnica e pelo desenvolvimento da metodologia Rio Saúde.</p><small>Currículo detalhado do Forms original será incorporado na versão de publicação.</small></details>
+<details class="team-details"><summary>Títulos e conquistas <span>+</span></summary><p>Espaço reservado para selecionar os principais títulos e resultados já listados na apresentação original, separando conquistas como atleta das conquistas dos alunos.</p></details>
+</div>
+<div class="trainer-grid">
+<article class="trainer-card">
+<div class="trainer-head"><div aria-label="Espaço reservado para foto de Pedro Moreira" class="trainer-photo">PM</div><div class="trainer-intro"><div class="trainer-role">SÓCIO · TREINADOR</div><h3>Pedro Moreira</h3><p>Treinador de corrida e triathlon, com experiência competitiva nas duas modalidades e no trail running.</p></div></div>
+<div class="trainer-philosophy"><span>FILOSOFIA DE TREINO · FRASE A VALIDAR</span><p>“Treinar bem é respeitar a individualidade sem perder o prazer de treinar junto.”</p></div>
+<details class="team-details"><summary>Biografia e trajetória <span>+</span></summary><p>Sócio da Rio Saúde, atua no planejamento, acompanhamento e preparação de corredores e triatletas.</p></details>
+<details class="team-details"><summary>Títulos e conquistas <span>+</span></summary><p>Campeão brasileiro amador de triathlon em 2023, com resultados relevantes em corrida e trail running. Seleção de provas e títulos será refinada para publicação.</p></details>
+</article>
+<article class="trainer-card">
+<div class="trainer-head"><div aria-label="Espaço reservado para foto de Victor Hugo Oliveira" class="trainer-photo">VH</div><div class="trainer-intro"><div class="trainer-role">TREINADOR DE TRIATHLON</div><h3>Victor Hugo Oliveira</h3><p>Com experiência na natação competitiva e atuação no ciclismo, acompanha a preparação dos triatletas.</p></div></div>
+<div class="trainer-philosophy"><span>FILOSOFIA DE TREINO · FRASE A VALIDAR</span><p>“Os dados ajudam a entender o atleta. As decisões precisam considerar a pessoa por trás deles.”</p></div>
+<details class="team-details"><summary>Biografia e trajetória <span>+</span></summary><p>Atua no acompanhamento técnico dos triatletas, com experiência em natação e ciclismo.</p></details>
+<details class="team-details"><summary>Títulos e conquistas <span>+</span></summary><p>Informações esportivas do Forms original a selecionar antes da publicação.</p></details>
+</article>
+<article class="trainer-card">
+<div class="trainer-head"><div aria-label="Espaço reservado para foto de Antônio Josiano" class="trainer-photo">AJ</div><div class="trainer-intro"><div class="trainer-role">TREINADOR · COORDENAÇÃO TÉCNICA</div><h3>Antônio Josiano</h3><p>Profissional de Educação Física, com experiência em treinamento de força e treinamento esportivo.</p></div></div>
+<div class="trainer-philosophy"><span>FILOSOFIA DE TREINO · FRASE A VALIDAR</span><p>“A consistência é o que transforma o treinamento em resultado ao longo do tempo.”</p></div>
+<details class="team-details"><summary>Biografia e trajetória <span>+</span></summary><p>Atua no acompanhamento dos alunos e no desenvolvimento do trabalho técnico da equipe.</p></details>
+<details class="team-details"><summary>Títulos e conquistas <span>+</span></summary><p>Informações de formação e resultados do Forms original a selecionar antes da publicação.</p></details>
+</article>
+</div>
+<p class="team-note">A equipe de atendimento nas bases e no Sport Lab poderá ser incluída nesta mesma seção. Fotos e frases pessoais serão validadas com cada treinador.</p>
+</section>
+<footer class="footer" id="contato">
+<div class="section-header"><span class="section-lbl" style="color:#AFC9DC">FALE COM A EQUIPE</span><span class="section-num" style="color:#AFC9DC">06 / 06</span></div>
+<h2>Seu próximo treino pode começar aqui.</h2>
+<p>Conheça uma modalidade, tire suas dúvidas ou comece seu cadastro. Você escolhe o caminho.</p>
+<div class="footer-actions"><a class="cta footer-start" href="#planos">Ver planos e começar <span>↗</span></a><a class="footer-wa" href="https://wa.me/5521999410202?text=Ol%C3%A1%21%20Conheci%20a%20Rio%20Sa%C3%BAde%20pelo%20site%20e%20queria%20tirar%20umas%20d%C3%BAvidas." rel="noopener noreferrer" target="_blank">Tirar dúvidas pelo WhatsApp <span>↗</span></a></div>
+<a class="footer-athlete" href="onboarding.html?edit=1">Já é aluno? Acesse sua área ↗</a>
+<div class="footer-bottom"><span>RIO SAÚDE · DESDE 2005</span><span>APRESENTAÇÃO · V5</span></div>
+</footer>
+</main>
+<script>
+const menuBtn=document.getElementById('menuBtn'), mobileMenu=document.getElementById('mobileMenu');menuBtn.addEventListener('click',()=>{const v=menuBtn.getAttribute('aria-expanded')!=='true';menuBtn.setAttribute('aria-expanded',String(v));mobileMenu.classList.toggle('open',v)});mobileMenu.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>{mobileMenu.classList.remove('open');menuBtn.setAttribute('aria-expanded','false')}));
+const accBtns=[...document.querySelectorAll('[data-acc]')];accBtns.forEach(b=>b.addEventListener('click',()=>{const willOpen=b.getAttribute('aria-expanded')!=='true';accBtns.forEach(x=>{x.setAttribute('aria-expanded','false');document.getElementById(x.getAttribute('aria-controls')).hidden=true});if(willOpen){b.setAttribute('aria-expanded','true');document.getElementById(b.getAttribute('aria-controls')).hidden=false}}));
+document.querySelectorAll('.subtoggle').forEach(b=>b.addEventListener('click',()=>{const opened=b.getAttribute('aria-expanded')==='true';b.setAttribute('aria-expanded',String(!opened));document.getElementById(b.getAttribute('aria-controls')).hidden=opened;b.querySelector('span').textContent=opened?'+':'−'}));
+function choosePlan(id){document.querySelectorAll('.plan-tab').forEach(b=>{const active=b.dataset.tab===id;b.classList.toggle('active',active);b.setAttribute('aria-selected',String(active))});document.querySelectorAll('.plan-panel').forEach(p=>{p.hidden=p.dataset.panel!==id})}document.querySelectorAll('.plan-tab').forEach(b=>b.addEventListener('click',()=>choosePlan(b.dataset.tab)));document.querySelectorAll('.pricejump').forEach(a=>a.addEventListener('click',()=>choosePlan(a.dataset.plan)));
+</script>
+</body></html>
