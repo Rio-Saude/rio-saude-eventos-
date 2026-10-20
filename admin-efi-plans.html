@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="pt-BR"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Rio Saúde • Ativar planos de teste Efí</title>
+<link rel="stylesheet" href="portal.css?v=parq-five-steps-20261020-v1">
+<style>
+main{max-width:780px;margin:auto;padding:32px 16px 80px}
+button:disabled{opacity:.6}
+.help{color:#c7d9ce;line-height:1.5}
+#auth-panel,#setup-panel{margin-top:20px}
+</style>
+</head>
+<body><main>
+<nav style="margin-bottom:28px"><a href="admin-cadastros.html" style="color:#a8e0be">Administração</a> · <a href="onboarding.html" style="color:#a8e0be">Cadastro dos alunos</a></nav>
+<div class="brand">RIO SAÚDE • ADMINISTRAÇÃO</div>
+<h1 style="margin:18px 0">Ativar planos da Efí</h1>
+<p class="lead">Configuração de homologação dos planos com desconto. Essa operação não cadastra nenhum atleta na Efí e não gera pagamento.</p>
+<section class="card">
+<div id="auth-panel" class="hidden">
+<h2>Entre como administrador</h2>
+<p class="help">Use o e-mail autorizado da Rio Saúde, não o e-mail da atleta de teste.</p>
+<form id="email-form">
+ <div class="field"><label for="admin-email">E-mail de administrador</label><input id="admin-email" type="email" required autocomplete="email" placeholder="seu@email.com"></div>
+ <div class="actions"><button type="submit" class="primary-btn">Enviar código</button></div>
+</form>
+<form id="code-form" class="hidden">
+ <div class="field"><label for="admin-code">Código de 6 dígitos</label><input id="admin-code" inputmode="numeric" maxlength="6" minlength="6" pattern="[0-9]{6}" required></div>
+ <div class="actions"><button type="submit" class="primary-btn">Confirmar código</button></div>
+</form>
+</div>
+<div id="setup-panel" class="hidden">
+<h2>Planos pendentes</h2>
+<p class="help">1 modalidade Online, Barra, Aterro / menor de 26 anos — <strong>R$ 290/mês</strong>.</p>
+<p class="help">2 ou mais modalidades / menor de 26 anos — <strong>R$ 390/mês</strong>.</p>
+<p class="help">A configuração reutiliza planos existentes na Efí de homologação, quando encontrados, e grava os identificadores no Supabase.</p>
+<div class="actions"><button id="activate" type="button" class="primary-btn">Ativar planos de teste</button></div>
+</div>
+<div class="actions"><button id="logout" type="button" class="secondary-btn hidden">Sair desta conta</button></div>
+<p id="feedback" class="status" role="status" aria-live="polite"></p>
+</section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script>
+(async () => {
+const cfg=window.RIO_SAUDE_CONFIG||{};
+const feedback=document.querySelector('#feedback');
+const authPanel=document.querySelector('#auth-panel'),setupPanel=document.querySelector('#setup-panel');
+const emailForm=document.querySelector('#email-form'),codeForm=document.querySelector('#code-form');
+const logout=document.querySelector('#logout'),activate=document.querySelector('#activate');
+if(!window.supabase||!cfg.supabaseUrl||!cfg.supabaseAnonKey){feedback.textContent='Configuração do site indisponível.';return;}
+const db=window.supabase.createClient(cfg.supabaseUrl,cfg.supabaseAnonKey);
+let pendingEmail='';
+const message=(txt,error=false)=>{feedback.className=error?'status error':'status';feedback.textContent=txt;};
+async function refresh(){
+  authPanel.classList.add('hidden');setupPanel.classList.add('hidden');logout.classList.add('hidden');
+  const {data:{user},error}=await db.auth.getUser();
+  if(!user || error){authPanel.classList.remove('hidden');message('Entre com a conta da administração.');return;}
+  logout.classList.remove('hidden');
+  const {data:admin,error:accessError}=await db.rpc('is_admin');
+  if(accessError||admin!==true){
+    message('A conta atual não tem permissão de administrador. Clique em Sair desta conta e use o e-mail administrativo.',true);
+    return;
+  }
+  setupPanel.classList.remove('hidden');message('Acesso administrativo confirmado.');
+  const {data:plans}=await db.from('billing_plans').select('code,active,efi_plan_id_homolog')
+    .in('code',['single_290_monthly','multi_tri_u26_monthly']);
+  if(plans?.length===2 && plans.every(p=>p.active && /^[0-9]+$/.test(p.efi_plan_id_homolog||''))){
+    activate.disabled=true;
+    activate.textContent='Planos já ativados';
+    message('Os dois planos já estão ativos na Efí de homologação. A atleta pode recarregar a página financeira.');
+  }
+}
+emailForm.addEventListener('submit',async(ev)=>{
+ ev.preventDefault();pendingEmail=document.querySelector('#admin-email').value.trim().toLowerCase();
+ emailForm.querySelector('button').disabled=true;message('Enviando código...');
+ try{
+ const {error}=await db.auth.signInWithOtp({email:pendingEmail,options:{shouldCreateUser:false}});
+ if(error)throw error;
+ emailForm.classList.add('hidden');codeForm.classList.remove('hidden');
+ message('Veja o código de seis dígitos enviado ao e-mail.');
+ }catch(e){message('Falha ao enviar código. Confira a conta administrativa e tente novamente.',true);}
+ finally{emailForm.querySelector('button').disabled=false;}
+});
+codeForm.addEventListener('submit',async(ev)=>{
+ ev.preventDefault();const token=document.querySelector('#admin-code').value.trim();
+ if(!/^[0-9]{6}$/.test(token)){message('Informe o código de seis dígitos.',true);return;}
+ codeForm.querySelector('button').disabled=true;message('Verificando código...');
+ try{
+ const {error}=await db.auth.verifyOtp({email:pendingEmail,token,type:'email'});
+ if(error)throw error;await refresh();
+ }catch(e){message('Código inválido ou expirado. Tente novamente.',true);}
+ finally{codeForm.querySelector('button').disabled=false;}
+});
+logout.addEventListener('click',async()=>{await db.auth.signOut();emailForm.classList.remove('hidden');codeForm.classList.add('hidden');await refresh();});
+activate.addEventListener('click',async()=>{
+ if(activate.disabled)return;
+ activate.disabled=true;message('Consultando e configurando os planos na Efí de homologação. Aguarde...');
+ try{
+ const {data,error}=await db.functions.invoke('efi-activate-discounted-plans',{body:{}});
+ if(error)throw error;
+ if(data?.ok!==true||data?.environment!=='homologation')throw new Error('unexpected_response');
+ message('Planos R$ 290 e R$ 390 habilitados. Agora atualize o cadastro da Tete e escolha Online.');
+ activate.textContent='Planos ativados';
+ }catch(e){
+ console.error('Falha na ativação',e);
+ message('Não foi possível concluir a ativação. Nenhuma assinatura foi criada. Não repita várias vezes; confira com a equipe o resultado.',true);
+ activate.disabled=false;
+ }
+});
+await refresh();
+})();
+</script>
+</body></html>
