@@ -36,6 +36,7 @@
   let updated = false;
   let saving = false;
   let checkoutBusy = false;
+  let parqOnlyMode = false;
   let availableRaceOptions = [];
   let pendingRaceEntries = [];
 
@@ -203,6 +204,23 @@
 
   async function bootAuthenticated() {
     await loadOrCreateProfile();
+    // Migrated users already on financeiro/TrainingPeaks complete the new health step first.
+    if (!profile.onboarding_completed_at && Number(profile.onboarding_step) >= 4) {
+      const {data:health,error:healthError}=await client.from('health_screenings')
+        .select('signed_at,form_version').eq('user_id',session.user.id)
+        .order('signed_at',{ascending:false}).limit(1).maybeSingle();
+      if(healthError)throw healthError;
+      const last=Date.parse(health?.signed_at||'');
+      const valid=health?.form_version==='rj_6765_2014_annex_i_v1' &&
+        Number.isFinite(last) && last>Date.now()-365*86400000;
+      if(!valid){
+        const {data,error}=await client.from('athlete_profiles')
+          .update({onboarding_step:3}).eq('user_id',session.user.id)
+          .select('*').single();
+        if(error)throw error;
+        profile=data;
+      }
+    }
     const params = new URLSearchParams(location.search);
     editing = Boolean(profile.onboarding_completed_at && params.get('edit') === '1');
     editStep = params.get('edit') === '1' ? 1 : 1;
@@ -571,11 +589,13 @@
     window.RioSaudePARQ.render({
       client, user:session.user, profile, root:stepRoot,
       next: async () => {
-        if(editing){editStep=4;render();}
+        if(parqOnlyMode){parqOnlyMode=false;editing=false;updated=true;render();}
+        else if(editing){editStep=4;render();}
         else await updateProfile({onboarding_step:4});
       },
       back: async () => {
-        if(editing){editStep=2;render();}
+        if(parqOnlyMode){parqOnlyMode=false;editing=false;render();}
+        else if(editing){editStep=2;render();}
         else await updateProfile({onboarding_step:2});
       }
     });
@@ -857,9 +877,13 @@
       <div class="actions">
         <a class="primary-btn" href="index.html">Voltar ao portal</a>
         <button id="edit-profile" class="secondary-btn" type="button">Editar minhas informações</button>
+        <button id="open-parq" class="secondary-btn" type="button">Saúde e segurança (PAR-Q)</button>
       </div>`;
     document.querySelector('#edit-profile').addEventListener('click', () => {
-      editing = true; editStep = 1; updated = false; render();
+      parqOnlyMode=false; editing=true; editStep=1; updated=false; render();
+    });
+    document.querySelector('#open-parq').addEventListener('click',()=>{
+      parqOnlyMode=true;editing=true;editStep=3;updated=false;render();
     });
   }
 
@@ -934,6 +958,7 @@
     profile = null;
     editing = false;
     updated = false;
+    parqOnlyMode = false;
     editStep = 1;
     stepRoot.innerHTML = '';
     document.querySelector('#login-email').value = '';
