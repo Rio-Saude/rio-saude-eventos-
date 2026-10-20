@@ -47,7 +47,7 @@
             <input id="parq-signer" name="signed_name" maxlength="160" autocomplete="name" required></div>
           ${minor?'<label class="check parq-accept"><input type="checkbox" name="guardian_accept" required> Sou o responsável legal e autorizo por escrito a participação do menor, observadas as condições de saúde e segurança.</label>':''}
           <label class="check parq-accept"><input type="checkbox" name="term_accept" required> Li e aceito o termo e confirmo que respondi com sinceridade.</label>
-          <p class="field-help">Registro eletrônico vinculado à conta, nome digitado e data/hora do servidor. A equipe poderá solicitar documentação complementar.</p>
+          <p class="field-help">Local da declaração: ${escape(profile.city||'Rio de Janeiro')}. A data e hora são registradas pelo servidor, e a assinatura fica vinculada à conta autenticada.</p>
           <p id="parq-status" class="status" role="status" aria-live="polite"></p>
           <div class="actions"><button class="primary-btn" type="submit">Assinar e continuar</button></div>
         </form>`;
@@ -67,7 +67,7 @@
           setError('Confirme o termo de responsabilidade e a autorização.');
           return;
         }
-        const body={signed_name:name,declaration_accepted:true,signer_role:minor?'guardian':'athlete',
+        const body={signed_name:name,signed_city:String(profile.city||'Rio de Janeiro').trim(),declaration_accepted:true,signer_role:minor?'guardian':'athlete',
           guardian_name:minor?name:null,guardian_authorization_accepted:minor};
         for(let i=1;i<=10;i++){
           const answer=fd.get('q'+i);
