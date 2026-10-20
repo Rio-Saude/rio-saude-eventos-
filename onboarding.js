@@ -261,17 +261,18 @@
       renderDashboard();
       return;
     }
-    const step = editing ? editStep : Math.min(Math.max(Number(profile.onboarding_step || 1), 1), 4);
+    const step = editing ? editStep : Math.min(Math.max(Number(profile.onboarding_step || 1), 1), 5);
     renderProgress(step);
     if (step === 1) renderPersonal();
     if (step === 2) renderSport();
-    if (step === 3) renderPayment();
-    if (step === 4) renderTrainingPeaks();
+    if (step === 3) renderHealthScreening();
+    if (step === 4) renderPayment();
+    if (step === 5) renderTrainingPeaks();
   }
 
   function renderProgress(step) {
     progressRoot.innerHTML = '';
-    for (let i = 1; i <= 4; i += 1) {
+    for (let i = 1; i <= 5; i += 1) {
       const item = document.createElement('span');
       if (i <= step) item.classList.add('active');
       progressRoot.appendChild(item);
@@ -280,7 +281,7 @@
 
   function renderPersonal() {
     stepRoot.innerHTML = `
-      <div class="step-kicker">${editing ? 'Editar cadastro · ' : ''}1 de 6 · Seus dados</div>
+      <div class="step-kicker">${editing ? 'Editar cadastro · ' : ''}1 de 5 · Seus dados</div>
       <h2>Começando pelo básico.</h2>
       <p class="lead">Esses dados identificam seu cadastro na Rio Saúde. O e-mail é a chave da sua conta.</p>
       <span class="email-pill">${escapeHtml(profile.email)}</span>
@@ -562,9 +563,27 @@
     });
   }
 
+  function renderHealthScreening() {
+    if (!window.RioSaudePARQ) {
+      stepRoot.innerHTML='<p class="status error">Questionário indisponível. Atualize a página e tente novamente.</p>';
+      return;
+    }
+    window.RioSaudePARQ.render({
+      client, user:session.user, profile, root:stepRoot,
+      next: async () => {
+        if(editing){editStep=4;render();}
+        else await updateProfile({onboarding_step:4});
+      },
+      back: async () => {
+        if(editing){editStep=2;render();}
+        else await updateProfile({onboarding_step:2});
+      }
+    });
+  }
+
   function renderPayment() {
     stepRoot.innerHTML = `
-      <div class="step-kicker">3 de 5 · Financeiro</div>
+      <div class="step-kicker">4 de 5 · Financeiro</div>
       <h2>Cadastro financeiro</h2>
       <div id="efi-first-access">
         <p class="lead">Escolha quantas modalidades vai contratar com a Rio Saúde.</p>
@@ -587,19 +606,19 @@
       </div>
       <p id="billing-initial-status" class="status" role="status" aria-live="polite"></p>
       <p class="field-help">Ambiente de teste: não efetue pagamentos reais.</p>
-      <div class="actions"><button class="text-btn" type="button" data-back="2">Voltar</button></div>`;
+      <div class="actions"><button class="text-btn" type="button" data-back="3">Voltar</button></div>`;
 
     document.querySelector('#billing-form').addEventListener('submit', startCheckout);
     document.querySelector('#efi-done').addEventListener('click', () => {
       const afterTrainingPeaks = profile.payment_followup_needed && profile.trainingpeaks_step_seen;
-      const next = {payment_status:'submitted',payment_followup_needed:false,onboarding_step:4};
+      const next = {payment_status:'submitted',payment_followup_needed:false,onboarding_step:5};
       if (afterTrainingPeaks) {
         next.onboarding_completed_at = profile.onboarding_completed_at || new Date().toISOString();
       }
       updateProfile(next,{finishEdit:editing && afterTrainingPeaks});
     });
     document.querySelector('#efi-later').addEventListener('click', () => updateProfile({
-      payment_status:'pending',payment_followup_needed:true,onboarding_step:4
+      payment_status:'pending',payment_followup_needed:true,onboarding_step:5
     }));
     loadBillingPlans();
     if (profile.payment_followup_needed === true) loadExistingCheckout();
@@ -764,7 +783,7 @@
     const storedBrand = profile.watch_brand === 'Coros' ? 'COROS' : profile.watch_brand;
     if (storedBrand && !brands.includes(storedBrand)) brands.push(storedBrand);
     stepRoot.innerHTML = `
-      <div class="step-kicker">4 de 4 · TrainingPeaks e relógio</div>
+      <div class="step-kicker">5 de 5 · TrainingPeaks e relógio</div>
       <h2>Deixe seus treinos conectados.</h2>
       <p class="lead">Você pode fazer essas conexões agora ou terminar depois.</p>
       <form id="tp-form" class="grid">
@@ -778,7 +797,7 @@
         <div class="field full"><label for="watch_brand">Relógio</label><select id="watch_brand" name="watch_brand"><option value="">Selecione</option>${brands.map(brand => option(brand, brand, storedBrand)).join('')}</select></div>
         <div id="watch-guide" class="notice field full hidden" aria-live="polite"></div>
         <div id="watch-connection" class="field full"><label class="check"><input id="watch_connected" name="watch_connected" type="checkbox" ${profile.watch_connected ? 'checked' : ''}>Meu relógio já está conectado</label></div>
-        <div class="actions field full"><button class="primary-btn" type="submit" name="tp_action" value="completed">Tudo pronto</button><button class="secondary-btn" type="submit" name="tp_action" value="pending">Terminar depois</button><button class="text-btn" type="button" data-back="3">Voltar</button></div>
+        <div class="actions field full"><button class="primary-btn" type="submit" name="tp_action" value="completed">Tudo pronto</button><button class="secondary-btn" type="submit" name="tp_action" value="pending">Terminar depois</button><button class="text-btn" type="button" data-back="4">Voltar</button></div>
       </form>`;
 
     document.querySelector('#tp-form').addEventListener('submit', saveTrainingPeaks);
@@ -820,7 +839,7 @@
       trainingpeaks_step_seen:true,
       trainingpeaks_status:event.submitter?.value === 'completed' ? 'completed' :
         (profile.trainingpeaks_status || 'pending'),
-      onboarding_step:needsPayment ? 3 : 4,
+      onboarding_step:needsPayment ? 4 : 5,
       ...(needsPayment ? {} : { onboarding_completed_at: profile.onboarding_completed_at || new Date().toISOString() })
     }, {finishEdit:editing && !needsPayment});
   }
