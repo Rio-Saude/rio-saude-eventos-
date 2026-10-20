@@ -56,7 +56,7 @@ Deno.serve(async (req: Request) => {
     }
 
     // Already provisioned: nothing to mutate.
-    if (plans.every(({data}) => data.active && /^\\d+$/.test(data.efi_plan_id_homolog || "")))
+    if (plans.every(({data}) => data.active && /^[0-9]+$/.test(data.efi_plan_id_homolog || "")))
       return reply(200, {ok:true,environment:"homologation",plans:plans.map(({target})=>({code:target.code,ready:true,reused:true}))});
 
     const authResponse = await fetch(`${BASE}/v1/authorize`,{
@@ -72,7 +72,7 @@ Deno.serve(async (req: Request) => {
     const output=[];
 
     for (const {target,data} of plans) {
-      if (/^\\d+$/.test(data.efi_plan_id_homolog || "")) {
+      if (/^[0-9]+$/.test(data.efi_plan_id_homolog || "")) {
         // Reuse a previously linked plan. Do not silently overwrite external IDs.
         if (!data.active) {
           const result=await db.from("billing_plans").update({active:true})
@@ -96,14 +96,14 @@ Deno.serve(async (req: Request) => {
       const match=foundData.data.find((x:Record<string,unknown>)=>x.name===target.name);
       let planId=match?.plan_id;
       let reused=Boolean(match);
-      if (!/^\\d+$/.test(String(planId||""))) {
+      if (!/^[0-9]+$/.test(String(planId||""))) {
         const created=await fetch(`${BASE}/v1/plan`,{
           method:"POST",headers:headersEfi,
           body:JSON.stringify({name:target.name,interval:1,repeats:null}),
           signal:AbortSignal.timeout(20000)
         });
         const createdData=await created.json();
-        if(!created.ok || !/^\\d+$/.test(String(createdData?.data?.plan_id||"")))
+        if(!created.ok || !/^[0-9]+$/.test(String(createdData?.data?.plan_id||"")))
           throw new Error("efi_plan_creation_unconfirmed");
         planId=createdData.data.plan_id;
         reused=false;
@@ -115,7 +115,7 @@ Deno.serve(async (req: Request) => {
       if(!update.data) {
         // Concurrent provisioning must not overwrite any existing provider ID.
         const recheck=await db.from("billing_plans").select("efi_plan_id_homolog,active").eq("id",data.id).single();
-        if(recheck.error || !recheck.data.active || !/^\\d+$/.test(recheck.data.efi_plan_id_homolog||""))
+        if(recheck.error || !recheck.data.active || !/^[0-9]+$/.test(recheck.data.efi_plan_id_homolog||""))
           throw new Error("plan_needs_review");
       }
       output.push({code:target.code,ready:true,reused});
