@@ -10,13 +10,4 @@ const rioSaudeProductionConfig = {
   whatsappGroupUrl: ""
 };
 
-// Local/static preview only. Production remains the default and is never selected implicitly.
-const rioSaudeHomologationConfig = {
-  ...rioSaudeProductionConfig,
-  supabaseUrl: "https://xiiudduncvcxcvbgbqpc.supabase.co",
-  supabaseAnonKey: "sb_publishable_K2bGyfOGFvmzY4mB-kDagQ_RMkIhXmF"
-};
-
-window.RIO_SAUDE_CONFIG = new URLSearchParams(window.location.search).get('environment') === 'homologacao'
-  ? rioSaudeHomologationConfig
-  : rioSaudeProductionConfig;
+window.RIO_SAUDE_CONFIG = rioSaudeProductionConfig;
