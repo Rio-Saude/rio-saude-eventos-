@@ -949,6 +949,8 @@
         ,card_details_invalid:'Confira os dados do cartão.'
         ,card_tokenization_failed:'Não foi possível validar o cartão na Efí. Confira os dados ou tente outro cartão de teste.'
         ,billing_address_invalid:'Confira o endereço de cobrança: informe rua, número, bairro, cidade, UF com duas letras e CEP com oito números.'
+        ,payment_token_required:'Não foi possível receber os dados tokenizados do cartão. Confira os dados e tente novamente.'
+        ,billing_unavailable:'A Efí não respondeu agora. Nenhuma cobrança foi criada; aguarde um momento antes de tentar novamente.'
       };
       if (status.isConnected) {
         status.className = 'status error';
