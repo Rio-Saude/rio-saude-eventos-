@@ -23,6 +23,13 @@ function addDays(day: string, days: number) { const d = new Date(`${day}T12:00:0
 function digits(v: unknown) { return String(v || '').replace(/\D/g, ''); }
 function cpfOk(cpf: string) { if (!/^\d{11}$/.test(cpf) || /^(\d)\1{10}$/.test(cpf)) return false; for (let n=9;n<=10;n++) { let s=0; for(let i=0;i<n;i++)s+=+cpf[i]*(n+1-i); if ((s*10)%11%10 !== +cpf[n]) return false; } return true; }
 function validAddress(a: any) { return a && /^[0-9]{8}$/.test(a.zipcode || '') && /^[A-Z]{2}$/.test(a.state || '') && [a.street,a.number,a.neighborhood,a.city].every((x: unknown) => typeof x === 'string' && x.trim().length > 0); }
+async function secureEquals(a: string | null, b: string | undefined) {
+  if (!a || !b) return false;
+  const encoder = new TextEncoder();
+  const [ah,bh] = await Promise.all([crypto.subtle.digest('SHA-256',encoder.encode(a)),crypto.subtle.digest('SHA-256',encoder.encode(b))]);
+  const av=new Uint8Array(ah), bv=new Uint8Array(bh); if(av.length!==bv.length) return false;
+  let different=0; for(let i=0;i<av.length;i++) different|=av[i]^bv[i]; return different===0;
+}
 
 async function userFor(req: Request) {
   const auth = req.headers.get('authorization') || '';
@@ -70,8 +77,9 @@ Deno.serve(async req => {
   if(req.method==='OPTIONS') return new Response(null,{status:204,headers:h});
   if(req.method!=='POST') return json(req,405,{error:'method_not_allowed'});
   try {
-    const user=await userFor(req); if(!user) return json(req,401,{error:'authentication_required'});
     const body=await req.json().catch(()=>null); if(!body || typeof body!=='object') return json(req,400,{error:'invalid_request'});
+    const scheduledWorker=body.action==='run_due_boleto' && await secureEquals(req.headers.get('x-rio-schedule-secret'),Deno.env.get('BILLING_CRON_SECRET_HOMOLOG'));
+    const user=scheduledWorker ? null : await userFor(req); if(!scheduledWorker && !user) return json(req,401,{error:'authentication_required'});
     if(body.action==='config') {
       const code=Deno.env.get('EFI_PAYEE_CODE_HOMOLOG');
       if(Deno.env.get('EFI_ENV')!=='homologation' || !Deno.env.get('EFI_CLIENT_ID_HOMOLOG') || !Deno.env.get('EFI_CLIENT_SECRET_HOMOLOG') || !code) return json(req,503,{error:'homologation_credentials_missing'});
@@ -79,13 +87,16 @@ Deno.serve(async req => {
     }
     if(!['card','boleto','cancel','run_due_boleto'].includes(body.action)) return json(req,400,{error:'invalid_action'});
     if(body.action==='run_due_boleto') {
-      const {data:adminRole}=await db.from('admin_emails').select('email').eq('email',user.email.toLowerCase()).maybeSingle();
-      if(!adminRole) return json(req,403,{error:'admin_required'});
+      if (!scheduledWorker) {
+        const {data:adminRole}=await db.from('admin_emails').select('email').eq('email',user!.email!.toLowerCase()).maybeSingle();
+        if(!adminRole) return json(req,403,{error:'admin_required'});
+      }
       const today=spDate(); const {data:due,error:de}=await db.from('billing_subscriptions').select('id,athlete_profile_id,billing_plan_id,first_due_on,price_cents').eq('environment','homologation').eq('creation_state','scheduled').eq('status','pending').lte('boleto_issue_on',today); if(de) throw de;
       let issued=0; for(const sub of due||[]) {
         const [{data:plan},{data:profile},{data:address}]=await Promise.all([db.from('billing_plans').select('name,efi_plan_id_homolog').eq('id',sub.billing_plan_id).single(),db.from('athlete_profiles').select('first_name,last_name,email,cpf,whatsapp').eq('id',sub.athlete_profile_id).single(),db.from('billing_customer_profiles').select('*').eq('athlete_profile_id',sub.athlete_profile_id).maybeSingle()]);
         if(!plan || !profile || !validAddress(address)) { await db.from('billing_subscriptions').update({creation_state:'review'}).eq('id',sub.id); continue; }
-        await db.from('billing_subscriptions').update({creation_state:'requested'}).eq('id',sub.id); let requested=false;
+        const {data:locked}=await db.from('billing_subscriptions').update({creation_state:'requested'}).eq('id',sub.id).eq('creation_state','scheduled').select('id').maybeSingle();
+        if (!locked) continue; let requested=false;
         try { const access=await oauth(); requested=true; const r=await fetch(`${EFI}/v1/plan/${plan.efi_plan_id_homolog}/subscription/one-step`,{method:'POST',headers:{Authorization:`Bearer ${access}`,'Content-Type':'application/json'},body:JSON.stringify({items:[{name:`Rio Saúde - ${plan.name} - Mensal`,value:sub.price_cents,amount:1}],metadata:{custom_id:sub.id,notification_url:`${URL.replace('.supabase.co','.functions.supabase.co')}/efi-webhook`},payment:{banking_billet:{customer:customer(profile,address),billing_address:billAddress(address),expire_at:sub.first_due_on}}}),signal:AbortSignal.timeout(25000)}); const out=await r.json().catch(()=>null),data=out?.data;if(!r.ok||!data?.subscription_id)throw new Error('efi_boleto_failed');await db.from('billing_subscriptions').update({efi_subscription_id:String(data.subscription_id),efi_charge_id:data.charge?.id?String(data.charge.id):null,efi_status:String(data.status||'new'),creation_state:'ready'}).eq('id',sub.id);if(data.charge?.id)await db.from('billing_charges').upsert({subscription_id:sub.id,efi_charge_id:String(data.charge.id),charge_kind:'boleto',status:'waiting',amount_cents:sub.price_cents,due_on:sub.first_due_on,billet_url:data.charge?.billet_link||null},{onConflict:'efi_charge_id'});issued++; } catch { await db.from('billing_subscriptions').update(requested?{creation_state:'review'}:{creation_state:'scheduled'}).eq('id',sub.id); }
       }
       return json(req,200,{environment:'homologation',issued});
