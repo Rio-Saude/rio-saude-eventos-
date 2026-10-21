@@ -7,6 +7,7 @@ const onboarding = await readFile(new URL('../onboarding.js', import.meta.url), 
 const productionConfig = await readFile(new URL('../config.js', import.meta.url), 'utf8');
 const homologationConfig = await readFile(new URL('../config-homologacao.js', import.meta.url), 'utf8');
 const homologationRaceCatalog = await readFile(new URL('../supabase/homologation/20261021121000_onboarding_test_race_catalog.sql', import.meta.url), 'utf8');
+const presentation = await readFile(new URL('../apresentacao.html', import.meta.url), 'utf8');
 
 test('experimental invitations are server-bound, exclusive, and thirty days long', () => {
   assert.match(migration, /ends_on = starts_on \+ 29/);
@@ -68,4 +69,23 @@ test('homologation race catalog is isolated, read-only, and uses non-personal fi
   assert.match(homologationRaceCatalog, /grant select on public\.onboarding_race_catalog to authenticated/);
   assert.match(homologationRaceCatalog, /Prova de teste Rio Saúde/);
   assert.doesNotMatch(homologationRaceCatalog, /athlete_email|cpf|health_screenings|auth\.users/i);
+});
+
+test('landing routes only monthly coaching plans to the isolated homologation onboarding', () => {
+  assert.match(presentation, /const onboardingPage=isHomologationLanding\?'onboarding-homologacao\.html':'onboarding\.html'/);
+  assert.match(presentation, /'Corrida — Lagoa':'single_monthly'/);
+  assert.match(presentation, /'Corrida — Barra \/ Aterro':'single_290_monthly'/);
+  assert.match(presentation, /'Triathlon':'multi_monthly'/);
+  assert.match(presentation, /months===1/);
+  assert.match(presentation, /onboardingPage\+'\?plan='\+encodeURIComponent\(planCode\)/);
+  assert.match(presentation, /months>1/);
+  assert.match(presentation, /wa\.me\/5521999410202/);
+  assert.match(presentation, /Consultar Sport Lab/);
+  assert.match(presentation, /data-panel="lab"[^]*?https:\/\/wa\.me\/5521999410202/);
+});
+
+test('URL plan preference is limited to known coaching plans', () => {
+  assert.match(onboarding, /new Set\(\['single_monthly', 'single_290_monthly', 'multi_monthly'\]\)/);
+  assert.match(onboarding, /if \(!selectablePlanCodes\.has\(selected\)/);
+  assert.doesNotMatch(onboarding, /\^\[a-z0-9_-\]\{2,64\}/);
 });

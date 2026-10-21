@@ -256,7 +256,8 @@
 
   async function preserveSelectedPlanFromUrl() {
     const selected = new URLSearchParams(location.search).get('plan');
-    if (!selected || !/^[a-z0-9_-]{2,64}$/i.test(selected) || profile.selected_plan_code === selected) return;
+    const selectablePlanCodes = new Set(['single_monthly', 'single_290_monthly', 'multi_monthly']);
+    if (!selectablePlanCodes.has(selected) || profile.selected_plan_code === selected) return;
     const { data, error } = await client.from('athlete_profiles').update({ selected_plan_code: selected })
       .eq('user_id', session.user.id).select('*').single();
     if (error) throw error;
