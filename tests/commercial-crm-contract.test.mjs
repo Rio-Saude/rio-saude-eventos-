@@ -8,6 +8,10 @@ const productionConfig = await readFile(new URL('../config.js', import.meta.url)
 const homologationConfig = await readFile(new URL('../config-homologacao.js', import.meta.url), 'utf8');
 const homologationRaceCatalog = await readFile(new URL('../supabase/homologation/20261021121000_onboarding_test_race_catalog.sql', import.meta.url), 'utf8');
 const presentation = await readFile(new URL('../apresentacao.html', import.meta.url), 'utf8');
+const commercialAdmin = await readFile(new URL('../commercial-admin.js', import.meta.url), 'utf8');
+const financialFollowupMigration = await readFile(new URL('../supabase/migrations/20261021150000_commercial_financial_followup.sql', import.meta.url), 'utf8');
+const publicHomologationIndex = await readFile(new URL('../homologacao-publica/dist/index.html', import.meta.url), 'utf8');
+const publicHomologationConfig = await readFile(new URL('../homologacao-publica/dist/config-homologacao.js', import.meta.url), 'utf8');
 
 test('experimental invitations are server-bound, exclusive, and thirty days long', () => {
   assert.match(migration, /ends_on = starts_on \+ 29/);
@@ -88,4 +92,26 @@ test('URL plan preference is limited to known coaching plans', () => {
   assert.match(onboarding, /new Set\(\['single_monthly', 'single_290_monthly', 'multi_monthly'\]\)/);
   assert.match(onboarding, /if \(!selectablePlanCodes\.has\(selected\)/);
   assert.doesNotMatch(onboarding, /\^\[a-z0-9_-\]\{2,64\}/);
+});
+
+test('trial invitations use the configured onboarding page', () => {
+  assert.match(commercialAdmin, /const onboardingPage=config\.onboardingPage\|\|'onboarding\.html'/);
+  assert.match(commercialAdmin, /\$\{onboardingPage\}\?trial=/);
+  assert.match(homologationConfig, /onboardingPage: "onboarding-homologacao\.html"/);
+});
+
+test('financial follow-up remains open until trusted payment confirmation', () => {
+  assert.match(financialFollowupMigration, /'financial_followup'/);
+  assert.match(financialFollowupMigration, /p\.payment_followup_needed or p\.payment_status <> 'confirmed'/);
+  assert.match(financialFollowupMigration, /p\.payment_status='confirmed'/);
+  assert.match(financialFollowupMigration, /lifecycle_status='awaiting_contract'/);
+  assert.doesNotMatch(financialFollowupMigration, /set\s+payment_status\s*=\s*'confirmed'/i);
+});
+
+test('public homologation bundle contains only the isolated Supabase configuration', () => {
+  assert.match(publicHomologationIndex, /const isHomologationLanding=true/);
+  assert.match(publicHomologationIndex, /onboarding-homologacao\.html/);
+  assert.match(publicHomologationConfig, /https:\/\/xiiudduncvcxcvbgbqpc\.supabase\.co/);
+  assert.doesNotMatch(publicHomologationIndex, /zzxveirmtgnrokgjthhy/);
+  assert.doesNotMatch(publicHomologationConfig, /zzxveirmtgnrokgjthhy|service_role/i);
 });
