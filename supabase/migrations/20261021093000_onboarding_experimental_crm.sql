@@ -106,6 +106,26 @@ drop trigger if exists athlete_profiles_initialize_commercial_case on public.ath
 create trigger athlete_profiles_initialize_commercial_case after insert on public.athlete_profiles
 for each row execute function public.initialize_commercial_case();
 
+-- Completing onboarding closes only the stale interrupted-registration task.
+-- It never changes payment status or marks an athlete financially regular.
+create or replace function public.sync_commercial_profile_completion()
+returns trigger language plpgsql security definer set search_path=public as $$
+begin
+  if new.onboarding_completed_at is not null and old.onboarding_completed_at is null then
+    update public.commercial_cases
+      set lifecycle_status='awaiting_contract'
+      where athlete_user_id=new.user_id and entry_kind='normal' and lifecycle_status='incomplete';
+    update public.commercial_tasks
+      set status='resolved',resolved_at=now(),resolved_by=null,resolution_note='onboarding completed'
+      where athlete_user_id=new.user_id and task_key='incomplete_onboarding' and status='open';
+  end if;
+  return new;
+end; $$;
+revoke all on function public.sync_commercial_profile_completion() from public, anon, authenticated;
+drop trigger if exists athlete_profiles_sync_commercial_completion on public.athlete_profiles;
+create trigger athlete_profiles_sync_commercial_completion after update of onboarding_completed_at on public.athlete_profiles
+for each row execute function public.sync_commercial_profile_completion();
+
 -- These functions use elevated access only after checking both identity and authorization.
 create or replace function public.claim_trial_invitation(p_token text)
 returns table(starts_on date, ends_on date)
@@ -116,7 +136,8 @@ begin
   select lower(email) into v_email from auth.users where id=auth.uid();
   select * into v_invite from public.trial_invitations
    where token_hash=encode(extensions.digest(p_token,'sha256'),'hex') and revoked_at is null
-     and expires_at>now() and lower(invited_email)=v_email for update;
+     and expires_at>now() and starts_on <= (now() at time zone 'America/Sao_Paulo')::date
+     and lower(invited_email)=v_email for update;
   if not found then raise exception 'invalid or expired invitation' using errcode='42501'; end if;
   if v_invite.claimed_at is not null then raise exception 'invitation already used' using errcode='42501'; end if;
   update public.trial_invitations set claimed_by=auth.uid(), claimed_at=coalesce(claimed_at,now()) where id=v_invite.id;
@@ -172,13 +193,16 @@ begin
   where entry_kind='trial' and lifecycle_status not in ('converted','lost');
   insert into public.commercial_tasks(athlete_user_id,task_key,task_type,priority,due_on)
   select athlete_user_id,'trial_7_days','trial_conversion_7_days',2,trial_ends_on-7 from public.commercial_cases where entry_kind='trial' and trial_ends_on=p_today+7 and lifecycle_status not in ('converted','lost')
-  on conflict (athlete_user_id,task_key) do nothing;
+  on conflict (athlete_user_id,task_key) do update set status='open',due_on=excluded.due_on,resolved_at=null,resolved_by=null,resolution_note=null;
   insert into public.commercial_tasks(athlete_user_id,task_key,task_type,priority,due_on)
   select athlete_user_id,'trial_3_days','trial_conversion_3_days',3,trial_ends_on-3 from public.commercial_cases where entry_kind='trial' and trial_ends_on=p_today+3 and lifecycle_status not in ('converted','lost')
-  on conflict (athlete_user_id,task_key) do nothing;
+  on conflict (athlete_user_id,task_key) do update set status='open',due_on=excluded.due_on,resolved_at=null,resolved_by=null,resolution_note=null;
   insert into public.commercial_tasks(athlete_user_id,task_key,task_type,priority,due_on)
   select athlete_user_id,'trial_expired_decision','trial_expired_decision',3,trial_ends_on from public.commercial_cases where entry_kind='trial' and trial_ends_on<=p_today and lifecycle_status not in ('converted','lost')
   on conflict (athlete_user_id,task_key) do update set status='open',due_on=excluded.due_on,resolved_at=null,resolved_by=null,resolution_note=null;
+  update public.commercial_tasks set status='resolved',resolved_at=now(),resolved_by=null,resolution_note='superseded by expiry decision'
+  where task_type in ('trial_conversion_7_days','trial_conversion_3_days') and status='open'
+    and athlete_user_id in (select athlete_user_id from public.commercial_cases where entry_kind='trial' and trial_ends_on<=p_today);
 end; $$;
 revoke all on function public.process_commercial_tasks(date) from public, anon, authenticated;
 
@@ -204,24 +228,23 @@ begin
  if p_action='assign_self' then
    update public.commercial_cases set owner_user_id=auth.uid(),next_action_on=coalesce(p_next_action_on,next_action_on) where athlete_user_id=p_athlete;
  elsif p_action='extend_trial' then
-   if v_case.entry_kind<>'trial' or p_trial_ends_on is null or p_trial_ends_on<v_case.trial_ends_on then raise exception 'invalid trial extension' using errcode='22023'; end if;
+   if v_case.entry_kind<>'trial' or p_trial_ends_on is null or p_trial_ends_on<=v_case.trial_ends_on then raise exception 'invalid trial extension' using errcode='22023'; end if;
    update public.commercial_cases set trial_ends_on=p_trial_ends_on,lifecycle_status='trial_active',next_action_on=p_next_action_on where athlete_user_id=p_athlete;
    update public.commercial_tasks set status='resolved',resolved_at=now(),resolved_by=auth.uid(),resolution_note='trial extended' where athlete_user_id=p_athlete and status='open' and task_type like 'trial_%';
  elsif p_action='closed_plan' then
+   if v_case.lifecycle_status<>'trial_expired_decision_pending' then raise exception 'trial decision required' using errcode='22023'; end if;
    update public.commercial_cases set lifecycle_status='awaiting_contract',funnel_status='negotiating',next_action_on=p_next_action_on where athlete_user_id=p_athlete;
    update public.commercial_tasks set status='resolved',resolved_at=now(),resolved_by=auth.uid(),resolution_note='contracting started' where athlete_user_id=p_athlete and status='open' and task_type like 'trial_%';
    insert into public.commercial_tasks(athlete_user_id,task_key,task_type,priority,due_on) values(p_athlete,'contract_pending','contract_pending',3,coalesce(p_next_action_on,(now() at time zone 'America/Sao_Paulo')::date)) on conflict(athlete_user_id,task_key) do update set status='open',due_on=excluded.due_on,resolved_at=null,resolved_by=null,resolution_note=null;
  elsif p_action='not_contracted' then
+   if v_case.lifecycle_status<>'trial_expired_decision_pending' then raise exception 'trial decision required' using errcode='22023'; end if;
    update public.commercial_cases set lifecycle_status='awaiting_contract',funnel_status=coalesce(p_funnel_status,'not_converted'),next_action_on=p_next_action_on where athlete_user_id=p_athlete;
    update public.commercial_tasks set status='resolved',resolved_at=now(),resolved_by=auth.uid(),resolution_note='moved to commercial funnel' where athlete_user_id=p_athlete and status='open' and task_type like 'trial_%';
    insert into public.commercial_tasks(athlete_user_id,task_key,task_type,priority,due_on) values(p_athlete,'commercial_contact','commercial_contact',2,coalesce(p_next_action_on,(now() at time zone 'America/Sao_Paulo')::date)) on conflict(athlete_user_id,task_key) do update set status='open',due_on=excluded.due_on,resolved_at=null,resolved_by=null,resolution_note=null;
  elsif p_action='update_funnel' then
-   if p_funnel_status not in ('not_converted','contact_pending','negotiating','converted','lost') then raise exception 'invalid funnel status'; end if;
-   update public.commercial_cases set funnel_status=p_funnel_status,lifecycle_status=case when p_funnel_status='lost' then 'lost' when p_funnel_status='converted' then 'awaiting_contract' else lifecycle_status end,next_action_on=p_next_action_on where athlete_user_id=p_athlete;
- elsif p_action='confirmed_efi' then
-   -- Called only after a real trusted Efí confirmation workflow, never directly by the athlete.
-   update public.commercial_cases set lifecycle_status='converted',funnel_status='converted',converted_at=now(),next_action_on=null where athlete_user_id=p_athlete;
-   update public.commercial_tasks set status='resolved',resolved_at=now(),resolved_by=auth.uid(),resolution_note='converted after trusted payment confirmation' where athlete_user_id=p_athlete and status='open';
+   if p_funnel_status not in ('not_converted','contact_pending','negotiating','lost') then raise exception 'invalid funnel status'; end if;
+   update public.commercial_cases set funnel_status=p_funnel_status,lifecycle_status=case when p_funnel_status='lost' then 'lost' else lifecycle_status end,next_action_on=p_next_action_on where athlete_user_id=p_athlete;
+   if p_funnel_status='lost' then update public.commercial_tasks set status='resolved',resolved_at=now(),resolved_by=auth.uid(),resolution_note='commercial case closed as lost' where athlete_user_id=p_athlete and status='open'; end if;
  else raise exception 'invalid action'; end if;
  insert into public.commercial_history(athlete_user_id,event_type,detail,performed_by) values(p_athlete,p_action,jsonb_strip_nulls(jsonb_build_object('funnel_status',p_funnel_status,'next_action_on',p_next_action_on,'trial_ends_on',p_trial_ends_on,'note',p_note)),auth.uid());
  insert into public.commercial_events(athlete_user_id,event_type,payload) values(p_athlete,'commercial.'||p_action,jsonb_build_object('source','admin'));
