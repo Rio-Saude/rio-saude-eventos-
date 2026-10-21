@@ -4,6 +4,8 @@ import { readFile } from 'node:fs/promises';
 
 const source = await readFile(new URL('../supabase/functions/efi-billing/index.ts', import.meta.url), 'utf8');
 const migration = await readFile(new URL('../supabase/homologation/20261021190000_billing_trials_webhooks.sql', import.meta.url), 'utf8');
+const config = await readFile(new URL('../supabase/config.toml', import.meta.url), 'utf8');
+const onboarding = await readFile(new URL('../onboarding.js', import.meta.url), 'utf8');
 
 test('card trial is server-side, token-only, and remains unconfirmed', () => {
   assert.match(source, /payment_token_required/);
@@ -30,4 +32,17 @@ test('cancellation requires the provider response before persisting cancellation
   assert.match(cancellation, /\/cancel/);
   assert.match(cancellation, /if\(!r\.ok\) throw new Error\('efi_cancel_failed'\)/);
   assert.match(cancellation, /provider_cancelled_at/);
+});
+
+test('browser billing allows CORS preflight but keeps every action authenticated in the handler', () => {
+  assert.match(config, /\[functions\.efi-billing\][\s\S]*?verify_jwt = false/);
+  assert.match(source, /if\(req\.method==='OPTIONS'\) return new Response\(null,\{status:204,headers:h\}\)/);
+  assert.match(source, /const user=scheduledWorker \? null : await userFor\(req\)/);
+  assert.match(source, /if\(!scheduledWorker && !user\) return json\(req,401,\{error:'authentication_required'\}\)/);
+});
+
+test('checkout normalizes and validates a Brazilian billing address before the request', () => {
+  assert.match(onboarding, /replace\(\/\[\^a-z\]\/gi, ''\)\.toUpperCase\(\)/);
+  assert.match(onboarding, /billing_address_invalid/);
+  assert.match(onboarding, /\^\\d\{8\}\$/);
 });

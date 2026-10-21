@@ -664,10 +664,10 @@
           <div id="billing-summary" class="notice field full">Você terá 30 dias grátis, se for elegível. A primeira cobrança será após esse período. A confirmação do pagamento vem somente da Efí.</div>
           <div class="actions field full"><button id="billing-checkout" class="primary-btn" type="submit" disabled>Confirmar contratação</button></div>
         </form>
-        <p class="field-help">A Efí abre em outra aba. Você continua com o cadastro da Rio Saúde aberto.</p>
+        <p class="field-help">A contratação é preparada com segurança neste cadastro. Você seguirá para o TrainingPeaks após a confirmação; pagamento confirmado é informado somente pela Efí.</p>
       </div>
       <div id="efi-return" class="hidden">
-        <p class="lead">Agora que você abriu a Efí, conseguiu terminar o preenchimento?</p>
+        <p class="lead">A contratação foi encaminhada. Você pode continuar o cadastro enquanto aguardamos a confirmação da Efí.</p>
         <p id="billing-status" class="status" role="status" aria-live="polite"></p>
         <div class="actions">
           <button id="efi-done" class="primary-btn" type="button">Já fiz meu cadastro na Efí</button>
@@ -677,7 +677,7 @@
       </div>
       ${isHomologationPreview && profile.payment_status !== 'confirmed' ? `
       <div id="homologation-finance-fallback" class="notice">
-        <strong>Homologação:</strong> a contratação ainda não está disponível neste ambiente. Você pode continuar sem cobrança e resolver o financeiro depois.
+        <strong>Homologação:</strong> se preferir não concluir a contratação agora, você pode continuar sem cobrança e resolver o financeiro depois.
         <div class="actions"><button id="finance-later-homologation" class="secondary-btn" type="button">Continuar e resolver o financeiro depois</button></div>
       </div>` : ''}
       <p id="billing-initial-status" class="status" role="status" aria-live="polite"></p>
@@ -687,6 +687,9 @@
     document.querySelector('#billing-form').addEventListener('submit', startCheckout);
     document.querySelectorAll('[name="payment_method"]').forEach(input => input.addEventListener('change', updatePaymentMethodUI));
     updatePaymentMethodUI();
+      document.querySelector('[name="billing_state"]')?.addEventListener('input', event => {
+        event.target.value = event.target.value.replace(/[^a-z]/gi, '').toUpperCase();
+      });
     document.querySelector('#efi-done').addEventListener('click', () => {
       const afterTrainingPeaks = profile.payment_followup_needed && profile.trainingpeaks_step_seen;
       // A browser click never settles a financial obligation. Only the Efí
@@ -911,7 +914,13 @@
       }
       const form = Object.fromEntries(new FormData(event.currentTarget));
       const paymentMethod = form.payment_method === 'boleto' ? 'boleto' : 'card';
-      const billing_address = {street:String(form.billing_street||''),number:String(form.billing_number||''),complement:String(form.billing_complement||''),neighborhood:String(form.billing_neighborhood||''),city:String(form.billing_city||''),state:String(form.billing_state||'').toUpperCase(),zipcode:String(form.billing_zipcode||'').replace(/\D/g,'')};
+      const billing_address = {
+        street:String(form.billing_street||'').trim(), number:String(form.billing_number||'').trim(),
+        complement:String(form.billing_complement||'').trim(), neighborhood:String(form.billing_neighborhood||'').trim(),
+        city:String(form.billing_city||'').trim(), state:String(form.billing_state||'').replace(/[^a-z]/gi,'').toUpperCase(),
+        zipcode:String(form.billing_zipcode||'').replace(/\D/g,'')
+      };
+      if (!billing_address.street || !billing_address.number || !billing_address.neighborhood || !billing_address.city || !/^[A-Z]{2}$/.test(billing_address.state) || !/^\d{8}$/.test(billing_address.zipcode)) throw new Error('billing_address_invalid');
       const payment_token = paymentMethod === 'card' ? await efiCardToken(form) : undefined;
       const offer = new URLSearchParams(window.location.search).get('offer') === 'standard' ? 'standard' : 'trial';
       const data = await efiBilling({action:paymentMethod,plan_code:planCode,offer,billing_address,payment_token});
@@ -939,6 +948,7 @@
         ,billing_address_required:'Preencha o endereço de cobrança.'
         ,card_details_invalid:'Confira os dados do cartão.'
         ,card_tokenization_failed:'Não foi possível validar o cartão na Efí. Confira os dados ou tente outro cartão de teste.'
+        ,billing_address_invalid:'Confira o endereço de cobrança: informe rua, número, bairro, cidade, UF com duas letras e CEP com oito números.'
       };
       if (status.isConnected) {
         status.className = 'status error';

@@ -4,7 +4,9 @@ project_id = "rio-saude-eventos"
 verify_jwt = true
 
 [functions.efi-billing]
-verify_jwt = true
+# CORS preflight has no user token. The handler validates the Supabase user
+# token before every student/admin action.
+verify_jwt = false
 
 [functions.efi-billing-cron]
 verify_jwt = false
