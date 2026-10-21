@@ -6,5 +6,8 @@ verify_jwt = true
 [functions.efi-billing]
 verify_jwt = true
 
+[functions.efi-billing-cron]
+verify_jwt = false
+
 [functions.efi-webhook]
 verify_jwt = false
