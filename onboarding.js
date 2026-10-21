@@ -686,6 +686,7 @@
 
     document.querySelector('#billing-form').addEventListener('submit', startCheckout);
     document.querySelectorAll('[name="payment_method"]').forEach(input => input.addEventListener('change', updatePaymentMethodUI));
+    updatePaymentMethodUI();
     document.querySelector('#efi-done').addEventListener('click', () => {
       const afterTrainingPeaks = profile.payment_followup_needed && profile.trainingpeaks_step_seen;
       // A browser click never settles a financial obligation. Only the Efí
@@ -712,7 +713,10 @@
     if (card) card.classList.toggle('hidden', method !== 'card');
     card?.querySelectorAll('input').forEach(input => { input.required = method === 'card'; });
     const summary = document.querySelector('#billing-summary');
-    if (summary) summary.textContent = method === 'boleto'
+    const standardOffer = new URLSearchParams(window.location.search).get('offer') === 'standard';
+    if (summary) summary.textContent = standardOffer
+      ? 'Contratação sem gratuidade: a primeira cobrança ou vencimento seguirá a data confirmada pela Efí. Cancelamentos impedem novas cobranças.'
+      : method === 'boleto'
       ? 'Se você for elegível, a experiência começa hoje. O boleto será emitido no 20º dia, vence no 30º dia e as cobranças posteriores serão mensais. Cancelamentos impedem novas cobranças.'
       : 'Se você for elegível, são 30 dias grátis. A primeira cobrança ocorre após o período. Os dados do cartão são tokenizados pela Efí; a Rio Saúde não armazena número, validade ou CVV.';
   }
@@ -909,7 +913,8 @@
       const paymentMethod = form.payment_method === 'boleto' ? 'boleto' : 'card';
       const billing_address = {street:String(form.billing_street||''),number:String(form.billing_number||''),complement:String(form.billing_complement||''),neighborhood:String(form.billing_neighborhood||''),city:String(form.billing_city||''),state:String(form.billing_state||'').toUpperCase(),zipcode:String(form.billing_zipcode||'').replace(/\D/g,'')};
       const payment_token = paymentMethod === 'card' ? await efiCardToken(form) : undefined;
-      const data = await efiBilling({action:paymentMethod,plan_code:planCode,offer:'trial',billing_address,payment_token});
+      const offer = new URLSearchParams(window.location.search).get('offer') === 'standard' ? 'standard' : 'trial';
+      const data = await efiBilling({action:paymentMethod,plan_code:planCode,offer,billing_address,payment_token});
       if (session?.user.id !== userId) return;
       showEfiReturnChoices();
       const end=data?.trial_ends_on ? String(data.trial_ends_on).split('-').reverse().join('/') : '';
