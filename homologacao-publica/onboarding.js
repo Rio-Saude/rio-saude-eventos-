@@ -343,6 +343,7 @@
         <div class="field"><label for="last_name">Sobrenome</label><input id="last_name" name="last_name" value="${value(profile.last_name)}" autocomplete="family-name" required></div>
         <div class="field full"><label for="cpf">CPF</label><input id="cpf" name="cpf" inputmode="numeric" maxlength="14" required placeholder="000.000.000-00" value="${value(formatCpf(profile.cpf))}" aria-describedby="cpf-note"><p id="cpf-note" class="field-help">Seu e-mail continua sendo o login. O CPF será a referência para o cadastro financeiro.</p></div>
         <div class="field"><label for="whatsapp">WhatsApp</label><input id="whatsapp" name="whatsapp" value="${value(profile.whatsapp)}" autocomplete="tel" placeholder="(21) 99999-9999" required></div>
+        <label class="check field full"><input type="checkbox" name="whatsapp_financial_contact_authorized" ${profile.whatsapp_financial_contact_authorized ? 'checked' : ''}><span>Autorizo receber pelo WhatsApp lembretes sobre a ativação e o pagamento do meu plano.</span></label>
         <div class="field"><label for="birth_date">Data de nascimento</label><input id="birth_date" name="birth_date" type="date" value="${value(profile.birth_date)}" required></div>
         <div class="field full"><label for="city">Cidade</label><input id="city" name="city" value="${value(profile.city)}" autocomplete="address-level2" placeholder="Rio de Janeiro" required></div>
         <div class="actions field full"><button class="primary-btn" type="submit">Continuar</button></div>
@@ -370,6 +371,7 @@
       first_name: clean(form.get('first_name')),
       last_name: clean(form.get('last_name')),
       whatsapp: clean(form.get('whatsapp')),
+      whatsapp_financial_contact_authorized: form.get('whatsapp_financial_contact_authorized') === 'on',
       birth_date: clean(form.get('birth_date')),
       city: clean(form.get('city')),
       onboarding_step: 2
@@ -718,7 +720,7 @@
       ? 'Contratação sem gratuidade: a primeira cobrança ou vencimento seguirá a data confirmada pela Efí. Cancelamentos impedem novas cobranças.'
       : method === 'boleto'
       ? 'Se você for elegível, a experiência começa hoje. O boleto será emitido no 20º dia, vence no 30º dia e as cobranças posteriores serão mensais. Cancelamentos impedem novas cobranças.'
-       : 'Se você for elegível, são 30 dias grátis. No fim do período, o checkout oficial da Efí ficará disponível em “Minha assinatura” para cadastrar o cartão. A Rio Saúde não coleta dados do cartão.';
+       : 'Se você for elegível, são 30 dias grátis. No 25º dia enviaremos, se você autorizou o contato pelo WhatsApp, o checkout oficial da Efí. A Efí poderá cobrar quando o cartão for cadastrado; não espere até o 31º dia para concluir. A Rio Saúde não coleta dados do cartão.';
   }
 
   function renderTrialPaymentBypass() {
@@ -791,7 +793,7 @@
       const status = document.querySelector('#billing-status');
       const hostedTrialWaiting = existing?.checkout_kind === 'card_hosted_trial' && existing?.creation_state === 'scheduled';
       const message = profile.payment_status === 'confirmed' ? 'Pagamento confirmado pela Rio Saúde.' :
-        hostedTrialWaiting ? `Sua experiência gratuita está registrada até ${String(existing.trial_ends_on || '').split('-').reverse().join('/')}. O checkout oficial da Efí será disponibilizado somente no fim desse período; nenhum cartão foi solicitado agora.` :
+        hostedTrialWaiting ? `Sua experiência gratuita está registrada até ${String(existing.trial_ends_on || '').split('-').reverse().join('/')}. No 25º dia, o checkout oficial da Efí será enviado pelo WhatsApp caso você tenha autorizado esse contato. A Efí poderá cobrar quando o cartão for cadastrado.` :
         created ? 'Assinatura já criada na Efí. Isso não confirma o pagamento. Você pode continuar sem criar outra assinatura.' :
         'Já existe uma solicitação em processamento ou conferência. Nenhuma nova assinatura será criada. Você pode seguir para o TrainingPeaks enquanto aguarda.';
       status.insertAdjacentHTML('afterbegin','<p>' + escapeHtml(message) + '</p>');
@@ -915,7 +917,7 @@
       document.querySelector('#billing-status').textContent = paymentMethod === 'boleto'
         ? `Experiência registrada${end ? ` até ${end}` : ''}. O boleto não foi emitido agora; a emissão é programada para o 20º dia.`
         : data?.checkout_deferred
-          ? `Experiência registrada${end ? ` até ${end}` : ''}. No fim desse período, o checkout oficial da Efí ficará disponível em “Minha assinatura”. Nenhum cartão foi solicitado agora.`
+          ? `Experiência registrada${end ? ` até ${end}` : ''}. No 25º dia, enviaremos o checkout oficial da Efí pelo WhatsApp se você autorizou o contato. A Efí poderá cobrar quando o cartão for cadastrado; nenhum cartão foi solicitado agora.`
           : 'O checkout oficial da Efí está disponível em “Minha assinatura”. O pagamento só será confirmado após a notificação da Efí.';
     } catch (error) {
       if (['subscription_exists','existing_subscription_other_plan','checkout_in_progress','checkout_requires_review'].includes(error.message)) {

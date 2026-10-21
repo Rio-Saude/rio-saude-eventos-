@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const source = await readFile(new URL('../supabase/functions/efi-billing/index.ts', import.meta.url), 'utf8');
+const cronWorker = await readFile(new URL('../supabase/functions/efi-billing-cron/index.ts', import.meta.url), 'utf8');
+const followupMigration = await readFile(new URL('../supabase/migrations/20261021194256_homologation_hosted_card_whatsapp_followup.sql', import.meta.url), 'utf8');
 const migration = await readFile(new URL('../supabase/homologation/20261021190000_billing_trials_webhooks.sql', import.meta.url), 'utf8');
 const config = await readFile(new URL('../supabase/config.toml', import.meta.url), 'utf8');
 const onboarding = await readFile(new URL('../onboarding.js', import.meta.url), 'utf8');
@@ -24,12 +26,24 @@ test('boleto trial has a persisted 20th-day issue date and 30th-day due date', (
   assert.match(migration, /due_boleto_trials/);
 });
 
-test('hosted card checkout is not created before the end of the trial', () => {
+test('hosted card checkout is created on day 25 and is valid through day 31', () => {
   assert.match(source, /checkout_kind','card_hosted_trial/);
-  assert.match(source, /\.lte\('first_charge_on',today\)/);
-  assert.match(source, /addDays\(spDate\(\),7\)/);
-  assert.match(source, /financial\.card_checkout_coming/);
-  assert.match(source, /card_checkout_coming:\$\{sub\.id\}/);
+  assert.match(source, /checkout_link_on:kind==='card_hosted_trial'\?addDays\(start,24\):null/);
+  assert.match(source, /checkout_reminder_on:kind==='card_hosted_trial'\?addDays\(start,30\):null/);
+  assert.match(cronWorker, /\.lte\('checkout_link_on', today\)/);
+  assert.match(cronWorker, /addDays\(today, 6\)/);
+  assert.match(cronWorker, /card_checkout_day_25/);
+  assert.match(cronWorker, /card_checkout_day_31/);
+});
+
+test('WhatsApp follow-up has explicit consent, a durable idempotent ledger, and remains disabled without configuration', () => {
+  assert.match(followupMigration, /whatsapp_financial_contact_authorized boolean not null default false/);
+  assert.match(followupMigration, /unique\(subscription_id,message_kind\)/);
+  assert.match(followupMigration, /revoke all on public\.billing_notification_attempts from anon, authenticated/);
+  assert.match(cronWorker, /EVOLUTION_SEND_ENABLED_HOMOLOG/);
+  assert.match(cronWorker, /evolution_delivery_disabled/);
+  assert.match(cronWorker, /apikey: apiKey/);
+  assert.match(cronWorker, /notification_no_longer_eligible/);
 });
 
 test('webhook ledger and browser data use ownership RLS, not public write access', () => {

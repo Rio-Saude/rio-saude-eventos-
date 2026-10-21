@@ -9,7 +9,7 @@ begin
   select decrypted_secret into project_url from vault.decrypted_secrets where name='rio_saude_hml_project_url';
   select decrypted_secret into schedule_secret from vault.decrypted_secrets where name='rio_saude_hml_billing_cron_secret';
   if project_url <> 'https://xiiudduncvcxcvbgbqpc.supabase.co' or schedule_secret is null then raise exception 'missing or invalid billing cron configuration'; end if;
-  perform net.http_post(url:=project_url||'/functions/v1/efi-billing-cron',headers:=jsonb_build_object('Content-Type','application/json','x-rio-schedule-secret',schedule_secret),body:='{"action":"run_due_boleto"}'::jsonb,timeout_milliseconds:=30000);
+  perform net.http_post(url:=project_url||'/functions/v1/efi-billing-cron',headers:=jsonb_build_object('Content-Type','application/json','x-rio-schedule-secret',schedule_secret),body:='{"action":"run_financial_followup"}'::jsonb,timeout_milliseconds:=30000);
 end; $$;
 revoke all on function public.invoke_homologation_billing_cron() from public, anon, authenticated;
 
