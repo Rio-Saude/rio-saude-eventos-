@@ -1,12 +1,18 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.117.2";
 
-// Administrative, idempotent setup of the two DISCOUNTED homologation plans.
+// Administrative, idempotent setup of all Rio Saúde homologation plans.
 // It does not create athlete subscriptions, charges or production plans.
 const BASE = "https://cobrancas-h.api.efipay.com.br";
-const ORIGIN = "https://rio-saude.github.io";
+const ORIGINS = new Set([
+  "http://127.0.0.1:4173",
+  "http://localhost:4173",
+  "https://rio-saude-homologacao-20261021.balmypuppy7.chatgpt.site"
+]);
 const TARGETS = [
+  { code: "single_monthly", name: "Rio Saúde - 1 modalidade R$390 - Mensal - Homologação", price: 39000 },
   { code: "single_290_monthly", name: "Rio Saúde - 1 modalidade R$290 - Mensal - Homologação", price: 29000 },
+  { code: "multi_monthly", name: "Rio Saúde - 2+ modalidades R$490 - Mensal - Homologação", price: 49000 },
   { code: "multi_tri_u26_monthly", name: "Rio Saúde - 2+ modalidades até 25 anos R$390 - Mensal - Homologação", price: 39000 }
 ] as const;
 const supabaseProjectUrl = Deno.env.get("SUPABASE_URL") || "";
@@ -22,10 +28,10 @@ Deno.serve(async (req: Request) => {
     "Access-Control-Allow-Headers": "authorization, apikey, x-client-info, content-type",
     "Access-Control-Allow-Methods": "POST, OPTIONS"
   };
-  if (origin === ORIGIN) headers["Access-Control-Allow-Origin"] = ORIGIN;
+  if (origin && ORIGINS.has(origin)) headers["Access-Control-Allow-Origin"] = origin;
   const reply = (status: number, data: unknown) =>
     new Response(JSON.stringify(data), { status, headers });
-  if (origin && origin !== ORIGIN) return reply(403, { error: "origin_not_allowed" });
+  if (origin && !ORIGINS.has(origin)) return reply(403, { error: "origin_not_allowed" });
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers });
   if (req.method !== "POST") return reply(405, { error: "method_not_allowed" });
   if (Deno.env.get("EFI_ENV") !== "homologation") return reply(503, { error: "homologation_only" });

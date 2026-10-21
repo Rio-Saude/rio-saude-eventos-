@@ -13,6 +13,8 @@ const financialFollowupMigration = await readFile(new URL('../supabase/migration
 const publicHomologationIndex = await readFile(new URL('../homologacao-publica/dist/index.html', import.meta.url), 'utf8');
 const publicHomologationConfig = await readFile(new URL('../homologacao-publica/dist/config-homologacao.js', import.meta.url), 'utf8');
 const operationsMigration = await readFile(new URL('../supabase/migrations/20261021170000_homologation_billing_operations.sql', import.meta.url), 'utf8');
+const efiSandboxPlans = await readFile(new URL('../supabase/homologation/20261021180000_efi_homologation_plans.sql', import.meta.url), 'utf8');
+const efiPlanProvisioning = await readFile(new URL('../supabase/functions/efi-activate-discounted-plans/index.ts', import.meta.url), 'utf8');
 
 test('experimental invitations are server-bound, exclusive, and thirty days long', () => {
   assert.match(migration, /ends_on = starts_on \+ 29/);
@@ -143,4 +145,15 @@ test('simple admin operations view remains restricted and excludes PAR-Q', async
   assert.doesNotMatch(operationsMigration, /health_screenings/);
   assert.match(admin, /admin_operations_dashboard/);
   assert.match(admin, /students:'Alunos',races:'Provas',finance:'Financeiro',tasks:'Pendências'/);
+});
+
+test('sandbox plan provisioning is admin-only, isolated and uses the existing four prices', () => {
+  assert.match(efiSandboxPlans, /HOMOLOGATION ONLY\. Do not apply to production/);
+  for (const [code, price] of [['single_monthly',39000],['single_290_monthly',29000],['multi_monthly',49000],['multi_tri_u26_monthly',39000]]) {
+    assert.match(efiSandboxPlans, new RegExp(`\\('${code}'.*${price}`));
+  }
+  assert.match(efiPlanProvisioning, /EFI_ENV"\) !== "homologation"/);
+  assert.match(efiPlanProvisioning, /admin_only/);
+  assert.match(efiPlanProvisioning, /https:\/\/cobrancas-h\.api\.efipay\.com\.br/);
+  assert.doesNotMatch(efiPlanProvisioning, /cobrancas\.api\.efipay\.com\.br/);
 });
