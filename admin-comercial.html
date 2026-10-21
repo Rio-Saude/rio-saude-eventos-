@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Rio Saúde · Comercial</title><link rel="stylesheet" href="portal.css?v=commercial-crm-20261021-v1">
+</head>
+<body><main class="shell admin-commercial">
+  <div class="topbar"><div class="brand">RIO SAÚDE · COMERCIAL</div><div class="toplinks"><a href="admin.html">Central de provas</a><a href="admin-parq.html">PAR-Q</a><a href="index.html">Portal</a></div></div>
+  <section class="hero"><small>Área restrita</small><h1>Acompanhamento comercial.</h1><p>Cadastros, experiências e pendências. O PAR-Q não é exibido nesta área.</p></section>
+  <section id="access" class="card"><p id="status" class="status" role="status">Conferindo acesso...</p></section>
+  <div id="app" class="hidden">
+    <section class="card"><div class="step-kicker">Novo aluno experimental</div><h2>Criar convite individual</h2><p class="lead">O link fica vinculado ao e-mail informado e expira. O período é de 30 dias a partir da data autorizada.</p>
+      <form id="invite-form" class="grid"><div class="field"><label for="invite-email">E-mail</label><input id="invite-email" name="email" type="email" required></div><div class="field"><label for="invite-start">Início autorizado</label><input id="invite-start" name="starts_on" type="date" required></div><div class="actions field full"><button class="primary-btn" type="submit">Gerar convite</button></div></form><p id="invite-result" class="status" aria-live="polite"></p>
+    </section>
+    <section class="card commercial-list"><div class="topbar"><div><div class="step-kicker">Funil e pendências</div><h2>Alunos acompanhados</h2></div><button id="refresh" class="secondary-btn" type="button">Atualizar</button></div><div id="summary" class="dashboard-grid"></div><div id="cases" class="case-list"></div></section>
+  </div>
+</main><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.min.js"></script><script src="config.js"></script><script src="commercial-admin.js"></script></body></html>

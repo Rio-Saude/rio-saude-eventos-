@@ -39,6 +39,7 @@
   let parqOnlyMode = false;
   let availableRaceOptions = [];
   let pendingRaceEntries = [];
+  let trialAccess = null;
 
   loginForm.addEventListener('submit', (event) => {
     event.preventDefault();
@@ -204,6 +205,9 @@
 
   async function bootAuthenticated() {
     await loadOrCreateProfile();
+    await claimTrialFromUrl();
+    await loadTrialAccess();
+    await preserveSelectedPlanFromUrl();
     // Migrated users already on financeiro/TrainingPeaks complete the new health step first.
     if (!profile.onboarding_completed_at && Number(profile.onboarding_step) >= 4) {
       const {data:health,error:healthError}=await client.from('health_screenings')
@@ -224,11 +228,34 @@
     const params = new URLSearchParams(location.search);
     editing = Boolean(profile.onboarding_completed_at && params.get('edit') === '1');
     editStep = params.get('edit') === '1' ? 1 : 1;
-    history.replaceState(null, '', location.pathname);
+    history.replaceState(null, '', location.pathname + (params.get('edit') === '1' ? '?edit=1' : ''));
     loginView.classList.add('hidden');
     appView.classList.remove('hidden');
     logoutButton.classList.remove('hidden');
     render();
+  }
+
+  async function claimTrialFromUrl() {
+    const token = new URLSearchParams(location.search).get('trial');
+    if (!token) return;
+    if (!/^[a-f0-9]{64}$/i.test(token)) throw new Error('invalid_trial_invitation');
+    const { error } = await client.rpc('claim_trial_invitation', { p_token: token });
+    if (error) throw error;
+  }
+
+  async function loadTrialAccess() {
+    const { data, error } = await client.rpc('my_trial_access');
+    if (error) throw error;
+    trialAccess = data?.[0] || null;
+  }
+
+  async function preserveSelectedPlanFromUrl() {
+    const selected = new URLSearchParams(location.search).get('plan');
+    if (!selected || !/^[a-z0-9_-]{2,64}$/i.test(selected) || profile.selected_plan_code === selected) return;
+    const { data, error } = await client.from('athlete_profiles').update({ selected_plan_code: selected })
+      .eq('user_id', session.user.id).select('*').single();
+    if (error) throw error;
+    profile = data;
   }
 
   async function loadOrCreateProfile() {
@@ -290,8 +317,10 @@
 
   function renderProgress(step) {
     progressRoot.innerHTML = '';
+    const labels = ['Dados pessoais', 'Perfil esportivo', 'Saúde / PAR-Q', 'Plano e pagamento', 'TrainingPeaks'];
     for (let i = 1; i <= 5; i += 1) {
       const item = document.createElement('span');
+      item.textContent = labels[i - 1];
       if (i <= step) item.classList.add('active');
       progressRoot.appendChild(item);
     }
@@ -602,6 +631,10 @@
   }
 
   function renderPayment() {
+    if (trialAccess && trialAccess.lifecycle_status !== 'trial_expired_decision_pending') {
+      renderTrialPaymentBypass();
+      return;
+    }
     stepRoot.innerHTML = `
       <div class="step-kicker">4 de 5 · Financeiro</div>
       <h2>Cadastro financeiro</h2>
@@ -641,6 +674,18 @@
       payment_status:profile.payment_status === 'confirmed' ? 'confirmed' : 'pending',payment_followup_needed:profile.payment_status !== 'confirmed',onboarding_step:5
     }));
     loadExistingCheckout();
+    bindBackButtons();
+  }
+
+  function renderTrialPaymentBypass() {
+    const end = String(trialAccess.ends_on || '').split('-').reverse().join('/');
+    stepRoot.innerHTML = `
+      <div class="step-kicker">4 de 5 · Plano e pagamento</div>
+      <h2>Seu período experimental está ativo.</h2>
+      <div class="success-box"><strong>Sem cobrança nesta etapa.</strong><br>Seu acesso experimental vai até ${escapeHtml(end)}. Você pode seguir para o TrainingPeaks sem informar cartão ou criar cobrança.</div>
+      <p class="lead">Quando quiser contratar um plano, a equipe poderá aproveitar este mesmo cadastro.</p>
+      <div class="actions"><button id="trial-continue" class="primary-btn" type="button">Continuar para o TrainingPeaks</button><button class="text-btn" type="button" data-back="3">Voltar</button></div>`;
+    document.querySelector('#trial-continue').addEventListener('click', () => updateProfile({ onboarding_step: 5 }));
     bindBackButtons();
   }
 
@@ -893,8 +938,8 @@
   async function saveTrainingPeaks(event) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
-    const needsPayment = profile.payment_followup_needed ||
-      (profile.payment_status !== 'submitted' && profile.payment_status !== 'confirmed');
+    const needsPayment = !trialAccess && (profile.payment_followup_needed ||
+      (profile.payment_status !== 'submitted' && profile.payment_status !== 'confirmed'));
     await updateProfile({
       watch_brand:clean(form.get('watch_brand')) || null,
       watch_connected:form.get('watch_brand') && form.get('watch_brand') !== 'Não uso' &&
@@ -916,7 +961,7 @@
       <h2>${firstName ? 'Pronto, ' + firstName + '.' : 'Cadastro salvo.'}</h2>
       <p class="lead">Seus dados estão salvos na Rio Saúde. A equipe poderá consultar suas informações e acompanhar seu início nos treinos.</p>
       ${raceSummary ? `<p class="field-help">${escapeHtml(raceSummary)}</p>` : ''}
-      <p class="field-help">O cadastro na Efí não é confirmação de pagamento. A situação financeira será verificada separadamente.</p>
+      <p class="field-help">${trialAccess ? 'Seu período experimental está registrado. A contratação poderá ser feita com este mesmo cadastro.' : 'O cadastro na Efí não é confirmação de pagamento. A situação financeira será verificada separadamente.'}</p>
       <div class="actions">
         <a class="primary-btn" href="index.html">Voltar ao portal</a>
         <button id="edit-profile" class="secondary-btn" type="button">Editar minhas informações</button>
@@ -999,6 +1044,7 @@
     progressRoot.classList.remove('hidden');
     session = null;
     profile = null;
+    trialAccess = null;
     editing = false;
     updated = false;
     parqOnlyMode = false;
