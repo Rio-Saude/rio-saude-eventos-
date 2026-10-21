@@ -46,3 +46,11 @@ test('checkout normalizes and validates a Brazilian billing address before the r
   assert.match(onboarding, /billing_address_invalid/);
   assert.match(onboarding, /\^\\d\{8\}\$/);
 });
+
+test('checkout retains its form before the asynchronous duplicate check', () => {
+  const checkout = onboarding.slice(onboarding.indexOf('async function startCheckout'), onboarding.indexOf('function renderTrainingPeaks'));
+  assert.match(checkout, /const formElement = event\.currentTarget/);
+  assert.match(checkout, /const formData = new FormData\(formElement\)/);
+  assert.match(checkout, /const form = Object\.fromEntries\(formData\)/);
+  assert.doesNotMatch(checkout, /new FormData\(event\.currentTarget\)/);
+});

@@ -897,8 +897,10 @@
 
   async function startCheckout(event) {
     event.preventDefault();
-    if (checkoutBusy || saving || !session?.user) return;
-    const planCode = new FormData(event.currentTarget).get('plan_code');
+    const formElement = event.currentTarget;
+    if (checkoutBusy || saving || !session?.user || !(formElement instanceof HTMLFormElement)) return;
+    const formData = new FormData(formElement);
+    const planCode = formData.get('plan_code');
     if (!planCode) return;
     const userId = session.user.id;
     const status = document.querySelector('#billing-initial-status');
@@ -912,7 +914,9 @@
       if (await loadExistingCheckout({preparePlans:false})) {
         return;
       }
-      const form = Object.fromEntries(new FormData(event.currentTarget));
+      // Event.currentTarget is only set while the listener is running. Keep the
+      // form snapshot above because the duplicate-check await has already run.
+      const form = Object.fromEntries(formData);
       const paymentMethod = form.payment_method === 'boleto' ? 'boleto' : 'card';
       const billing_address = {
         street:String(form.billing_street||'').trim(), number:String(form.billing_number||'').trim(),
