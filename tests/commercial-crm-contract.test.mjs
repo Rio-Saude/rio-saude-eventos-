@@ -12,6 +12,7 @@ const commercialAdmin = await readFile(new URL('../commercial-admin.js', import.
 const financialFollowupMigration = await readFile(new URL('../supabase/migrations/20261021150000_commercial_financial_followup.sql', import.meta.url), 'utf8');
 const publicHomologationIndex = await readFile(new URL('../homologacao-publica/dist/index.html', import.meta.url), 'utf8');
 const publicHomologationConfig = await readFile(new URL('../homologacao-publica/dist/config-homologacao.js', import.meta.url), 'utf8');
+const operationsMigration = await readFile(new URL('../supabase/migrations/20261021170000_homologation_billing_operations.sql', import.meta.url), 'utf8');
 
 test('experimental invitations are server-bound, exclusive, and thirty days long', () => {
   assert.match(migration, /ends_on = starts_on \+ 29/);
@@ -95,8 +96,8 @@ test('URL plan preference is limited to known coaching plans', () => {
 });
 
 test('trial invitations use the configured onboarding page', () => {
-  assert.match(commercialAdmin, /const onboardingPage=config\.onboardingPage\|\|'onboarding\.html'/);
-  assert.match(commercialAdmin, /\$\{onboardingPage\}\?trial=/);
+  assert.match(commercialAdmin, /page=config\.onboardingPage\|\|'onboarding\.html'/);
+  assert.match(commercialAdmin, /\$\{page\}\?trial=/);
   assert.match(homologationConfig, /onboardingPage: "onboarding-homologacao\.html"/);
 });
 
@@ -114,4 +115,32 @@ test('public homologation bundle contains only the isolated Supabase configurati
   assert.match(publicHomologationConfig, /https:\/\/xiiudduncvcxcvbgbqpc\.supabase\.co/);
   assert.doesNotMatch(publicHomologationIndex, /zzxveirmtgnrokgjthhy/);
   assert.doesNotMatch(publicHomologationConfig, /zzxveirmtgnrokgjthhy|service_role/i);
+});
+
+test('financial operations remain server-controlled, with durable charge history and no fake confirmation', () => {
+  assert.match(operationsMigration, /create table if not exists public\.billing_charges/);
+  assert.match(operationsMigration, /alter table public\.billing_charges enable row level security/);
+  assert.match(operationsMigration, /revoke all on public\.billing_charges from anon, authenticated/);
+  assert.match(operationsMigration, /free_trial_days smallint not null default 0 check \(free_trial_days in \(0,30\)\)/);
+  assert.match(operationsMigration, /free_trial_available/);
+  assert.match(operationsMigration, /prior\.cpf=current_profile\.cpf/);
+  assert.doesNotMatch(operationsMigration, /set\s+payment_status\s*=\s*'confirmed'/i);
+});
+
+test('future notification queue and daily rules are idempotent', () => {
+  assert.match(operationsMigration, /event_key text/);
+  assert.match(operationsMigration, /commercial_events_one_key_per_athlete/);
+  assert.match(operationsMigration, /on conflict \(athlete_user_id,event_key\).*do nothing/);
+  assert.match(operationsMigration, /trial_7_days:/);
+  assert.match(operationsMigration, /trial_3_days:/);
+  assert.match(operationsMigration, /trial_expired:/);
+});
+
+test('simple admin operations view remains restricted and excludes PAR-Q', async () => {
+  const admin = await readFile(new URL('../commercial-admin.js', import.meta.url), 'utf8');
+  assert.match(operationsMigration, /admin_operations_dashboard/);
+  assert.match(operationsMigration, /auth\.uid\(\) is not null and public\.is_admin\(\)/);
+  assert.doesNotMatch(operationsMigration, /health_screenings/);
+  assert.match(admin, /admin_operations_dashboard/);
+  assert.match(admin, /students:'Alunos',races:'Provas',finance:'Financeiro',tasks:'Pendências'/);
 });
