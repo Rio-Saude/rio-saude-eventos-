@@ -120,4 +120,3 @@
   }
   window.RioSaudePARQ={render,questions:QUESTIONS,version};
 })();
-
