@@ -1,6 +1,10 @@
 (() => {
   const config = window.RIO_SAUDE_CONFIG || {};
   const ready = Boolean(config.supabaseUrl && config.supabaseAnonKey && window.supabase);
+  // This is tied to the isolated project ref, not a URL flag or a hidden control.
+  // If a browser changes it, its client can only point at homologation, never production.
+  const isHomologationPreview = config.supabaseUrl === 'https://xiiudduncvcxcvbgbqpc.supabase.co' &&
+    config.environmentLabel === 'HOMOLOGAÇÃO';
 
   const loginView = document.querySelector('#login-view');
   const appView = document.querySelector('#app-view');
@@ -657,6 +661,11 @@
         </div>
         <p class="field-help">Isso não confirma o pagamento. Se ainda não terminou, você poderá voltar à Efí depois do TrainingPeaks.</p>
       </div>
+      ${isHomologationPreview && profile.payment_status !== 'confirmed' ? `
+      <div id="homologation-finance-fallback" class="notice">
+        <strong>Homologação:</strong> a contratação ainda não está disponível neste ambiente. Você pode continuar sem cobrança e resolver o financeiro depois.
+        <div class="actions"><button id="finance-later-homologation" class="secondary-btn" type="button">Continuar e resolver o financeiro depois</button></div>
+      </div>` : ''}
       <p id="billing-initial-status" class="status" role="status" aria-live="polite"></p>
       <p class="field-help">Ambiente de teste: não efetue pagamentos reais.</p>
       <div class="actions"><button class="text-btn" type="button" data-back="3">Voltar</button></div>`;
@@ -672,6 +681,9 @@
     });
     document.querySelector('#efi-later').addEventListener('click', () => updateProfile({
       payment_status:profile.payment_status === 'confirmed' ? 'confirmed' : 'pending',payment_followup_needed:profile.payment_status !== 'confirmed',onboarding_step:5
+    }));
+    document.querySelector('#finance-later-homologation')?.addEventListener('click', () => updateProfile({
+      payment_status: 'pending', payment_followup_needed: true, onboarding_step: 5
     }));
     loadExistingCheckout();
     bindBackButtons();
@@ -940,6 +952,9 @@
     const form = new FormData(event.currentTarget);
     const needsPayment = !trialAccess && (profile.payment_followup_needed ||
       (profile.payment_status !== 'submitted' && profile.payment_status !== 'confirmed'));
+    const canFinishWithFinancialFollowup = isHomologationPreview &&
+      profile.payment_status === 'pending' && profile.payment_followup_needed;
+    const mayComplete = !needsPayment || canFinishWithFinancialFollowup;
     await updateProfile({
       watch_brand:clean(form.get('watch_brand')) || null,
       watch_connected:form.get('watch_brand') && form.get('watch_brand') !== 'Não uso' &&
@@ -947,9 +962,9 @@
       trainingpeaks_step_seen:true,
       trainingpeaks_status:event.submitter?.value === 'completed' ? 'completed' :
         (profile.trainingpeaks_status || 'pending'),
-      onboarding_step:needsPayment ? 4 : 5,
-      ...(needsPayment ? {} : { onboarding_completed_at: profile.onboarding_completed_at || new Date().toISOString() })
-    }, {finishEdit:editing && !needsPayment});
+      onboarding_step:mayComplete ? 5 : 4,
+      ...(mayComplete ? { onboarding_completed_at: profile.onboarding_completed_at || new Date().toISOString() } : {})
+    }, {finishEdit:editing && mayComplete});
   }
 
   function renderDashboard() {
