@@ -136,7 +136,7 @@ begin
   select lower(email) into v_email from auth.users where id=auth.uid();
   select * into v_invite from public.trial_invitations
    where token_hash=encode(extensions.digest(p_token,'sha256'),'hex') and revoked_at is null
-     and expires_at>now() and starts_on <= (now() at time zone 'America/Sao_Paulo')::date
+     and expires_at>now() and trial_invitations.starts_on <= (now() at time zone 'America/Sao_Paulo')::date
      and lower(invited_email)=v_email for update;
   if not found then raise exception 'invalid or expired invitation' using errcode='42501'; end if;
   if v_invite.claimed_at is not null then raise exception 'invitation already used' using errcode='42501'; end if;

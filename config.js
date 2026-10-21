@@ -1,4 +1,4 @@
-window.RIO_SAUDE_CONFIG = {
+const rioSaudeProductionConfig = {
   registrationEnabled: true,
   onboardingEnabled: true,
   supabaseUrl: "https://zzxveirmtgnrokgjthhy.supabase.co",
@@ -9,3 +9,14 @@ window.RIO_SAUDE_CONFIG = {
   efiPaymentUrl: "",
   whatsappGroupUrl: ""
 };
+
+// Local/static preview only. Production remains the default and is never selected implicitly.
+const rioSaudeHomologationConfig = {
+  ...rioSaudeProductionConfig,
+  supabaseUrl: "https://xiiudduncvcxcvbgbqpc.supabase.co",
+  supabaseAnonKey: "sb_publishable_K2bGyfOGFvmzY4mB-kDagQ_RMkIhXmF"
+};
+
+window.RIO_SAUDE_CONFIG = new URLSearchParams(window.location.search).get('environment') === 'homologacao'
+  ? rioSaudeHomologationConfig
+  : rioSaudeProductionConfig;
