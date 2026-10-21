@@ -6,6 +6,7 @@ const migration = await readFile(new URL('../supabase/migrations/20261021093000_
 const onboarding = await readFile(new URL('../onboarding.js', import.meta.url), 'utf8');
 const productionConfig = await readFile(new URL('../config.js', import.meta.url), 'utf8');
 const homologationConfig = await readFile(new URL('../config-homologacao.js', import.meta.url), 'utf8');
+const homologationRaceCatalog = await readFile(new URL('../supabase/homologation/20261021121000_onboarding_test_race_catalog.sql', import.meta.url), 'utf8');
 
 test('experimental invitations are server-bound, exclusive, and thirty days long', () => {
   assert.match(migration, /ends_on = starts_on \+ 29/);
@@ -56,4 +57,15 @@ test('financial deferral is isolated to the known homologation project', () => {
   assert.doesNotMatch(productionConfig, /xiiudduncvcxcvbgbqpc/);
   assert.match(homologationConfig, /https:\/\/xiiudduncvcxcvbgbqpc\.supabase\.co/);
   assert.match(homologationConfig, /environmentLabel: "HOMOLOGAÇÃO"/);
+});
+
+test('homologation race catalog is isolated, read-only, and uses non-personal fixtures', () => {
+  assert.match(onboarding, /const raceCatalogSource = isHomologationPreview \? 'onboarding_race_catalog' : 'events'/);
+  assert.match(onboarding, /client\.from\(raceCatalogSource\)/);
+  assert.match(homologationRaceCatalog, /HOMOLOGATION ONLY\. Never apply this file to production/);
+  assert.match(homologationRaceCatalog, /alter table public\.onboarding_race_catalog enable row level security/);
+  assert.match(homologationRaceCatalog, /revoke all on public\.onboarding_race_catalog from anon/);
+  assert.match(homologationRaceCatalog, /grant select on public\.onboarding_race_catalog to authenticated/);
+  assert.match(homologationRaceCatalog, /Prova de teste Rio Saúde/);
+  assert.doesNotMatch(homologationRaceCatalog, /athlete_email|cpf|health_screenings|auth\.users/i);
 });

@@ -5,6 +5,7 @@
   // If a browser changes it, its client can only point at homologation, never production.
   const isHomologationPreview = config.supabaseUrl === 'https://xiiudduncvcxcvbgbqpc.supabase.co' &&
     config.environmentLabel === 'HOMOLOGAÇÃO';
+  const raceCatalogSource = isHomologationPreview ? 'onboarding_race_catalog' : 'events';
 
   const loginView = document.querySelector('#login-view');
   const appView = document.querySelector('#app-view');
@@ -560,7 +561,7 @@
     const datalist = document.querySelector('#race-suggestions');
     if (!datalist) return;
     try {
-      const { data, error } = await client.from('events')
+      const { data, error } = await client.from(raceCatalogSource)
         .select('name,event_date')
         .eq('active',true)
         .gte('event_date',new Date().toISOString().slice(0,10))
