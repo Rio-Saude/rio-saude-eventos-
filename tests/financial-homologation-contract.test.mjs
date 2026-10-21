@@ -7,9 +7,12 @@ const migration = await readFile(new URL('../supabase/homologation/2026102119000
 const config = await readFile(new URL('../supabase/config.toml', import.meta.url), 'utf8');
 const onboarding = await readFile(new URL('../onboarding.js', import.meta.url), 'utf8');
 
-test('card trial is server-side, token-only, and remains unconfirmed', () => {
-  assert.match(source, /payment_token_required/);
-  assert.match(source, /trial_days:eligible\?30/);
+test('hosted card trial is server-side, delayed, and remains unconfirmed', () => {
+  assert.match(source, /card_hosted_trial/);
+  assert.match(source, /checkout_deferred:true/);
+  assert.match(source, /subscription\/one-step\/link/);
+  assert.match(source, /payment_method:'credit_card'/);
+  assert.doesNotMatch(source, /payment_token/);
   assert.match(source, /payment_status:'pending',payment_followup_needed:true/);
   assert.doesNotMatch(source, /payment_status:'confirmed'/);
 });
@@ -19,6 +22,14 @@ test('boleto trial has a persisted 20th-day issue date and 30th-day due date', (
   assert.match(source, /first_due_on:method==='boleto'\?\(useTrial\?ends:start\)/);
   assert.match(source, /creation_state:'scheduled'/);
   assert.match(migration, /due_boleto_trials/);
+});
+
+test('hosted card checkout is not created before the end of the trial', () => {
+  assert.match(source, /checkout_kind','card_hosted_trial/);
+  assert.match(source, /\.lte\('first_charge_on',today\)/);
+  assert.match(source, /addDays\(spDate\(\),7\)/);
+  assert.match(source, /financial\.card_checkout_coming/);
+  assert.match(source, /card_checkout_coming:\$\{sub\.id\}/);
 });
 
 test('webhook ledger and browser data use ownership RLS, not public write access', () => {
@@ -45,6 +56,13 @@ test('checkout normalizes and validates a Brazilian billing address before the r
   assert.match(onboarding, /replace\(\/\[\^a-z\]\/gi, ''\)\.toUpperCase\(\)/);
   assert.match(onboarding, /billing_address_invalid/);
   assert.match(onboarding, /\^\\d\{8\}\$/);
+});
+
+test('onboarding does not render or send card details to Rio Saúde', () => {
+  assert.doesNotMatch(onboarding, /card_cvv/);
+  assert.doesNotMatch(onboarding, /card_number/);
+  assert.match(onboarding, /action:paymentMethod === 'boleto' \? 'boleto' : 'card_hosted'/);
+  assert.match(onboarding, /checkout oficial da Efí/);
 });
 
 test('checkout retains its form before the asynchronous duplicate check', () => {

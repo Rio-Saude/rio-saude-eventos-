@@ -651,17 +651,14 @@
             <div id="billing-plans" class="goal-options">Carregando planos...</div>
           </fieldset>
           <fieldset class="field full choice-fieldset"><legend>Forma de pagamento</legend>
-            <label class="goal-option"><input type="radio" name="payment_method" value="card" checked><span>Cartão de crédito</span></label>
+            <label class="goal-option"><input type="radio" name="payment_method" value="card" checked><span>Cartão de crédito · checkout Efí ao fim da experiência</span></label>
             <label class="goal-option"><input type="radio" name="payment_method" value="boleto"><span>Boleto</span></label>
           </fieldset>
-          <fieldset class="field full choice-fieldset"><legend>Endereço de cobrança</legend>
-            <p class="field-help">Solicitamos somente para a cobrança. Os dados do cartão são tokenizados pela Efí e não passam pela Rio Saúde.</p>
+          <fieldset id="billing-address" class="field full choice-fieldset"><legend>Endereço de cobrança</legend>
+            <p class="field-help">Solicitamos este endereço somente para a emissão de boleto.</p>
             <div class="grid"><label class="field full">Rua<input name="billing_street" autocomplete="street-address" required></label><label class="field">Número<input name="billing_number" autocomplete="address-line2" required></label><label class="field">Complemento<input name="billing_complement" autocomplete="address-line2"></label><label class="field">Bairro<input name="billing_neighborhood" autocomplete="address-level3" required></label><label class="field">Cidade<input name="billing_city" autocomplete="address-level2" required></label><label class="field">UF<input name="billing_state" maxlength="2" autocomplete="address-level1" required></label><label class="field">CEP<input name="billing_zipcode" inputmode="numeric" maxlength="9" autocomplete="postal-code" required></label></div>
           </fieldset>
-          <fieldset id="card-details" class="field full choice-fieldset"><legend>Dados do cartão</legend>
-            <div class="grid"><label class="field full">Nome no cartão<input name="card_holder" autocomplete="cc-name"></label><label class="field full">Número<input name="card_number" inputmode="numeric" autocomplete="cc-number"></label><label class="field">Validade (MM/AA)<input name="card_expiry" inputmode="numeric" autocomplete="cc-exp" placeholder="MM/AA"></label><label class="field">CVV<input name="card_cvv" inputmode="numeric" autocomplete="cc-csc" maxlength="4"></label></div>
-          </fieldset>
-          <div id="billing-summary" class="notice field full">Você terá 30 dias grátis, se for elegível. A primeira cobrança será após esse período. A confirmação do pagamento vem somente da Efí.</div>
+          <div id="billing-summary" class="notice field full">Se você for elegível, sua experiência começa hoje e dura 30 dias. Para cartão, você informará os dados somente no checkout oficial da Efí ao fim desse período. A primeira cobrança só poderá ocorrer depois da experiência.</div>
           <div class="actions field full"><button id="billing-checkout" class="primary-btn" type="submit" disabled>Confirmar contratação</button></div>
         </form>
         <p class="field-help">A contratação é preparada com segurança neste cadastro. Você seguirá para o TrainingPeaks após a confirmação; pagamento confirmado é informado somente pela Efí.</p>
@@ -712,16 +709,16 @@
 
   function updatePaymentMethodUI() {
     const method = document.querySelector('[name="payment_method"]:checked')?.value || 'card';
-    const card = document.querySelector('#card-details');
-    if (card) card.classList.toggle('hidden', method !== 'card');
-    card?.querySelectorAll('input').forEach(input => { input.required = method === 'card'; });
+    const address = document.querySelector('#billing-address');
+    if (address) address.classList.toggle('hidden', method !== 'boleto');
+    address?.querySelectorAll('input[required]').forEach(input => { input.required = method === 'boleto'; });
     const summary = document.querySelector('#billing-summary');
     const standardOffer = new URLSearchParams(window.location.search).get('offer') === 'standard';
     if (summary) summary.textContent = standardOffer
       ? 'Contratação sem gratuidade: a primeira cobrança ou vencimento seguirá a data confirmada pela Efí. Cancelamentos impedem novas cobranças.'
       : method === 'boleto'
       ? 'Se você for elegível, a experiência começa hoje. O boleto será emitido no 20º dia, vence no 30º dia e as cobranças posteriores serão mensais. Cancelamentos impedem novas cobranças.'
-      : 'Se você for elegível, são 30 dias grátis. A primeira cobrança ocorre após o período. Os dados do cartão são tokenizados pela Efí; a Rio Saúde não armazena número, validade ou CVV.';
+       : 'Se você for elegível, são 30 dias grátis. No fim do período, o checkout oficial da Efí ficará disponível em “Minha assinatura” para cadastrar o cartão. A Rio Saúde não coleta dados do cartão.';
   }
 
   function renderTrialPaymentBypass() {
@@ -773,7 +770,7 @@
     try {
       // Read through the authenticated client and the existing read-own RLS policy.
       const { data,error } = await client.from('billing_subscriptions')
-        .select('payment_url,payment_expires_at,efi_subscription_id,creation_state,environment,status')
+        .select('payment_url,payment_expires_at,efi_subscription_id,creation_state,checkout_kind,trial_ends_on,first_charge_on,environment,status')
         .eq('athlete_profile_id',profileId).eq('environment','homologation')
         .in('status',['pending','active','past_due'])
         .order('created_at',{ascending:false}).limit(1);
@@ -792,7 +789,9 @@
       showEfiReturnChoices(url);
       document.querySelector('#efi-return .lead').textContent = 'Situação do seu cadastro financeiro';
       const status = document.querySelector('#billing-status');
+      const hostedTrialWaiting = existing?.checkout_kind === 'card_hosted_trial' && existing?.creation_state === 'scheduled';
       const message = profile.payment_status === 'confirmed' ? 'Pagamento confirmado pela Rio Saúde.' :
+        hostedTrialWaiting ? `Sua experiência gratuita está registrada até ${String(existing.trial_ends_on || '').split('-').reverse().join('/')}. O checkout oficial da Efí será disponibilizado somente no fim desse período; nenhum cartão foi solicitado agora.` :
         created ? 'Assinatura já criada na Efí. Isso não confirma o pagamento. Você pode continuar sem criar outra assinatura.' :
         'Já existe uma solicitação em processamento ou conferência. Nenhuma nova assinatura será criada. Você pode seguir para o TrainingPeaks enquanto aguarda.';
       status.insertAdjacentHTML('afterbegin','<p>' + escapeHtml(message) + '</p>');
@@ -878,23 +877,6 @@
     throw new Error(result?.error || 'billing_unavailable');
   }
 
-  async function efiCardToken(fields) {
-    const config = await efiBilling({action:'config'});
-    if (config?.environment !== 'homologation' || !config.payee_code) throw new Error('billing_unavailable');
-    if (!window.EfiPay?.CreditCard) {
-      await new Promise((resolve,reject) => { const s=document.createElement('script'); s.src=config.tokenization_url; s.async=true; s.onload=resolve; s.onerror=reject; document.head.appendChild(s); });
-    }
-    const expiry = String(fields.card_expiry || '').replace(/\s/g,'').match(/^(0[1-9]|1[0-2])\/?(\d{2}|\d{4})$/);
-    if (!expiry) throw new Error('card_details_invalid');
-    const year = expiry[2].length === 2 ? `20${expiry[2]}` : expiry[2];
-    const result = await window.EfiPay.CreditCard.setAccount(config.payee_code).setEnvironment('sandbox').setCreditCardData({
-      brand: window.EfiPay.CreditCard.getBrand(String(fields.card_number || '').replace(/\D/g,'')), number:String(fields.card_number || '').replace(/\D/g,''),
-      cvv:String(fields.card_cvv || ''), expirationMonth:expiry[1], expirationYear:year, holderName:fields.card_holder, holderDocument:digits(profile.cpf), reuse:true
-    }).getPaymentToken();
-    if (!result?.payment_token) throw new Error('card_tokenization_failed');
-    return result.payment_token;
-  }
-
   async function startCheckout(event) {
     event.preventDefault();
     const formElement = event.currentTarget;
@@ -924,16 +906,17 @@
         city:String(form.billing_city||'').trim(), state:String(form.billing_state||'').replace(/[^a-z]/gi,'').toUpperCase(),
         zipcode:String(form.billing_zipcode||'').replace(/\D/g,'')
       };
-      if (!billing_address.street || !billing_address.number || !billing_address.neighborhood || !billing_address.city || !/^[A-Z]{2}$/.test(billing_address.state) || !/^\d{8}$/.test(billing_address.zipcode)) throw new Error('billing_address_invalid');
-      const payment_token = paymentMethod === 'card' ? await efiCardToken(form) : undefined;
+      if (paymentMethod === 'boleto' && (!billing_address.street || !billing_address.number || !billing_address.neighborhood || !billing_address.city || !/^[A-Z]{2}$/.test(billing_address.state) || !/^\d{8}$/.test(billing_address.zipcode))) throw new Error('billing_address_invalid');
       const offer = new URLSearchParams(window.location.search).get('offer') === 'standard' ? 'standard' : 'trial';
-      const data = await efiBilling({action:paymentMethod,plan_code:planCode,offer,billing_address,payment_token});
+      const data = await efiBilling({action:paymentMethod === 'boleto' ? 'boleto' : 'card_hosted',plan_code:planCode,offer,billing_address:paymentMethod === 'boleto' ? billing_address : undefined});
       if (session?.user.id !== userId) return;
       showEfiReturnChoices();
       const end=data?.trial_ends_on ? String(data.trial_ends_on).split('-').reverse().join('/') : '';
       document.querySelector('#billing-status').textContent = paymentMethod === 'boleto'
         ? `Experiência registrada${end ? ` até ${end}` : ''}. O boleto não foi emitido agora; a emissão é programada para o 20º dia.`
-        : `Assinatura registrada${end ? ` com experiência até ${end}` : ''}. Isso não confirma pagamento.`;
+        : data?.checkout_deferred
+          ? `Experiência registrada${end ? ` até ${end}` : ''}. No fim desse período, o checkout oficial da Efí ficará disponível em “Minha assinatura”. Nenhum cartão foi solicitado agora.`
+          : 'O checkout oficial da Efí está disponível em “Minha assinatura”. O pagamento só será confirmado após a notificação da Efí.';
     } catch (error) {
       if (['subscription_exists','existing_subscription_other_plan','checkout_in_progress','checkout_requires_review'].includes(error.message)) {
         await loadExistingCheckout({preparePlans:false});
@@ -950,10 +933,8 @@
         plan_unavailable:'Este plano não está disponível no momento.'
         ,trial_not_available:'A experiência gratuita já foi utilizada. Você pode contratar sem gratuidade com a equipe.'
         ,billing_address_required:'Preencha o endereço de cobrança.'
-        ,card_details_invalid:'Confira os dados do cartão.'
-        ,card_tokenization_failed:'Não foi possível validar o cartão na Efí. Confira os dados ou tente outro cartão de teste.'
         ,billing_address_invalid:'Confira o endereço de cobrança: informe rua, número, bairro, cidade, UF com duas letras e CEP com oito números.'
-        ,payment_token_required:'Não foi possível receber os dados tokenizados do cartão. Confira os dados e tente novamente.'
+        ,efi_checkout_link_failed:'Não foi possível preparar o checkout oficial da Efí. Nenhuma cobrança foi confirmada.'
         ,billing_unavailable:'A Efí não respondeu agora. Nenhuma cobrança foi criada; aguarde um momento antes de tentar novamente.'
       };
       if (status.isConnected) {

@@ -70,6 +70,41 @@ async function reserve(profile: any, plan: any, method: string, kind: string, us
 }
 function customer(profile:any, address:any) { return {name:`${profile.first_name} ${profile.last_name}`.trim(),cpf:digits(profile.cpf),email:profile.email,phone_number:digits(profile.whatsapp)}; }
 function billAddress(a:any) { return {street:a.street,number:a.number,neighborhood:a.neighborhood,zipcode:a.zipcode,city:a.city,state:a.state,complement:a.complement || undefined}; }
+async function createHostedCardLink(sub: any) {
+  const [{data:plan},{data:profile}]=await Promise.all([
+    db.from('billing_plans').select('name,efi_plan_id_homolog').eq('id',sub.billing_plan_id).single(),
+    db.from('athlete_profiles').select('user_id').eq('id',sub.athlete_profile_id).single()
+  ]);
+  if (!plan || !profile || !/^\d+$/.test(plan.efi_plan_id_homolog || '')) throw new Error('plan_unavailable');
+  const {data:locked}=await db.from('billing_subscriptions').update({creation_state:'requested'}).eq('id',sub.id).eq('creation_state','scheduled').select('id').maybeSingle();
+  if (!locked) return false;
+  let requested=false;
+  try {
+    const access=await oauth(); requested=true;
+    const expires=addDays(spDate(),7);
+    const response=await fetch(`${EFI}/v1/plan/${plan.efi_plan_id_homolog}/subscription/one-step/link`,{
+      method:'POST',headers:{Authorization:`Bearer ${access}`,'Content-Type':'application/json'},
+      body:JSON.stringify({
+        items:[{name:`Rio Saúde - ${plan.name} - Mensal`,value:sub.price_cents,amount:1}],
+        metadata:{custom_id:sub.id,notification_url:`${URL.replace('.supabase.co','.functions.supabase.co')}/efi-webhook`},
+        settings:{payment_method:'credit_card',expire_at:expires,request_delivery_address:false}
+      }),signal:AbortSignal.timeout(25000)
+    });
+    const out=await response.json().catch(()=>null), data=out?.data;
+    if(!response.ok || !data?.subscription_id || !data?.payment_url) throw new Error('efi_checkout_link_failed');
+    const {error}=await db.from('billing_subscriptions').update({
+      efi_subscription_id:String(data.subscription_id),efi_charge_id:data.charge?.id?String(data.charge.id):null,
+      efi_status:String(data.status||'new'),payment_url:String(data.payment_url),payment_expires_at:expires,
+      creation_state:'ready',status:'pending'
+    }).eq('id',sub.id);
+    if(error) throw error;
+    if(data.charge?.id) await db.from('billing_charges').upsert({subscription_id:sub.id,efi_charge_id:String(data.charge.id),charge_kind:'subscription',status:'new',amount_cents:sub.price_cents,due_on:sub.first_charge_on},{onConflict:'efi_charge_id'});
+    return true;
+  } catch (e) {
+    await db.from('billing_subscriptions').update(requested?{creation_state:'review'}:{creation_state:'scheduled'}).eq('id',sub.id);
+    throw e;
+  }
+}
 
 Deno.serve(async req => {
   const h=headers(req), origin=req.headers.get('origin')||'';
@@ -80,18 +115,13 @@ Deno.serve(async req => {
     const body=await req.json().catch(()=>null); if(!body || typeof body!=='object') return json(req,400,{error:'invalid_request'});
     const scheduledWorker=body.action==='run_due_boleto' && await secureEquals(req.headers.get('x-rio-schedule-secret'),Deno.env.get('BILLING_CRON_SECRET_HOMOLOG'));
     const user=scheduledWorker ? null : await userFor(req); if(!scheduledWorker && !user) return json(req,401,{error:'authentication_required'});
-    if(body.action==='config') {
-      const code=Deno.env.get('EFI_PAYEE_CODE_HOMOLOG');
-      if(Deno.env.get('EFI_ENV')!=='homologation' || !Deno.env.get('EFI_CLIENT_ID_HOMOLOG') || !Deno.env.get('EFI_CLIENT_SECRET_HOMOLOG') || !code) return json(req,503,{error:'homologation_credentials_missing'});
-      return json(req,200,{environment:'homologation',payee_code:code,tokenization_url:'https://cdn.jsdelivr.net/gh/efipay/js-payment-token-efi/dist/payment-token-efi-umd.min.js'});
-    }
-    if(!['card','boleto','cancel','run_due_boleto'].includes(body.action)) return json(req,400,{error:'invalid_action'});
+    if(!['card_hosted','boleto','cancel','run_due_boleto'].includes(body.action)) return json(req,400,{error:'invalid_action'});
     if(body.action==='run_due_boleto') {
       if (!scheduledWorker) {
         const {data:adminRole}=await db.from('admin_emails').select('email').eq('email',user!.email!.toLowerCase()).maybeSingle();
         if(!adminRole) return json(req,403,{error:'admin_required'});
       }
-      const today=spDate(); const {data:due,error:de}=await db.from('billing_subscriptions').select('id,athlete_profile_id,billing_plan_id,first_due_on,price_cents').eq('environment','homologation').eq('creation_state','scheduled').eq('status','pending').lte('boleto_issue_on',today); if(de) throw de;
+      const today=spDate(); const {data:due,error:de}=await db.from('billing_subscriptions').select('id,athlete_profile_id,billing_plan_id,first_due_on,price_cents').eq('environment','homologation').eq('payment_method','boleto').eq('creation_state','scheduled').eq('status','pending').lte('boleto_issue_on',today); if(de) throw de;
       let issued=0; for(const sub of due||[]) {
         const [{data:plan},{data:profile},{data:address}]=await Promise.all([db.from('billing_plans').select('name,efi_plan_id_homolog').eq('id',sub.billing_plan_id).single(),db.from('athlete_profiles').select('first_name,last_name,email,cpf,whatsapp').eq('id',sub.athlete_profile_id).single(),db.from('billing_customer_profiles').select('*').eq('athlete_profile_id',sub.athlete_profile_id).maybeSingle()]);
         if(!plan || !profile || !validAddress(address)) { await db.from('billing_subscriptions').update({creation_state:'review'}).eq('id',sub.id); continue; }
@@ -99,7 +129,16 @@ Deno.serve(async req => {
         if (!locked) continue; let requested=false;
         try { const access=await oauth(); requested=true; const r=await fetch(`${EFI}/v1/plan/${plan.efi_plan_id_homolog}/subscription/one-step`,{method:'POST',headers:{Authorization:`Bearer ${access}`,'Content-Type':'application/json'},body:JSON.stringify({items:[{name:`Rio Saúde - ${plan.name} - Mensal`,value:sub.price_cents,amount:1}],metadata:{custom_id:sub.id,notification_url:`${URL.replace('.supabase.co','.functions.supabase.co')}/efi-webhook`},payment:{banking_billet:{customer:customer(profile,address),billing_address:billAddress(address),expire_at:sub.first_due_on}}}),signal:AbortSignal.timeout(25000)}); const out=await r.json().catch(()=>null),data=out?.data;if(!r.ok||!data?.subscription_id)throw new Error('efi_boleto_failed');await db.from('billing_subscriptions').update({efi_subscription_id:String(data.subscription_id),efi_charge_id:data.charge?.id?String(data.charge.id):null,efi_status:String(data.status||'new'),creation_state:'ready'}).eq('id',sub.id);if(data.charge?.id)await db.from('billing_charges').upsert({subscription_id:sub.id,efi_charge_id:String(data.charge.id),charge_kind:'boleto',status:'waiting',amount_cents:sub.price_cents,due_on:sub.first_due_on,billet_url:data.charge?.billet_link||null},{onConflict:'efi_charge_id'});issued++; } catch { await db.from('billing_subscriptions').update(requested?{creation_state:'review'}:{creation_state:'scheduled'}).eq('id',sub.id); }
       }
-      return json(req,200,{environment:'homologation',issued});
+      const {data:upcoming,error:ue}=await db.from('billing_subscriptions').select('id,athlete_profile_id,first_charge_on').eq('environment','homologation').eq('checkout_kind','card_hosted_trial').eq('creation_state','scheduled').eq('status','pending').eq('first_charge_on',addDays(today,10));
+      if(ue) throw ue;
+      for(const sub of upcoming||[]) {
+        const {data:profile}=await db.from('athlete_profiles').select('user_id').eq('id',sub.athlete_profile_id).maybeSingle();
+        if(profile?.user_id) await db.from('commercial_events').upsert({athlete_user_id:profile.user_id,event_type:'financial.card_checkout_coming',event_key:`card_checkout_coming:${sub.id}`,payload:{checkout_available_on:sub.first_charge_on}},{onConflict:'athlete_user_id,event_key'});
+      }
+      const {data:hostedDue,error:he}=await db.from('billing_subscriptions').select('id,athlete_profile_id,billing_plan_id,price_cents,first_charge_on').eq('environment','homologation').eq('checkout_kind','card_hosted_trial').eq('creation_state','scheduled').eq('status','pending').lte('first_charge_on',today);
+      if(he) throw he;
+      let hosted=0; for(const sub of hostedDue||[]) { try { if(await createHostedCardLink(sub)) hosted++; } catch { /* state is safely scheduled or review */ } }
+      return json(req,200,{environment:'homologation',issued,hosted});
     }
     if(body.action==='cancel') {
       const {data:p,error}=await db.from('athlete_profiles').select('id').eq('user_id',user.id).maybeSingle(); if(error||!p) throw new Error('profile_missing');
@@ -112,8 +151,8 @@ Deno.serve(async req => {
     }
     if(typeof body.plan_code!=='string' || !prices[body.plan_code]) return json(req,400,{error:'invalid_plan'});
     const c=await context(req,body.plan_code); const requestedTrial=body.offer==='trial'; const eligible=requestedTrial && await trialAvailable(c.profile.id); if(requestedTrial && !eligible) return json(req,409,{error:'trial_not_available'});
-    const address=await saveAddress(c.profile.id,body.billing_address || c.addr);
     if(body.action==='boleto') {
+      const address=await saveAddress(c.profile.id,body.billing_address || c.addr);
       const r=await reserve(c.profile,c.plan,'boleto',eligible?'boleto_trial':'boleto_standard',eligible);
       if(r.reused) return json(req,200,{environment:'homologation',subscription_id:r.row.id,reused:true,trial_ends_on:r.row.trial_ends_on,first_due_on:r.row.first_due_on});
       // Boleto is deliberately not sent to Efí on the first day of the trial.
@@ -123,22 +162,22 @@ Deno.serve(async req => {
       await db.from('athlete_profiles').update({payment_status:'pending',payment_followup_needed:true}).eq('id',c.profile.id);
       return json(req,200,{environment:'homologation',subscription_id:r.row.id,reused:false,trial_ends_on:r.row.trial_ends_on,first_due_on:r.row.first_due_on,boleto_issue_on:r.row.boleto_issue_on});
     }
-    if(typeof body.payment_token!=='string' || body.payment_token.length<20 || body.payment_token.length>4096) return json(req,400,{error:'payment_token_required'});
-    const r=await reserve(c.profile,c.plan,'card',eligible?'card_trial':'card_standard',eligible); if(r.reused) return json(req,200,{environment:'homologation',subscription_id:r.row.id,reused:true,trial_ends_on:r.row.trial_ends_on,first_charge_on:r.row.first_charge_on});
-    await db.from('billing_subscriptions').update({creation_state:'requested'}).eq('id',r.row.id);
-    let external=false;
-    try {
-      const token=await oauth(); external=true;
-      const payload={items:[{name:`Rio Saúde - ${c.plan.name} - Mensal`,value:c.plan.price_cents,amount:1}],metadata:{custom_id:r.row.id,notification_url:`${URL.replace('.supabase.co','.functions.supabase.co')}/efi-webhook`},payment:{credit_card:{customer:customer(c.profile,address),billing_address:billAddress(address),payment_token:body.payment_token,trial_days:eligible?30:undefined}}};
-      const response=await fetch(`${EFI}/v1/plan/${c.plan.efi_plan_id_homolog}/subscription/one-step`,{method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify(payload),signal:AbortSignal.timeout(25000)});
-      const result=await response.json().catch(()=>null), data=result?.data; if(!response.ok || !data?.subscription_id) throw new Error('efi_subscription_failed');
-      const {error}=await db.from('billing_subscriptions').update({efi_subscription_id:String(data.subscription_id),efi_charge_id:data.charge?.id?String(data.charge.id):null,efi_status:String(data.status||'new'),creation_state:'ready',status:'pending'}).eq('id',r.row.id); if(error) throw error;
-      if (data.charge?.id) await db.from('billing_charges').upsert({subscription_id:r.row.id,efi_charge_id:String(data.charge.id),charge_kind:'subscription',status:'new',amount_cents:c.plan.price_cents,due_on:r.row.first_charge_on},{onConflict:'efi_charge_id'});
-      await db.from('athlete_profiles').update({payment_status:'pending',payment_followup_needed:true}).eq('id',c.profile.id);
-      return json(req,200,{environment:'homologation',subscription_id:r.row.id,reused:false,trial_ends_on:r.row.trial_ends_on,first_charge_on:r.row.first_charge_on});
-    } catch (e) { await db.from('billing_subscriptions').update(external?{creation_state:'review'}:{creation_state:'failed',status:'failed'}).eq('id',r.row.id); throw e; }
+    const r=await reserve(c.profile,c.plan,'card',eligible?'card_hosted_trial':'card_hosted_standard',eligible);
+    if(r.reused) return json(req,200,{environment:'homologation',subscription_id:r.row.id,reused:true,trial_ends_on:r.row.trial_ends_on,first_charge_on:r.row.first_charge_on,payment_url:r.row.payment_url || null});
+    await db.from('athlete_profiles').update({payment_status:'pending',payment_followup_needed:true}).eq('id',c.profile.id);
+    if(eligible) {
+      const {error:scheduled}=await db.from('billing_subscriptions').update({creation_state:'scheduled'}).eq('id',r.row.id);
+      if(scheduled) throw scheduled;
+      return json(req,200,{environment:'homologation',subscription_id:r.row.id,reused:false,trial_ends_on:r.row.trial_ends_on,first_charge_on:r.row.first_charge_on,checkout_deferred:true});
+    }
+    const {error:scheduled}=await db.from('billing_subscriptions').update({creation_state:'scheduled'}).eq('id',r.row.id);
+    if(scheduled) throw scheduled;
+    await createHostedCardLink({...r.row,creation_state:'scheduled'});
+    const {data:ready,error:re}=await db.from('billing_subscriptions').select('payment_url,payment_expires_at').eq('id',r.row.id).single();
+    if(re || !ready?.payment_url) throw new Error('efi_checkout_link_failed');
+    return json(req,200,{environment:'homologation',subscription_id:r.row.id,reused:false,payment_url:ready.payment_url,payment_expires_at:ready.payment_expires_at});
   } catch(e) {
-    const msg=e instanceof Error?e.message:'billing_unavailable'; const allowed=['authentication_required','profile_missing','profile_incomplete','plan_unavailable','billing_address_required','payment_token_required','trial_not_available','subscription_not_found','efi_cancel_failed','homologation_credentials_missing'];
+    const msg=e instanceof Error?e.message:'billing_unavailable'; const allowed=['authentication_required','profile_missing','profile_incomplete','plan_unavailable','billing_address_required','trial_not_available','subscription_not_found','efi_cancel_failed','homologation_credentials_missing','efi_checkout_link_failed'];
     return json(req,allowed.includes(msg)?(msg==='trial_not_available'?409:msg==='subscription_not_found'?404:msg==='authentication_required'?401:422):502,{error:allowed.includes(msg)?msg:'billing_unavailable'});
   }
 });
