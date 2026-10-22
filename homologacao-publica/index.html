@@ -305,7 +305,7 @@ const planCodes={
 if(isHomologationLanding){
   document.querySelector('.homologation-banner').style.display='block';
   document.title='HOMOLOGAÇÃO · '+document.title;
-  document.querySelectorAll('.athlete-head,.nav-private,.footer-athlete').forEach(link=>{link.href='onboarding-homologacao.html?edit=1'});
+  document.querySelectorAll('.athlete-head,.nav-private,.footer-athlete').forEach(link=>{link.href='meu-espaco-homologacao.html'});
 }
 
 const moneyBRL=value=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(value);
