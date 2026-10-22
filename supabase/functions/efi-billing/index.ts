@@ -6,7 +6,8 @@ const db = createClient(URL, SERVICE, { auth: { persistSession: false, autoRefre
 const EFI = 'https://cobrancas-h.api.efipay.com.br';
 const origins = new Set([
   'http://127.0.0.1:4173', 'http://localhost:4173',
-  'https://rio-saude-homologacao-20261021.balmypuppy7.chatgpt.site'
+  'https://rio-saude-homologacao-20261021.balmypuppy7.chatgpt.site',
+  'https://rio-saude-homologacao.pages.dev'
 ]);
 const prices: Record<string, number> = { single_monthly: 39000, single_290_monthly: 29000, multi_monthly: 49000, multi_tri_u26_monthly: 39000 };
 
