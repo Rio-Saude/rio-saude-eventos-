@@ -17,7 +17,7 @@ test('Meu espaço keeps the four entry points and opens TrainingPeaks externally
   for (const label of ['Minhas provas', 'Meus treinos', 'Meu plano', 'Meus dados']) {
     assert.match(page, new RegExp(label));
   }
-  assert.match(page, /https:\/\/www\.trainingpeaks\.com\//);
+  assert.match(page, /https:\/\/home\.trainingpeaks\.com\/login/);
   assert.match(page, /target="_blank" rel="noopener noreferrer"/);
   assert.match(page, /Seu treino continua por aqui\./);
 });
