@@ -21,3 +21,76 @@
 .admin-commercial{max-width:1120px}.commercial-list{margin-top:20px}.case-list{display:grid;gap:12px;margin-top:20px}.case-card{display:flex;justify-content:space-between;gap:20px;padding:18px;border:1px solid var(--line);border-radius:10px;background:#f8fafb}.case-card h3{margin:0;color:#1d2b37}.case-card p{margin:7px 0;color:#627180;font-size:14px}.case-actions{display:grid;gap:8px;min-width:220px;align-content:start}.case-actions select,.case-actions input{border:1px solid #cbd9e3;border-radius:8px;padding:10px;font:inherit;background:#fff}@media(max-width:720px){.case-card{display:grid}.case-actions{min-width:0}}
 
 .environment-banner{position:sticky;top:0;z-index:20;padding:.55rem 1rem;background:#0e4f7b;color:#fff;font:700 .75rem/1 Inter,system-ui,sans-serif;letter-spacing:.08em;text-align:center}.environment-tag{display:inline-flex;align-items:center;padding:.28rem .55rem;border:1px solid #76b4dd;border-radius:999px;color:#0e4f7b;font-size:.72rem;font-weight:800;letter-spacing:.05em}.dashboard-card.nav-tile{width:100%;text-align:left;cursor:pointer;font:inherit}.dashboard-card.nav-tile.selected,.dashboard-card.nav-tile:hover{border-color:#316a96;box-shadow:0 0 0 2px #d8e8f2}.operations-search{margin-top:22px;max-width:520px}
+
+/* Meu plano V1: presentation only, isolated from the financial/onboarding flows. */
+.subscription-body{background:linear-gradient(155deg,#edf4f8 0%,#e7edf1 56%,#dfeaf0 100%)}
+.subscription-body [hidden]{display:none!important}
+.subscription-shell{max-width:780px}
+.subscription-intro{padding:0 0 26px}
+.subscription-intro h1{font-size:clamp(38px,8vw,58px);line-height:1.04;letter-spacing:-.055em;margin:0 0 12px}
+.subscription-intro p:last-child{font-size:17px;color:var(--muted);margin:0;line-height:1.5}
+.subscription-layout{display:grid;gap:14px}
+.subscription-primary-card{background:linear-gradient(145deg,#fff,#f7fbfd);border:1px solid var(--line);border-radius:18px;padding:30px;box-shadow:0 16px 36px rgba(32,66,90,.08)}
+.subscription-card-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.subscription-overline{font-size:11px;font-weight:850;letter-spacing:.10em;color:#57778d}
+.subscription-status,.subscription-label{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;padding:6px 11px;font-size:11px;font-weight:800;white-space:nowrap}
+.subscription-status.is-active{background:#e3f3ec;color:#236b49}
+.subscription-status.is-cancelled{background:#eef1f4;color:#526273}
+.subscription-status.is-attention{background:#fff0e6;color:#9a431f}
+.subscription-status.is-pending{background:#edf3fb;color:#315c82}
+.subscription-primary-card h2{font-size:clamp(32px,7vw,44px);margin:20px 0 4px;line-height:1.05;letter-spacing:-.055em}
+.subscription-subtitle{color:var(--muted);font-size:15px;margin:0;line-height:1.5}
+.subscription-amount{font-size:clamp(25px,5vw,32px);font-weight:850;letter-spacing:-.045em;margin:24px 0 0}
+.subscription-amount small{font-size:14px;font-weight:500;letter-spacing:normal;color:var(--muted);margin-left:5px}
+.subscription-trial{margin:13px 0 0;color:#316a96;font-size:13px;font-weight:750}
+.subscription-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.subscription-info-box{display:grid;align-content:start;gap:7px;min-height:148px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px}
+.subscription-info-icon{display:grid;place-items:center;width:34px;height:34px;background:#e8f2f8;border-radius:11px;font-size:18px;color:#316a96}
+.subscription-info-label{font-size:12px;color:var(--muted)}
+.subscription-info-box strong{font-size:17px;line-height:1.3;letter-spacing:-.025em;overflow-wrap:anywhere}
+.subscription-info-box small{color:var(--muted);font-size:12px}
+.subscription-extra,.subscription-detail{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px}
+.subscription-extra-title{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.subscription-extra-title strong,.subscription-detail strong{display:block;font-size:16px;letter-spacing:-.02em}
+.subscription-extra-title small,.subscription-tri small{display:block;margin-top:5px;color:var(--muted);font-size:13px}
+.subscription-label{background:#edf3fb;color:#315c82}
+.subscription-extra p,.subscription-detail p{font-size:13px;color:var(--muted);line-height:1.55;margin:12px 0 0}
+.subscription-detail summary{display:flex;align-items:center;justify-content:space-between;gap:14px;cursor:pointer;list-style:none}
+.subscription-detail summary::-webkit-details-marker{display:none}
+.subscription-detail summary>span:last-child{color:#316a96;font-weight:800}
+.subscription-detail:focus-within{border-color:#8ab4d2}
+.subscription-charge-list{list-style:none;padding:0;margin:14px 0 0;display:grid;gap:10px}
+.subscription-charge-list li{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:10px;border-top:1px solid var(--line)}
+.subscription-charge-list li span{display:grid;gap:5px}
+.subscription-charge-list li small{color:var(--muted);font-size:12px}
+.subscription-charge-list a{color:#316a96;font-weight:750;font-size:13px}
+.subscription-important{background:#fff9e9;border:1px solid #eddaa8;border-radius:16px;padding:20px}
+.subscription-important strong{color:#694b13}
+.subscription-important p{color:#655c49;font-size:14px;line-height:1.55}
+.subscription-important .primary-btn{margin-top:4px}
+.subscription-cancel-area{padding:10px 3px}
+.subscription-cancel-trigger{display:flex;align-items:center;justify-content:space-between;gap:15px;border:0;background:transparent;color:#587083;width:100%;text-align:left;padding:12px 14px;font:inherit;font-weight:650;font-size:14px;cursor:pointer}
+.subscription-cancel-trigger:hover,.subscription-cancel-trigger:focus-visible{text-decoration:underline;color:#1d2b37}
+.subscription-cancel-confirm{border:1px solid #e3c1be;border-radius:16px;background:#fff;padding:22px}
+.subscription-cancel-confirm h3{margin:0 0 8px;font-size:19px}
+.subscription-cancel-confirm p{color:var(--muted);line-height:1.5;font-size:14px}
+.subscription-confirm-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+.subscription-danger-btn{background:#a33333;color:#fff;border:0;border-radius:8px;font:inherit;font-weight:750;padding:13px 17px;cursor:pointer}
+.subscription-danger-btn:disabled{opacity:.55}
+.subscription-small{font-size:12px!important;line-height:1.5;color:var(--muted)}
+.subscription-error{color:#9c3535!important}
+.subscription-rehire{background:#f5faf7;border:1px solid #d1e8d9;border-radius:16px;padding:20px}
+.subscription-rehire p{line-height:1.5;color:#345448}
+.subscription-rehire .primary-btn{margin-top:5px}
+.subscription-empty{max-width:650px}
+.subscription-empty p{color:var(--muted);line-height:1.5}
+@media(max-width:560px){
+ .subscription-intro{padding-bottom:22px}
+ .subscription-primary-card{padding:23px}
+ .subscription-facts{gap:10px}
+ .subscription-info-box{padding:15px;min-height:138px}
+ .subscription-info-box strong{font-size:15px}
+ .subscription-extra,.subscription-detail{padding:17px}
+ .subscription-confirm-actions{display:grid;grid-template-columns:1fr}
+ .subscription-confirm-actions button{width:100%}
+}
