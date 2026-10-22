@@ -35,3 +35,9 @@ test('the homologation build includes only the Meu espaço static assets', () =>
   assert.match(build, /'meu-espaco-homologacao\.html'/);
   assert.match(build, /'meu-espaco\.js'/);
 });
+
+test('Minha assinatura keeps the homologation context and returns to Meu espaço', async () => {
+  const subscriptionPage = await readFile(new URL('../homologacao-publica/minha-assinatura-homologacao.html', import.meta.url), 'utf8');
+  assert.match(subscriptionPage, /HOMOLOGAÇÃO · use somente dados fictícios/);
+  assert.match(subscriptionPage, /href="meu-espaco-homologacao\.html">Meu espaço/);
+});
