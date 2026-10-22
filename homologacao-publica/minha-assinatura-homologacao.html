@@ -1,1 +1,32 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Rio Saúde · Minha assinatura</title><link rel="stylesheet" href="portal.css"></head><body><main class="shell"><div class="topbar"><div class="brand">RIO SAÚDE · HOMOLOGAÇÃO</div><div class="toplinks"><a href="onboarding-homologacao.html">Voltar ao onboarding</a></div></div><section class="hero"><small>Área do aluno</small><h1>Minha assinatura</h1><p>Consulte sua situação financeira e cancele futuras cobranças quando necessário.</p></section><section id="content" class="card"><p class="lead">Carregando sua assinatura…</p></section></main><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.min.js"></script><script src="config-homologacao.js"></script><script src="minha-assinatura.js"></script></body></html>
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#316a96">
+  <title>HOMOLOGAÇÃO · Rio Saúde · Meu plano</title>
+  <link rel="stylesheet" href="portal.css">
+</head>
+<body class="subscription-body">
+  <div class="environment-banner" role="status">HOMOLOGAÇÃO · use somente dados fictícios</div>
+  <main class="shell subscription-shell">
+    <header class="topbar my-space-topbar">
+      <div class="brand">RIO SAÚDE · ÁREA DO ALUNO</div>
+      <div class="toplinks">
+        <a id="subscription-back" class="ghost-btn" href="meu-espaco-homologacao.html">← Meu espaço</a>
+      </div>
+    </header>
+    <section class="subscription-intro">
+      <p class="step-kicker">Meu espaço / Meu plano</p>
+      <h1>Meu plano</h1>
+      <p>Seu plano e suas cobranças, sem complicação.</p>
+    </section>
+    <section id="content" aria-live="polite" aria-label="Detalhes da assinatura">
+      <div class="card subscription-loading"><p class="lead">Carregando sua assinatura…</p></div>
+    </section>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.min.js"></script>
+  <script src="config-homologacao.js"></script>
+  <script src="minha-assinatura.js"></script>
+</body>
+</html>
