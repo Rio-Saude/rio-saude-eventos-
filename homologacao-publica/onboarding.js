@@ -318,8 +318,10 @@
     appStatus.textContent = '';
     appStatus.className = 'status';
     const completed = Boolean(profile.onboarding_completed_at && !editing && !paymentOnlyMode);
-    document.querySelector('.hero')?.classList.toggle('hidden', completed);
-    progressRoot.classList.toggle('hidden', completed);
+    document.querySelector('#onboarding-hero')?.classList.toggle('hidden', completed || paymentOnlyMode);
+    document.querySelector('#rehire-hero')?.classList.toggle('hidden', !paymentOnlyMode);
+    progressRoot.classList.toggle('hidden', completed || paymentOnlyMode);
+    document.title = paymentOnlyMode ? 'HOMOLOGAÇÃO · Rio Saúde · Recontratar plano' : 'HOMOLOGAÇÃO · Rio Saúde · Primeiro acesso';
     if (completed) {
       if (mySpacePage) {
         window.location.replace(mySpacePage);
@@ -665,10 +667,10 @@
       return;
     }
     stepRoot.innerHTML = `
-      <div class="step-kicker">4 de 5 · Financeiro</div>
-      <h2>Cadastro financeiro</h2>
+      <div class="step-kicker">${paymentOnlyMode ? "Recontratação · Financeiro" : "4 de 5 · Financeiro"}</div>
+      <h2>${paymentOnlyMode ? "Escolha seu plano" : "Cadastro financeiro"}</h2>
       <div id="efi-first-access">
-        <p class="lead">Escolha quantas modalidades vai contratar com a Rio Saúde.</p>
+        <p class="lead">${paymentOnlyMode ? "Seu cadastro já está salvo. Selecione sua modalidade e a forma de pagamento para contratar novamente." : "Escolha quantas modalidades vai contratar com a Rio Saúde."}</p>
         <form id="billing-form" class="grid">
           <fieldset class="field full choice-fieldset"><legend>Plano mensal</legend>
             <div id="billing-plans" class="goal-options">Carregando planos...</div>
@@ -687,15 +689,15 @@
         <p class="field-help">A contratação é preparada com segurança neste cadastro. Você seguirá para o TrainingPeaks após a confirmação; pagamento confirmado é informado somente pela Efí.</p>
       </div>
       <div id="efi-return" class="hidden">
-        <p class="lead">A contratação foi encaminhada. Você pode continuar o cadastro enquanto aguardamos a confirmação da Efí.</p>
+        <p class="lead">${paymentOnlyMode ? "Sua solicitação foi encaminhada. Você pode acompanhar a situação no Meu plano." : "A contratação foi encaminhada. Você pode continuar o cadastro enquanto aguardamos a confirmação da Efí."}</p>
         <p id="billing-status" class="status" role="status" aria-live="polite"></p>
         <div class="actions">
           <button id="efi-done" class="primary-btn" type="button">Já fiz meu cadastro na Efí</button>
-          <button id="efi-later" class="secondary-btn" type="button">Ainda não fiz — seguir para o TrainingPeaks</button>
+          <button id="efi-later" class="secondary-btn" type="button">${paymentOnlyMode ? "Voltar ao Meu plano" : "Ainda não fiz — seguir para o TrainingPeaks"}</button>
         </div>
         <p class="field-help">Isso não confirma o pagamento. Se ainda não terminou, você poderá voltar à Efí depois do TrainingPeaks.</p>
       </div>
-      ${isHomologationPreview && profile.payment_status !== 'confirmed' ? `
+      ${isHomologationPreview && profile.payment_status !== 'confirmed' && !paymentOnlyMode ? `
       <div id="homologation-finance-fallback" class="notice">
         <strong>Homologação:</strong> se preferir não concluir a contratação agora, você pode continuar sem cobrança e resolver o financeiro depois.
         <div class="actions"><button id="finance-later-homologation" class="secondary-btn" type="button">Continuar e resolver o financeiro depois</button></div>
