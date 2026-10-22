@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#316a96">
+  <title>HOMOLOGAÇÃO · Rio Saúde · Minhas provas</title>
+  <link rel="stylesheet" href="portal.css">
+  <style>
+    .races-shell{max-width:1080px}.races-head{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;flex-wrap:wrap;margin:12px 0 24px}
+    .races-head h1{font-size:clamp(36px,6vw,58px);letter-spacing:-.055em;line-height:1.05;margin:6px 0 12px}
+    .races-head p{color:var(--muted);max-width:670px;line-height:1.5;margin:0}
+    .races-tabs{display:flex;gap:8px;flex-wrap:wrap;padding:6px;background:#e0ebf2;border-radius:14px;margin:22px 0}
+    .races-tabs button{flex:1;min-width:132px;border:0;background:transparent;color:#38566c;font:inherit;font-weight:800;padding:12px 14px;border-radius:10px;cursor:pointer}
+    .races-tabs button[aria-selected=true]{background:#fff;color:#18496e;box-shadow:0 4px 12px #143a5214}
+    .races-controls{display:flex;gap:12px;flex-wrap:wrap;margin:22px 0;align-items:center}.races-controls select{background:#fff;color:#1d2b37;border:1px solid #c9dae6;border-radius:9px;padding:11px 13px;font:inherit;min-width:150px}
+    .races-summary{color:var(--muted);font-size:14px;margin:10px 0 18px}
+    .races-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}
+    .race-card{background:#fff;border:1px solid #d7e3eb;border-radius:16px;padding:21px;box-shadow:0 12px 29px #1c48650c;display:flex;flex-direction:column;gap:12px;min-width:0}
+    .race-top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.race-date{display:inline-flex;background:#eaf3f9;color:#285c80;padding:8px 11px;border-radius:9px;font-weight:800;font-size:13px}
+    .race-category{font-size:12px;color:#5a7383;font-weight:700}.race-card h3{font-size:22px;letter-spacing:-.025em;line-height:1.2;margin:0}
+    .race-meta{font-size:13px;color:#617788;line-height:1.5}.race-counts{display:flex;gap:12px;border-block:1px solid #e1ebf1;padding:13px 0}
+    .race-counts>div{flex:1;display:flex;flex-direction:column;gap:4px}.race-counts strong{font-size:22px;color:#245777}.race-counts span{font-size:12px;color:#627887}
+    .race-group{padding:12px;background:#f3f8fb;border-left:3px solid #316a96;border-radius:4px 10px 10px 4px;font-size:13px;color:#405c6f}
+    .race-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto}.race-actions button,.race-actions a{flex:1;border:1px solid #b7cedf;background:#fff;border-radius:9px;padding:10px 12px;font:inherit;font-size:13px;font-weight:800;color:#286088;cursor:pointer;text-decoration:none;text-align:center;white-space:normal}
+    .race-actions button.selected{background:#316a96;color:#fff;border-color:#316a96}.race-actions .race-remove{border-color:#e1d9d5;color:#8d5b50}
+    .race-status{font-size:12px;font-weight:700;color:#316a96}.races-empty{border:1px dashed #bed1de;background:#f7fafc;color:#627180;border-radius:12px;padding:25px;text-align:center;grid-column:1/-1}
+    .race-suggest{max-width:690px}.race-suggest h2{margin-bottom:7px}.race-suggest>p{color:var(--muted);line-height:1.5}.race-suggest .grid{margin-top:20px}
+    .race-suggestions{margin-top:26px;display:grid;gap:10px}.race-suggestion{background:#f8fafb;border:1px solid #d9e5ed;border-radius:10px;padding:15px}
+    .race-suggestion strong{font-size:15px}.race-suggestion small{display:block;margin-top:5px;color:#718190}.race-chip{display:inline-block;padding:5px 9px;border-radius:99px;background:#e7eff6;color:#245777;font-size:12px;font-weight:800;margin-top:8px}
+    dialog.race-dialog{border:1px solid #c7d9e5;border-radius:18px;max-width:min(94vw,510px);width:100%;padding:28px;background:#fff;color:#1d2b37;box-shadow:0 18px 70px #102e4660}dialog.race-dialog::backdrop{background:#0924359e}
+    .race-dialog h2{font-size:24px;margin:0 0 6px}.race-dialog .field{margin:18px 0}.race-dialog .actions{margin-top:20px}
+    @media(max-width:720px){.races-grid{grid-template-columns:1fr}.races-tabs button{min-width:100px;font-size:13px}.race-card{padding:18px}.races-head{margin-top:0}}
+  </style>
+</head>
+<body class="my-space-body">
+  <div class="environment-banner" role="status">HOMOLOGAÇÃO · use somente dados fictícios</div>
+  <main class="shell races-shell">
+    <header class="topbar my-space-topbar">
+      <a class="ghost-btn" href="meu-espaco-homologacao.html">← Meu espaço</a>
+      <div class="toplinks">
+        <a class="ghost-btn" href="index.html#planos">Planos e valores ↗</a>
+        <a class="ghost-btn hidden" href="admin-provas-homologacao.html" id="race-admin-link">Equipe</a>
+      </div>
+    </header>
+    <section id="races-loading" class="card" aria-live="polite">Carregando seu calendário…</section>
+    <section id="races-app" class="hidden">
+      <div class="races-head">
+        <div><div class="step-kicker">Rio Saúde · Calendário</div><h1>Minhas provas.</h1><p>Organize seus objetivos e avise à equipe quais provas você pretende fazer. Este aviso não realiza sua inscrição oficial.</p></div>
+      </div>
+      <nav class="races-tabs" aria-label="Navegação de provas">
+        <button type="button" data-race-tab="calendar" aria-selected="true">Calendário</button>
+        <button type="button" data-race-tab="mine" aria-selected="false">Minhas provas</button>
+        <button type="button" data-race-tab="suggest" aria-selected="false">Sugerir prova</button>
+      </nav>
+      <section id="race-calendar-panel">
+        <div class="races-controls">
+          <label class="field"><span>Temporada</span><select id="race-year"></select></label>
+          <label class="field"><span>Modalidade</span><select id="race-category">
+            <option value="all">Todas as modalidades</option>
+            <option value="run">Corrida</option>
+            <option value="trail">Trail</option>
+            <option value="tri">Triathlon</option>
+          </select></label>
+        </div>
+        <div class="races-summary" id="race-calendar-summary"></div>
+        <div id="race-calendar-grid" class="races-grid"></div>
+      </section>
+      <section id="race-mine-panel" class="hidden">
+        <div class="races-summary">Suas próximas provas e interesses, sempre atualizados.</div>
+        <div id="race-mine-grid" class="races-grid"></div>
+      </section>
+      <section id="race-suggest-panel" class="hidden">
+        <div class="card race-suggest">
+          <h2>Sentiu falta de alguma prova?</h2>
+          <p>Envie uma sugestão. A equipe da Rio Saúde avalia antes de incluir no calendário.</p>
+          <form id="race-suggestion-form">
+            <div class="grid">
+              <div class="field full"><label for="suggest-name">Nome da prova</label><input required maxlength="160" minlength="3" id="suggest-name" placeholder="Ex.: Maratona de Buenos Aires"></div>
+              <div class="field"><label for="suggest-date">Data</label><input required type="date" id="suggest-date"></div>
+              <div class="field"><label for="suggest-city">Cidade</label><input maxlength="120" id="suggest-city"></div>
+              <div class="field"><label for="suggest-category">Modalidade</label><select id="suggest-category"><option value="">Selecione</option><option>Corrida</option><option>Meia Maratona</option><option>Maratona</option><option>Trail Run</option><option>Triathlon</option></select></div>
+              <div class="field"><label for="suggest-distance">Distância (se souber)</label><input maxlength="80" id="suggest-distance" placeholder="Ex.: 21 km"></div>
+              <div class="field full"><label for="suggest-notes">Observação (opcional)</label><textarea maxlength="600" id="suggest-notes" rows="2"></textarea></div>
+            </div>
+            <div class="actions"><button class="primary-btn" type="submit" id="suggest-submit">Enviar sugestão</button></div>
+          </form>
+          <div id="race-suggest-status" class="status" role="status"></div>
+          <div id="race-suggestion-list" class="race-suggestions"></div>
+        </div>
+      </section>
+      <p class="field-help">As informações sobre datas e inscrições podem mudar. Confirme sempre no site oficial da prova.</p>
+    </section>
+    <dialog id="race-dialog" class="race-dialog" aria-labelledby="race-dialog-title">
+      <form id="race-choice-form">
+        <h2 id="race-dialog-title">Atualizar prova</h2>
+        <p class="lead" id="race-dialog-name"></p>
+        <div class="field"><label for="race-distance">Distância</label><select id="race-distance"></select></div>
+        <div class="field hidden" id="race-custom-distance-field"><label for="race-custom-distance">Outra distância</label><input id="race-custom-distance" maxlength="80" placeholder="Ex.: 12 km"></div>
+        <div class="actions"><button type="submit" class="primary-btn" id="race-save">Salvar</button><button type="button" class="secondary-btn" id="race-cancel">Voltar</button></div>
+        <div id="race-choice-status" class="status" role="status"></div>
+      </form>
+    </dialog>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.min.js"></script>
+  <script src="config-homologacao.js"></script>
+  <script src="minhas-provas.js"></script>
+</body>
+</html>
