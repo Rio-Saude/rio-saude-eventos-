@@ -19,6 +19,8 @@ const allowedFiles = new Set([
   'config-homologacao.js',
   'minha-assinatura-homologacao.html',
   'minha-assinatura.js',
+  'meus-dados-homologacao.html',
+  'meus-dados.js',
   'admin-comercial-homologacao.html',
   'commercial-admin.js'
 ]);
