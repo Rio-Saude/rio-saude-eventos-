@@ -55,6 +55,14 @@ async function context(req: Request, planCode: string) {
 }
 async function trialAvailable(profileId: string) { const {data,error}=await db.rpc('free_trial_available',{p_profile_id:profileId}); if(error) throw error; return data===true; }
 async function existing(profileId: string) { const {data,error}=await db.from('billing_subscriptions').select('*').eq('athlete_profile_id',profileId).eq('environment','homologation').in('status',['pending','active','past_due']).order('created_at',{ascending:false}).limit(1).maybeSingle(); if(error) throw error; return data; }
+async function cancelledTrialStillActive(profileId: string) {
+  const today=spDate();
+  const {data,error}=await db.from('billing_subscriptions').select('*')
+    .eq('athlete_profile_id',profileId).eq('environment','homologation').eq('status','cancelled')
+    .eq('free_trial_days',30).gte('trial_ends_on',today).order('trial_ends_on',{ascending:false}).limit(1).maybeSingle();
+  if(error) throw error;
+  return data;
+}
 async function saveAddress(profileId: string, source: any) {
   if(!validAddress(source)) throw new Error('billing_address_required');
   const a={athlete_profile_id:profileId,street:source.street.trim(),number:source.number.trim(),complement:source.complement?.trim()||null,neighborhood:source.neighborhood.trim(),city:source.city.trim(),state:source.state,zipcode:source.zipcode};
@@ -67,6 +75,36 @@ async function reserve(profile: any, plan: any, method: string, kind: string, us
   if(!error) return {row:data,reused:false};
   if(error.code==='23505') { const current=await existing(profile.id); if(current) return {row:current,reused:true}; }
   throw error;
+}
+async function reserveResume(profile: any, plan: any, method: string, prior: any) {
+  const open=await existing(profile.id); if(open) return {row:open,reused:true};
+  const checkoutOn=addDays(prior.trial_ends_on,1);
+  const kind=method==='boleto'?'boleto_resume':'card_hosted_resume';
+  const dueOn=method==='boleto'?addDays(prior.trial_ends_on,10):null;
+  const {data,error}=await db.from('billing_subscriptions').insert({
+    athlete_profile_id:profile.id,billing_plan_id:plan.id,environment:'homologation',status:'pending',creation_state:'scheduled',
+    payment_method:method,price_cents:plan.price_cents,checkout_kind:kind,free_trial_days:0,
+    trial_ends_on:prior.trial_ends_on,first_charge_on:checkoutOn,next_charge_on:checkoutOn,
+    first_due_on:dueOn,boleto_issue_on:method==='boleto'?checkoutOn:null,
+    checkout_link_on:method==='card'?checkoutOn:null,checkout_reminder_on:method==='card'?addDays(checkoutOn,6):null
+  }).select('*').single();
+  if(!error) return {row:data,reused:false};
+  if(error.code==='23505') { const current=await existing(profile.id); if(current) return {row:current,reused:true}; }
+  throw error;
+}
+async function reviveUnprovisionedTrial(profile: any, plan: any, method: string, prior: any) {
+  const kind=method==='boleto'?'boleto_trial':'card_hosted_trial';
+  const {data,error}=await db.from('billing_subscriptions').update({
+    billing_plan_id:plan.id,payment_method:method,price_cents:plan.price_cents,checkout_kind:kind,
+    status:'pending',creation_state:'scheduled',cancel_requested_at:null,provider_cancelled_at:null,cancelled_at:null,cancelled_effective_on:null,
+    first_charge_on:addDays(prior.trial_ends_on,1),next_charge_on:addDays(prior.trial_ends_on,1),
+    first_due_on:method==='boleto'?prior.trial_ends_on:null,boleto_issue_on:method==='boleto'?addDays(prior.trial_ends_on,-10):null,
+    checkout_link_on:method==='card'?addDays(prior.trial_ends_on,-5):null,checkout_reminder_on:method==='card'?addDays(prior.trial_ends_on,1):null
+  }).eq('id',prior.id).eq('status','cancelled').is('efi_subscription_id',null).select('*').maybeSingle();
+  if(error) throw error;
+  if(data) return {row:data,reused:false};
+  const open=await existing(profile.id); if(open) return {row:open,reused:true};
+  return null;
 }
 function customer(profile:any, address:any) { return {name:`${profile.first_name} ${profile.last_name}`.trim(),cpf:digits(profile.cpf),email:profile.email,phone_number:digits(profile.whatsapp)}; }
 function billAddress(a:any) { return {street:a.street,number:a.number,neighborhood:a.neighborhood,zipcode:a.zipcode,city:a.city,state:a.state,complement:a.complement || undefined}; }
@@ -135,7 +173,7 @@ Deno.serve(async req => {
         const {data:profile}=await db.from('athlete_profiles').select('user_id').eq('id',sub.athlete_profile_id).maybeSingle();
         if(profile?.user_id) await db.from('commercial_events').upsert({athlete_user_id:profile.user_id,event_type:'financial.card_checkout_coming',event_key:`card_checkout_coming:${sub.id}`,payload:{checkout_available_on:sub.checkout_link_on}},{onConflict:'athlete_user_id,event_key'});
       }
-      const {data:hostedDue,error:he}=await db.from('billing_subscriptions').select('id,athlete_profile_id,billing_plan_id,price_cents,first_charge_on,checkout_link_on').eq('environment','homologation').eq('checkout_kind','card_hosted_trial').eq('creation_state','scheduled').eq('status','pending').lte('checkout_link_on',today);
+      const {data:hostedDue,error:he}=await db.from('billing_subscriptions').select('id,athlete_profile_id,billing_plan_id,price_cents,first_charge_on,checkout_link_on').eq('environment','homologation').in('checkout_kind',['card_hosted_trial','card_hosted_resume']).eq('creation_state','scheduled').eq('status','pending').lte('checkout_link_on',today);
       if(he) throw he;
       let hosted=0; for(const sub of hostedDue||[]) { try { if(await createHostedCardLink(sub)) hosted++; } catch { /* state is safely scheduled or review */ } }
       return json(req,200,{environment:'homologation',issued,hosted});
@@ -150,9 +188,22 @@ Deno.serve(async req => {
       return json(req,200,{cancelled:true,effective_on:effective});
     }
     if(typeof body.plan_code!=='string' || !prices[body.plan_code]) return json(req,400,{error:'invalid_plan'});
-    const c=await context(req,body.plan_code); const requestedTrial=body.offer==='trial'; const eligible=requestedTrial && await trialAvailable(c.profile.id); if(requestedTrial && !eligible) return json(req,409,{error:'trial_not_available'});
+    const c=await context(req,body.plan_code);
+    const address=body.action==='boleto'?await saveAddress(c.profile.id,body.billing_address || c.addr):null;
+    // The browser cannot choose or waive the benefit. Eligibility comes only
+    // from the CPF-backed financial history on the server.
+    const eligible=await trialAvailable(c.profile.id);
+    const activeCancelledTrial=eligible?null:await cancelledTrialStillActive(c.profile.id);
+    if(activeCancelledTrial) {
+      const method=body.action==='boleto'?'boleto':'card';
+      const revived=!activeCancelledTrial.efi_subscription_id
+        ? await reviveUnprovisionedTrial(c.profile,c.plan,method,activeCancelledTrial)
+        : null;
+      const resumed=revived || await reserveResume(c.profile,c.plan,method,activeCancelledTrial);
+      await db.from('athlete_profiles').update({payment_status:'pending',payment_followup_needed:true}).eq('id',c.profile.id);
+      return json(req,200,{environment:'homologation',subscription_id:resumed.row.id,reused:resumed.reused,resumed_trial:true,checkout_deferred:true,trial_ends_on:activeCancelledTrial.trial_ends_on,first_charge_on:resumed.row.first_charge_on,first_due_on:resumed.row.first_due_on,boleto_issue_on:resumed.row.boleto_issue_on});
+    }
     if(body.action==='boleto') {
-      const address=await saveAddress(c.profile.id,body.billing_address || c.addr);
       const r=await reserve(c.profile,c.plan,'boleto',eligible?'boleto_trial':'boleto_standard',eligible);
       if(r.reused) return json(req,200,{environment:'homologation',subscription_id:r.row.id,reused:true,trial_ends_on:r.row.trial_ends_on,first_due_on:r.row.first_due_on});
       // Boleto is deliberately not sent to Efí on the first day of the trial.

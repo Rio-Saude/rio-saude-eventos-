@@ -88,10 +88,21 @@ test('checkout retains its form before the asynchronous duplicate check', () => 
   assert.doesNotMatch(checkout, /new FormData\(event\.currentTarget\)/);
 });
 
-test('standard offer persists through authentication in the public homologation bundle', () => {
+test('free trial is decided by backend history, not an offer URL parameter', () => {
+  assert.match(source, /const eligible=await trialAvailable\(c\.profile\.id\);/);
+  assert.doesNotMatch(source, /body\.offer/);
   for (const code of [onboarding, publicOnboarding]) {
-    assert.match(code, /const requestedOffer = new URLSearchParams\(window\.location\.search\)\.get\('offer'\) === 'standard' \? 'standard' : 'trial';/);
-    assert.match(code, /if \(requestedOffer === 'standard'\) retainedParams\.set\('offer', 'standard'\);/);
-    assert.match(code, /const offer = requestedOffer;/);
+    assert.doesNotMatch(code, /requestedOffer|offer=standard|offer=trial/);
+    assert.match(code, /action:paymentMethod === 'boleto' \? 'boleto' : 'card_hosted'/);
   }
+});
+
+test('re-contract preserves an unexpired consumed trial and schedules checkout after it', () => {
+  assert.match(source, /cancelledTrialStillActive/);
+  assert.match(source, /const checkoutOn=addDays\(prior\.trial_ends_on,1\);/);
+  assert.match(source, /reviveUnprovisionedTrial/);
+  assert.match(source, /checkout_link_on:method==='card'\?addDays\(prior\.trial_ends_on,-5\):null/);
+  assert.match(source, /resumed_trial:true,checkout_deferred:true/);
+  assert.match(cronWorker, /'card_hosted_trial', 'card_hosted_resume'/);
+  assert.match(onboarding, /paymentOnlyMode/);
 });

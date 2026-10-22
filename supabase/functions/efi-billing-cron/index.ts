@@ -124,11 +124,11 @@ async function deliverNotices(today: string) {
 }
 
 async function processCardFollowup(today: string) {
-  const { data: due, error } = await db.from('billing_subscriptions').select('id,billing_plan_id,price_cents,first_charge_on').eq('environment', 'homologation').eq('checkout_kind', 'card_hosted_trial').eq('creation_state', 'scheduled').eq('status', 'pending').lte('checkout_link_on', today);
+  const { data: due, error } = await db.from('billing_subscriptions').select('id,billing_plan_id,price_cents,first_charge_on').eq('environment', 'homologation').in('checkout_kind', ['card_hosted_trial', 'card_hosted_resume']).eq('creation_state', 'scheduled').eq('status', 'pending').lte('checkout_link_on', today);
   if (error) throw error;
   let links = 0;
   for (const subscription of due || []) if (await createHostedCardLink(subscription, today)) links += 1;
-  const { data: reminders, error: reminderError } = await db.from('billing_subscriptions').select('id').eq('environment', 'homologation').eq('checkout_kind', 'card_hosted_trial').eq('creation_state', 'ready').eq('status', 'pending').lte('checkout_reminder_on', today).gte('payment_expires_at', today);
+  const { data: reminders, error: reminderError } = await db.from('billing_subscriptions').select('id').eq('environment', 'homologation').in('checkout_kind', ['card_hosted_trial', 'card_hosted_resume']).eq('creation_state', 'ready').eq('status', 'pending').lte('checkout_reminder_on', today).gte('payment_expires_at', today);
   if (reminderError) throw reminderError;
   for (const subscription of reminders || []) await queueNotice(subscription.id, 'card_checkout_day_31');
   return { links, reminders: reminders?.length || 0 };

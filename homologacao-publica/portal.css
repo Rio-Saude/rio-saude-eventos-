@@ -2,6 +2,7 @@
 .choice-fieldset{border:0;padding:0;margin:0;min-width:0}.choice-fieldset legend{font-size:13px;font-weight:800;color:var(--muted);margin-bottom:10px}.goal-options{display:flex;flex-wrap:wrap;gap:8px}.goal-option{position:relative;cursor:pointer}.goal-option input{position:absolute;opacity:0;width:1px;height:1px;padding:0}.goal-option span{display:block;border:1px solid var(--line);border-radius:999px;padding:10px 15px;color:var(--muted);font-size:14px}.goal-option input:checked+span{background:var(--green2);color:var(--dark);border-color:var(--green2)}.goal-option input:focus-visible+span{outline:2px solid white;outline-offset:3px}.field-help{font-size:13px;color:var(--muted);line-height:1.5;margin:12px 0}.text-btn{border:0;background:none;color:var(--green2);font:inherit;font-size:14px;text-decoration:underline;cursor:pointer;padding:8px 0}.field input[type=date]{min-width:0;min-height:48px;color-scheme:dark}.grid>*{min-width:0}.check input{width:auto}.topbar{flex-wrap:wrap}
 
 .notice a{color:var(--green2);text-underline-offset:3px}
+.notice a.primary-btn{color:#fff;text-decoration:none}
 
 /* RJ PAR-Q: clear ten-question screening without mixing financial fields. */
 .parq-question{border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:16px;margin:0 0 12px;background:rgba(255,255,255,.025)}

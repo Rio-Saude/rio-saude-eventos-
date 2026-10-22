@@ -5,8 +5,6 @@
   // If a browser changes it, its client can only point at homologation, never production.
   const isHomologationPreview = config.supabaseUrl === 'https://xiiudduncvcxcvbgbqpc.supabase.co' &&
     config.environmentLabel === 'HOMOLOGAÇÃO';
-  // Capture the offer before login/navigation removes unrelated query parameters.
-  const requestedOffer = new URLSearchParams(window.location.search).get('offer') === 'standard' ? 'standard' : 'trial';
   const raceCatalogSource = isHomologationPreview ? 'onboarding_race_catalog' : 'events';
 
   const loginView = document.querySelector('#login-view');
@@ -47,6 +45,7 @@
   let availableRaceOptions = [];
   let pendingRaceEntries = [];
   let trialAccess = null;
+  let paymentOnlyMode = false;
 
   loginForm.addEventListener('submit', (event) => {
     event.preventDefault();
@@ -233,11 +232,12 @@
       }
     }
     const params = new URLSearchParams(location.search);
-    editing = Boolean(profile.onboarding_completed_at && params.get('edit') === '1');
+    paymentOnlyMode = Boolean(profile.onboarding_completed_at && params.get('payment') === '1');
+    editing = Boolean(profile.onboarding_completed_at && params.get('edit') === '1' && !paymentOnlyMode);
     editStep = params.get('edit') === '1' ? 1 : 1;
     const retainedParams = new URLSearchParams();
     if (params.get('edit') === '1') retainedParams.set('edit', '1');
-    if (requestedOffer === 'standard') retainedParams.set('offer', 'standard');
+    if (paymentOnlyMode) retainedParams.set('payment', '1');
     const query = retainedParams.toString();
     history.replaceState(null, '', location.pathname + (query ? `?${query}` : ''));
     loginView.classList.add('hidden');
@@ -311,11 +311,16 @@
   function render() {
     appStatus.textContent = '';
     appStatus.className = 'status';
-    const completed = Boolean(profile.onboarding_completed_at && !editing);
+    const completed = Boolean(profile.onboarding_completed_at && !editing && !paymentOnlyMode);
     document.querySelector('.hero')?.classList.toggle('hidden', completed);
     progressRoot.classList.toggle('hidden', completed);
     if (completed) {
       renderDashboard();
+      return;
+    }
+    if (paymentOnlyMode) {
+      renderProgress(4);
+      renderPayment();
       return;
     }
     const step = editing ? editStep : Math.min(Math.max(Number(profile.onboarding_step || 1), 1), 5);
@@ -667,7 +672,7 @@
             <div class="grid"><label class="field full">Rua<input name="billing_street" autocomplete="street-address" required></label><label class="field">Número<input name="billing_number" autocomplete="address-line2" required></label><label class="field">Complemento<input name="billing_complement" autocomplete="address-line2"></label><label class="field">Bairro<input name="billing_neighborhood" autocomplete="address-level3" required></label><label class="field">Cidade<input name="billing_city" autocomplete="address-level2" required></label><label class="field">UF<input name="billing_state" maxlength="2" autocomplete="address-level1" required></label><label class="field">CEP<input name="billing_zipcode" inputmode="numeric" maxlength="9" autocomplete="postal-code" required></label></div>
           </fieldset>
           <div id="billing-summary" class="notice field full">Se você for elegível, sua experiência começa hoje e dura 30 dias. Para cartão, você informará os dados somente no checkout oficial da Efí ao fim desse período. A primeira cobrança só poderá ocorrer depois da experiência.</div>
-          <div class="actions field full"><button id="billing-checkout" class="primary-btn" type="submit" disabled>Confirmar contratação</button></div>
+          <div class="actions field full"><button id="billing-checkout" class="primary-btn" type="submit" disabled>Continuar para contratação</button></div>
         </form>
         <p class="field-help">A contratação é preparada com segurança neste cadastro. Você seguirá para o TrainingPeaks após a confirmação; pagamento confirmado é informado somente pela Efí.</p>
       </div>
@@ -687,7 +692,7 @@
       </div>` : ''}
       <p id="billing-initial-status" class="status" role="status" aria-live="polite"></p>
       <p class="field-help">Ambiente de teste: não efetue pagamentos reais.</p>
-      <div class="actions"><button class="text-btn" type="button" data-back="3">Voltar</button></div>`;
+      <div class="actions">${paymentOnlyMode ? '<a class="text-btn" href="minha-assinatura-homologacao.html">Voltar à minha assinatura</a>' : '<button class="text-btn" type="button" data-back="3">Voltar</button>'}</div>`;
 
     document.querySelector('#billing-form').addEventListener('submit', startCheckout);
     document.querySelectorAll('[name="payment_method"]').forEach(input => input.addEventListener('change', updatePaymentMethodUI));
@@ -696,6 +701,10 @@
         event.target.value = event.target.value.replace(/[^a-z]/gi, '').toUpperCase();
       });
     document.querySelector('#efi-done').addEventListener('click', () => {
+      if (paymentOnlyMode) {
+        window.location.href = 'minha-assinatura-homologacao.html';
+        return;
+      }
       const afterTrainingPeaks = profile.payment_followup_needed && profile.trainingpeaks_step_seen;
       // A browser click never settles a financial obligation. Only the Efí
       // webhook/reconciliation can move payment_status to confirmed.
@@ -705,9 +714,9 @@
       }
       updateProfile(next,{finishEdit:editing && afterTrainingPeaks});
     });
-    document.querySelector('#efi-later').addEventListener('click', () => updateProfile({
-      payment_status:profile.payment_status === 'confirmed' ? 'confirmed' : 'pending',payment_followup_needed:profile.payment_status !== 'confirmed',onboarding_step:5
-    }));
+    document.querySelector('#efi-later').addEventListener('click', () => paymentOnlyMode
+      ? (window.location.href = 'minha-assinatura-homologacao.html')
+      : updateProfile({ payment_status:profile.payment_status === 'confirmed' ? 'confirmed' : 'pending',payment_followup_needed:profile.payment_status !== 'confirmed',onboarding_step:5 }));
     document.querySelector('#finance-later-homologation')?.addEventListener('click', () => updateProfile({
       payment_status: 'pending', payment_followup_needed: true, onboarding_step: 5
     }));
@@ -721,12 +730,9 @@
     if (address) address.classList.toggle('hidden', method !== 'boleto');
     address?.querySelectorAll('input[required]').forEach(input => { input.required = method === 'boleto'; });
     const summary = document.querySelector('#billing-summary');
-    const standardOffer = requestedOffer === 'standard';
-    if (summary) summary.textContent = standardOffer
-      ? 'Contratação sem gratuidade: a primeira cobrança ou vencimento seguirá a data confirmada pela Efí. Cancelamentos impedem novas cobranças.'
-      : method === 'boleto'
-      ? 'Se você for elegível, a experiência começa hoje. O boleto será emitido no 20º dia, vence no 30º dia e as cobranças posteriores serão mensais. Cancelamentos impedem novas cobranças.'
-       : 'Se você for elegível, são 30 dias grátis. No 25º dia enviaremos, se você autorizou o contato pelo WhatsApp, o checkout oficial da Efí. A Efí poderá cobrar quando o cartão for cadastrado; não espere até o 31º dia para concluir. A Rio Saúde não coleta dados do cartão.';
+    if (summary) summary.textContent = method === 'boleto'
+      ? 'Para novos alunos elegíveis, a experiência começa hoje. O boleto será emitido no 20º dia, vence no 30º dia e as cobranças posteriores serão mensais. Se a experiência já foi usada, mostraremos a contratação normal sem bloquear seu cadastro.'
+       : 'Para novos alunos elegíveis, são 30 dias grátis. No 25º dia enviaremos, se você autorizou o contato pelo WhatsApp, o checkout oficial da Efí. Caso a experiência já tenha sido usada, o checkout oficial será preparado para a contratação normal. A Rio Saúde não coleta dados do cartão.';
   }
 
   function renderTrialPaymentBypass() {
@@ -797,7 +803,7 @@
       showEfiReturnChoices(url);
       document.querySelector('#efi-return .lead').textContent = 'Situação do seu cadastro financeiro';
       const status = document.querySelector('#billing-status');
-      const hostedTrialWaiting = existing?.checkout_kind === 'card_hosted_trial' && existing?.creation_state === 'scheduled';
+      const hostedTrialWaiting = ['card_hosted_trial','card_hosted_resume'].includes(existing?.checkout_kind) && existing?.creation_state === 'scheduled';
       const message = profile.payment_status === 'confirmed' ? 'Pagamento confirmado pela Rio Saúde.' :
         hostedTrialWaiting ? `Sua experiência gratuita está registrada até ${String(existing.trial_ends_on || '').split('-').reverse().join('/')}. No 25º dia, o checkout oficial da Efí será enviado pelo WhatsApp caso você tenha autorizado esse contato. A Efí poderá cobrar quando o cartão for cadastrado.` :
         created ? 'Assinatura já criada na Efí. Isso não confirma o pagamento. Você pode continuar sem criar outra assinatura.' :
@@ -915,15 +921,14 @@
         zipcode:String(form.billing_zipcode||'').replace(/\D/g,'')
       };
       if (paymentMethod === 'boleto' && (!billing_address.street || !billing_address.number || !billing_address.neighborhood || !billing_address.city || !/^[A-Z]{2}$/.test(billing_address.state) || !/^\d{8}$/.test(billing_address.zipcode))) throw new Error('billing_address_invalid');
-      const offer = requestedOffer;
-      const data = await efiBilling({action:paymentMethod === 'boleto' ? 'boleto' : 'card_hosted',plan_code:planCode,offer,billing_address:paymentMethod === 'boleto' ? billing_address : undefined});
+      const data = await efiBilling({action:paymentMethod === 'boleto' ? 'boleto' : 'card_hosted',plan_code:planCode,billing_address:paymentMethod === 'boleto' ? billing_address : undefined});
       if (session?.user.id !== userId) return;
       showEfiReturnChoices();
       const end=data?.trial_ends_on ? String(data.trial_ends_on).split('-').reverse().join('/') : '';
       document.querySelector('#billing-status').textContent = paymentMethod === 'boleto'
         ? `Experiência registrada${end ? ` até ${end}` : ''}. O boleto não foi emitido agora; a emissão é programada para o 20º dia.`
         : data?.checkout_deferred
-          ? `Experiência registrada${end ? ` até ${end}` : ''}. No 25º dia, enviaremos o checkout oficial da Efí pelo WhatsApp se você autorizou o contato. A Efí poderá cobrar quando o cartão for cadastrado; nenhum cartão foi solicitado agora.`
+          ? `${data?.resumed_trial ? 'Seu período experimental anterior foi retomado' : 'Experiência registrada'}${end ? ` até ${end}` : ''}. O checkout oficial será disponibilizado somente no momento correto; nenhum cartão foi solicitado agora.`
           : 'O checkout oficial da Efí está disponível em “Minha assinatura”. O pagamento só será confirmado após a notificação da Efí.';
     } catch (error) {
       if (['subscription_exists','existing_subscription_other_plan','checkout_in_progress','checkout_requires_review'].includes(error.message)) {
@@ -939,7 +944,6 @@
         subscription_exists:'Você já possui uma assinatura. Fale com a equipe para alterar seu plano.',
         homologation_only:'O cadastro de pagamento está disponível somente em homologação.',
         plan_unavailable:'Este plano não está disponível no momento.'
-        ,trial_not_available:'A experiência gratuita já foi utilizada. Você pode contratar sem gratuidade com a equipe.'
         ,billing_address_required:'Preencha o endereço de cobrança.'
         ,billing_address_invalid:'Confira o endereço de cobrança: informe rua, número, bairro, cidade, UF com duas letras e CEP com oito números.'
         ,efi_checkout_link_failed:'Não foi possível preparar o checkout oficial da Efí. Nenhuma cobrança foi confirmada.'
@@ -1112,7 +1116,7 @@
   async function logout() {
     const { error } = await client.auth.signOut();
     if (error) { showAppError(error); return; }
-    history.replaceState(null, '', location.pathname + (requestedOffer === 'standard' ? '?offer=standard' : ''));
+    history.replaceState(null, '', location.pathname);
     showLogin();
   }
 
@@ -1194,3 +1198,4 @@
     return escapeHtml(input);
   }
 })();
+
