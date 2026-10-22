@@ -46,6 +46,7 @@
   let pendingRaceEntries = [];
   let trialAccess = null;
   let paymentOnlyMode = false;
+  let cardCheckoutMode = 'unknown';
 
   loginForm.addEventListener('submit', (event) => {
     event.preventDefault();
@@ -721,6 +722,7 @@
       payment_status: 'pending', payment_followup_needed: true, onboarding_step: 5
     }));
     loadExistingCheckout();
+    loadCardCheckoutMode();
     bindBackButtons();
   }
 
@@ -760,8 +762,38 @@
     if (status && paymentUrl) {
       status.className = 'status';
       status.innerHTML = '<a target="_blank" rel="noopener noreferrer" href="' +
-        escapeAttr(paymentUrl) + '">Abrir a Efí novamente</a>';
+        escapeAttr(paymentUrl) + '">Abrir o checkout da Efí</a>';
     }
+  }
+
+  function openEfiCheckoutFromClick() {
+    // A known trial never opens a second tab. While the authenticated
+    // preflight is still loading, reserve a blank tab so an immediate checkout
+    // is not blocked by the browser; it is closed when the server defers it.
+    if (cardCheckoutMode === 'deferred') return null;
+    // A harmless page is opened while this click is trusted by the browser.
+    // It is redirected only after the backend returns a validated Efí URL.
+    const popup = window.open('about:blank', '_blank');
+    try { if (popup) popup.opener = null; } catch { /* best effort */ }
+    return popup;
+  }
+
+  function redirectEfiCheckout(popup, url) {
+    const safeUrl = validEfiLink(url);
+    if (!popup || popup.closed || !safeUrl) return false;
+    try { popup.location.replace(safeUrl); return true; }
+    catch { try { popup.location.href = safeUrl; return true; } catch { return false; } }
+  }
+
+  function closeEfiCheckout(popup) {
+    try { if (popup && !popup.closed) popup.close(); } catch { /* best effort */ }
+  }
+
+  function addBillingMessage(message, paymentUrl = '') {
+    const status = document.querySelector('#billing-status');
+    if (!status) return;
+    if (paymentUrl) status.insertAdjacentHTML('afterbegin', '<p>' + escapeHtml(message) + '</p>');
+    else status.textContent = message;
   }
 
   function validEfiLink(urlString) {
@@ -776,7 +808,7 @@
   }
   function digits(value) { return String(value || '').replace(/\D/g,''); }
 
-  async function loadExistingCheckout({ preparePlans = true } = {}) {
+  async function loadExistingCheckout({ preparePlans = true, onPaymentUrl = null } = {}) {
     const root = document.querySelector('#efi-first-access');
     const userId = session?.user.id;
     const profileId = profile?.id;
@@ -800,6 +832,7 @@
       const url = existing?.creation_state === 'ready' &&
         existing.payment_expires_at >= new Date().toISOString().slice(0,10) ?
         validEfiLink(existing.payment_url) : '';
+      if (url && typeof onPaymentUrl === 'function') onPaymentUrl(url);
       showEfiReturnChoices(url);
       document.querySelector('#efi-return .lead').textContent = 'Situação do seu cadastro financeiro';
       const status = document.querySelector('#billing-status');
@@ -891,6 +924,18 @@
     throw new Error(result?.error || 'billing_unavailable');
   }
 
+  async function loadCardCheckoutMode() {
+    const userId = session?.user.id;
+    if (!userId) return;
+    try {
+      const data = await efiBilling({action:'payment_mode'});
+      if (session?.user.id === userId) cardCheckoutMode = data?.card_checkout === 'immediate' ? 'immediate' : 'deferred';
+    } catch {
+      // If preflight fails, preserve the manual checkout link as the safe fallback.
+      if (session?.user.id === userId) cardCheckoutMode = 'unknown';
+    }
+  }
+
   async function startCheckout(event) {
     event.preventDefault();
     const formElement = event.currentTarget;
@@ -899,6 +944,9 @@
     const planCode = formData.get('plan_code');
     if (!planCode) return;
     const userId = session.user.id;
+    const selectedMethod = formData.get('payment_method') === 'boleto' ? 'boleto' : 'card';
+    const checkoutPopup = selectedMethod === 'card' ? openEfiCheckoutFromClick() : null;
+    let checkoutRedirected = false;
     const status = document.querySelector('#billing-initial-status');
     checkoutBusy = true;
     stepRoot.querySelectorAll('button').forEach(button => { button.disabled = true; });
@@ -907,7 +955,9 @@
     status.textContent = 'Preparando seu cadastro na Efí...';
     try {
       // Recheck before creation, including a subscription made in another tab.
-      if (await loadExistingCheckout({preparePlans:false})) {
+      if (await loadExistingCheckout({preparePlans:false,onPaymentUrl:url => {
+        checkoutRedirected = redirectEfiCheckout(checkoutPopup,url);
+      }})) {
         return;
       }
       // Event.currentTarget is only set while the listener is running. Keep the
@@ -923,13 +973,18 @@
       if (paymentMethod === 'boleto' && (!billing_address.street || !billing_address.number || !billing_address.neighborhood || !billing_address.city || !/^[A-Z]{2}$/.test(billing_address.state) || !/^\d{8}$/.test(billing_address.zipcode))) throw new Error('billing_address_invalid');
       const data = await efiBilling({action:paymentMethod === 'boleto' ? 'boleto' : 'card_hosted',plan_code:planCode,billing_address:paymentMethod === 'boleto' ? billing_address : undefined});
       if (session?.user.id !== userId) return;
-      showEfiReturnChoices();
+      const paymentUrl = paymentMethod === 'card' ? validEfiLink(data?.payment_url) : '';
+      showEfiReturnChoices(paymentUrl);
+      if (paymentUrl) checkoutRedirected = redirectEfiCheckout(checkoutPopup,paymentUrl);
       const end=data?.trial_ends_on ? String(data.trial_ends_on).split('-').reverse().join('/') : '';
-      document.querySelector('#billing-status').textContent = paymentMethod === 'boleto'
+      const message = paymentMethod === 'boleto'
         ? `Experiência registrada${end ? ` até ${end}` : ''}. O boleto não foi emitido agora; a emissão é programada para o 20º dia.`
         : data?.checkout_deferred
           ? `${data?.resumed_trial ? 'Seu período experimental anterior foi retomado' : 'Experiência registrada'}${end ? ` até ${end}` : ''}. O checkout oficial será disponibilizado somente no momento correto; nenhum cartão foi solicitado agora.`
-          : 'O checkout oficial da Efí está disponível em “Minha assinatura”. O pagamento só será confirmado após a notificação da Efí.';
+          : checkoutRedirected
+            ? 'O checkout oficial da Efí foi aberto em uma nova aba. Se você o fechar, use o botão abaixo para voltar ao pagamento. O pagamento só será confirmado após a notificação da Efí.'
+            : 'O checkout oficial da Efí está pronto. Use o botão abaixo para abrir o pagamento. O pagamento só será confirmado após a notificação da Efí.';
+      addBillingMessage(message,paymentUrl);
     } catch (error) {
       if (['subscription_exists','existing_subscription_other_plan','checkout_in_progress','checkout_requires_review'].includes(error.message)) {
         await loadExistingCheckout({preparePlans:false});
@@ -955,6 +1010,7 @@
           'Não foi possível preparar o cadastro na Efí. Tente novamente, sem repetir várias vezes.';
       }
     } finally {
+      if (!checkoutRedirected) closeEfiCheckout(checkoutPopup);
       checkoutBusy = false;
       logoutButton.disabled = false;
       if (status.isConnected) {

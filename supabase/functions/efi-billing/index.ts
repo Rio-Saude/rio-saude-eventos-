@@ -63,6 +63,16 @@ async function cancelledTrialStillActive(profileId: string) {
   if(error) throw error;
   return data;
 }
+async function cardCheckoutMode(profileId: string) {
+  // UX hint only: creation recalculates eligibility, so the browser cannot
+  // grant itself either a trial or an immediate checkout.
+  const [open, cancelledTrial, trialAvailableNow] = await Promise.all([
+    existing(profileId), cancelledTrialStillActive(profileId), trialAvailable(profileId)
+  ]);
+  if (open) return open.payment_method === 'card' && open.creation_state === 'ready' &&
+    typeof open.payment_url === 'string' && open.payment_url.startsWith('https://') ? 'immediate' : 'deferred';
+  return !cancelledTrial && !trialAvailableNow ? 'immediate' : 'deferred';
+}
 async function saveAddress(profileId: string, source: any) {
   if(!validAddress(source)) throw new Error('billing_address_required');
   const a={athlete_profile_id:profileId,street:source.street.trim(),number:source.number.trim(),complement:source.complement?.trim()||null,neighborhood:source.neighborhood.trim(),city:source.city.trim(),state:source.state,zipcode:source.zipcode};
@@ -153,7 +163,13 @@ Deno.serve(async req => {
     const body=await req.json().catch(()=>null); if(!body || typeof body!=='object') return json(req,400,{error:'invalid_request'});
     const scheduledWorker=body.action==='run_due_boleto' && await secureEquals(req.headers.get('x-rio-schedule-secret'),Deno.env.get('BILLING_CRON_SECRET_HOMOLOG'));
     const user=scheduledWorker ? null : await userFor(req); if(!scheduledWorker && !user) return json(req,401,{error:'authentication_required'});
-    if(!['card_hosted','boleto','cancel','run_due_boleto'].includes(body.action)) return json(req,400,{error:'invalid_action'});
+    if(!['card_hosted','boleto','cancel','run_due_boleto','payment_mode'].includes(body.action)) return json(req,400,{error:'invalid_action'});
+    if(body.action==='payment_mode') {
+      const {data:profile,error}=await db.from('athlete_profiles').select('id').eq('user_id',user!.id).maybeSingle();
+      if(error) throw error;
+      if(!profile) throw new Error('profile_missing');
+      return json(req,200,{environment:'homologation',card_checkout:await cardCheckoutMode(profile.id)});
+    }
     if(body.action==='run_due_boleto') {
       if (!scheduledWorker) {
         const {data:adminRole}=await db.from('admin_emails').select('email').eq('email',user!.email!.toLowerCase()).maybeSingle();

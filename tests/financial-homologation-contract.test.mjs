@@ -106,3 +106,13 @@ test('re-contract preserves an unexpired consumed trial and schedules checkout a
   assert.match(cronWorker, /'card_hosted_trial', 'card_hosted_resume'/);
   assert.match(onboarding, /paymentOnlyMode/);
 });
+
+test('immediate card checkout opens from the trusted click and keeps a manual fallback', () => {
+  assert.match(source, /body\.action==='payment_mode'/);
+  assert.match(source, /card_checkout:await cardCheckoutMode\(profile\.id\)/);
+  assert.match(onboarding, /const checkoutPopup = selectedMethod === 'card' \? openEfiCheckoutFromClick\(\) : null/);
+  assert.match(onboarding, /window\.open\('about:blank', '_blank'\)/);
+  assert.match(onboarding, /redirectEfiCheckout\(checkoutPopup,paymentUrl\)/);
+  assert.match(onboarding, /Abrir o checkout da Efí/);
+  assert.match(onboarding, /data\?\.checkout_deferred/);
+});
