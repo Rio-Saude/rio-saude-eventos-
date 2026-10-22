@@ -9,12 +9,12 @@
 .my-space-shell{max-width:780px}.my-space-topbar{margin-bottom:42px}.my-space-loading{max-width:520px}.my-space-welcome{padding:6px 0 30px}.my-space-welcome h1{font-size:clamp(38px,8vw,62px);line-height:1.03;letter-spacing:-.055em;margin:0 0 12px}.my-space-welcome p:not(.step-kicker){margin:0;color:var(--muted);font-size:18px;line-height:1.5}.my-space-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.my-space-card{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:15px;min-height:142px;padding:22px;text-decoration:none;color:var(--dark);background:rgba(255,255,255,.88);border:1px solid var(--line);border-radius:16px;box-shadow:0 14px 34px rgba(32,66,90,.07);transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease}.my-space-card:hover{transform:translateY(-2px);border-color:#aac6d8;box-shadow:0 18px 38px rgba(32,66,90,.13)}.my-space-card:focus-visible{outline:3px solid #316a96;outline-offset:3px}.my-space-icon{display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:#e8f2f8;color:#316a96;font-size:20px;font-weight:800}.my-space-card-copy{display:grid;gap:5px;min-width:0}.my-space-card-copy strong{font-size:18px;letter-spacing:-.025em}.my-space-card-copy small{font-size:13px;line-height:1.35;color:var(--muted)}.my-space-arrow{color:#316a96;font-size:20px;font-weight:700}@media(max-width:560px){.my-space-topbar{margin-bottom:28px}.my-space-grid{grid-template-columns:1fr;gap:11px}.my-space-card{min-height:104px;padding:18px;border-radius:14px}.my-space-welcome{padding-bottom:24px}.my-space-welcome h1{font-size:40px}.my-space-welcome p:not(.step-kicker){font-size:16px}}
 
 /* RJ PAR-Q: clear ten-question screening without mixing financial fields. */
-.parq-question{border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:16px;margin:0 0 12px;background:rgba(255,255,255,.025)}
-.parq-question legend{padding:0 6px;font-size:15px;line-height:1.5;font-weight:750;color:#f4fff8;max-width:100%}
+.parq-question{border:1px solid #d5e0e8;border-radius:16px;padding:16px;margin:0 0 12px;background:#f8fafb}
+.parq-question legend{padding:0 6px;font-size:15px;line-height:1.5;font-weight:750;color:#1d2b37;max-width:100%}
 .parq-options{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px}
-.parq-option{display:flex;align-items:center;gap:8px;border:1px solid rgba(255,255,255,.15);border-radius:999px;padding:10px 16px;background:rgba(255,255,255,.05);font-weight:700;cursor:pointer}
-.parq-option:has(input:checked){border-color:var(--green2);background:rgba(168,224,190,.15)}
-.parq-term{border-left:3px solid var(--green2);padding:14px 18px;background:rgba(255,255,255,.04);line-height:1.55;border-radius:0 12px 12px 0}
+.parq-option{display:flex;align-items:center;gap:8px;border:1px solid #c6d8e4;border-radius:999px;padding:10px 16px;background:#fff;color:#1d2b37;font-weight:700;cursor:pointer}
+.parq-option:has(input:checked){border-color:var(--green2);background:#e7f2fa}
+.parq-term{border-left:3px solid var(--green2);padding:14px 18px;background:#f3f8fb;color:#1d2b37;line-height:1.55;border-radius:0 12px 12px 0}
 .parq-accept{margin-top:14px;line-height:1.5;cursor:pointer}
 #parq-form h3{margin-top:26px;font-size:20px}
 #parq-form .field{margin-top:18px}
