@@ -5,6 +5,8 @@
   // If a browser changes it, its client can only point at homologation, never production.
   const isHomologationPreview = config.supabaseUrl === 'https://xiiudduncvcxcvbgbqpc.supabase.co' &&
     config.environmentLabel === 'HOMOLOGAÇÃO';
+  // Capture the offer before login/navigation removes unrelated query parameters.
+  const requestedOffer = new URLSearchParams(window.location.search).get('offer') === 'standard' ? 'standard' : 'trial';
   const raceCatalogSource = isHomologationPreview ? 'onboarding_race_catalog' : 'events';
 
   const loginView = document.querySelector('#login-view');
@@ -233,7 +235,11 @@
     const params = new URLSearchParams(location.search);
     editing = Boolean(profile.onboarding_completed_at && params.get('edit') === '1');
     editStep = params.get('edit') === '1' ? 1 : 1;
-    history.replaceState(null, '', location.pathname + (params.get('edit') === '1' ? '?edit=1' : ''));
+    const retainedParams = new URLSearchParams();
+    if (params.get('edit') === '1') retainedParams.set('edit', '1');
+    if (requestedOffer === 'standard') retainedParams.set('offer', 'standard');
+    const query = retainedParams.toString();
+    history.replaceState(null, '', location.pathname + (query ? `?${query}` : ''));
     loginView.classList.add('hidden');
     appView.classList.remove('hidden');
     logoutButton.classList.remove('hidden');
@@ -715,7 +721,7 @@
     if (address) address.classList.toggle('hidden', method !== 'boleto');
     address?.querySelectorAll('input[required]').forEach(input => { input.required = method === 'boleto'; });
     const summary = document.querySelector('#billing-summary');
-    const standardOffer = new URLSearchParams(window.location.search).get('offer') === 'standard';
+    const standardOffer = requestedOffer === 'standard';
     if (summary) summary.textContent = standardOffer
       ? 'Contratação sem gratuidade: a primeira cobrança ou vencimento seguirá a data confirmada pela Efí. Cancelamentos impedem novas cobranças.'
       : method === 'boleto'
@@ -909,7 +915,7 @@
         zipcode:String(form.billing_zipcode||'').replace(/\D/g,'')
       };
       if (paymentMethod === 'boleto' && (!billing_address.street || !billing_address.number || !billing_address.neighborhood || !billing_address.city || !/^[A-Z]{2}$/.test(billing_address.state) || !/^\d{8}$/.test(billing_address.zipcode))) throw new Error('billing_address_invalid');
-      const offer = new URLSearchParams(window.location.search).get('offer') === 'standard' ? 'standard' : 'trial';
+      const offer = requestedOffer;
       const data = await efiBilling({action:paymentMethod === 'boleto' ? 'boleto' : 'card_hosted',plan_code:planCode,offer,billing_address:paymentMethod === 'boleto' ? billing_address : undefined});
       if (session?.user.id !== userId) return;
       showEfiReturnChoices();
@@ -1106,7 +1112,7 @@
   async function logout() {
     const { error } = await client.auth.signOut();
     if (error) { showAppError(error); return; }
-    history.replaceState(null, '', location.pathname);
+    history.replaceState(null, '', location.pathname + (requestedOffer === 'standard' ? '?offer=standard' : ''));
     showLogin();
   }
 

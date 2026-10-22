@@ -8,6 +8,7 @@ const followupMigration = await readFile(new URL('../supabase/migrations/2026102
 const migration = await readFile(new URL('../supabase/homologation/20261021190000_billing_trials_webhooks.sql', import.meta.url), 'utf8');
 const config = await readFile(new URL('../supabase/config.toml', import.meta.url), 'utf8');
 const onboarding = await readFile(new URL('../onboarding.js', import.meta.url), 'utf8');
+const publicOnboarding = await readFile(new URL('../homologacao-publica/dist/onboarding.js', import.meta.url), 'utf8');
 
 test('hosted card trial is server-side, delayed, and remains unconfirmed', () => {
   assert.match(source, /card_hosted_trial/);
@@ -85,4 +86,12 @@ test('checkout retains its form before the asynchronous duplicate check', () => 
   assert.match(checkout, /const formData = new FormData\(formElement\)/);
   assert.match(checkout, /const form = Object\.fromEntries\(formData\)/);
   assert.doesNotMatch(checkout, /new FormData\(event\.currentTarget\)/);
+});
+
+test('standard offer persists through authentication in the public homologation bundle', () => {
+  for (const code of [onboarding, publicOnboarding]) {
+    assert.match(code, /const requestedOffer = new URLSearchParams\(window\.location\.search\)\.get\('offer'\) === 'standard' \? 'standard' : 'trial';/);
+    assert.match(code, /if \(requestedOffer === 'standard'\) retainedParams\.set\('offer', 'standard'\);/);
+    assert.match(code, /const offer = requestedOffer;/);
+  }
 });
