@@ -6,6 +6,7 @@
   const isHomologationPreview = config.supabaseUrl === 'https://xiiudduncvcxcvbgbqpc.supabase.co' &&
     config.environmentLabel === 'HOMOLOGAÇÃO';
   const raceCatalogSource = isHomologationPreview ? 'onboarding_race_catalog' : 'events';
+  const mySpacePage = isHomologationPreview ? (config.mySpacePage || 'meu-espaco-homologacao.html') : '';
 
   const loginView = document.querySelector('#login-view');
   const appView = document.querySelector('#app-view');
@@ -241,6 +242,10 @@
     if (paymentOnlyMode) retainedParams.set('payment', '1');
     const query = retainedParams.toString();
     history.replaceState(null, '', location.pathname + (query ? `?${query}` : ''));
+    if (profile.onboarding_completed_at && mySpacePage && !editing && !paymentOnlyMode) {
+      window.location.replace(mySpacePage);
+      return;
+    }
     loginView.classList.add('hidden');
     appView.classList.remove('hidden');
     logoutButton.classList.remove('hidden');
@@ -316,6 +321,10 @@
     document.querySelector('.hero')?.classList.toggle('hidden', completed);
     progressRoot.classList.toggle('hidden', completed);
     if (completed) {
+      if (mySpacePage) {
+        window.location.replace(mySpacePage);
+        return;
+      }
       renderDashboard();
       return;
     }

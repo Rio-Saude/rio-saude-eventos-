@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#316a96">
+  <title>HOMOLOGAÇÃO · Rio Saúde · Meu espaço</title>
+  <link rel="stylesheet" href="portal.css">
+</head>
+<body class="my-space-body">
+  <div class="environment-banner" role="status">HOMOLOGAÇÃO · use somente dados fictícios</div>
+  <main class="shell my-space-shell">
+    <header class="topbar my-space-topbar">
+      <div class="brand">RIO SAÚDE · ÁREA DO ALUNO</div>
+      <button id="logout-btn" class="ghost-btn" type="button">Sair</button>
+    </header>
+    <section id="my-space-loading" class="card my-space-loading" aria-live="polite">
+      <p class="lead">Preparando seu espaço…</p>
+    </section>
+    <section id="my-space-app" class="hidden" aria-labelledby="my-space-title">
+      <div class="my-space-welcome">
+        <p class="step-kicker">Meu espaço</p>
+        <h1 id="my-space-title">Olá, <span id="athlete-first-name">atleta</span>.</h1>
+        <p>Seu treino continua por aqui.</p>
+      </div>
+      <nav class="my-space-grid" aria-label="Áreas do aluno">
+        <a class="my-space-card" href="index.html#eventos-oficiais">
+          <span class="my-space-icon" aria-hidden="true">⌁</span>
+          <span class="my-space-card-copy"><strong>Minhas provas</strong><small>Calendário e participações</small></span>
+          <span class="my-space-arrow" aria-hidden="true">→</span>
+        </a>
+        <a class="my-space-card" href="https://www.trainingpeaks.com/" target="_blank" rel="noopener noreferrer">
+          <span class="my-space-icon" aria-hidden="true">↗</span>
+          <span class="my-space-card-copy"><strong>Meus treinos</strong><small>Acessar TrainingPeaks</small></span>
+          <span class="my-space-arrow" aria-hidden="true">↗</span>
+        </a>
+        <a class="my-space-card" href="minha-assinatura-homologacao.html">
+          <span class="my-space-icon" aria-hidden="true">◌</span>
+          <span class="my-space-card-copy"><strong>Meu plano</strong><small>Assinatura e pagamentos</small></span>
+          <span class="my-space-arrow" aria-hidden="true">→</span>
+        </a>
+        <a class="my-space-card" href="onboarding-homologacao.html?edit=1">
+          <span class="my-space-icon" aria-hidden="true">○</span>
+          <span class="my-space-card-copy"><strong>Meus dados</strong><small>Informações pessoais</small></span>
+          <span class="my-space-arrow" aria-hidden="true">→</span>
+        </a>
+      </nav>
+    </section>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.min.js"></script>
+  <script src="config-homologacao.js"></script>
+  <script src="meu-espaco.js"></script>
+</body>
+</html>

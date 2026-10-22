@@ -8,6 +8,8 @@ const allowedFiles = new Set([
   'index.html',
   'onboarding-homologacao.html',
   'onboarding.js',
+  'meu-espaco-homologacao.html',
+  'meu-espaco.js',
   'parq.js',
   'portal.css',
   'config-homologacao.js',

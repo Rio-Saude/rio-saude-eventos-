@@ -9,6 +9,7 @@ window.RIO_SAUDE_CONFIG = {
   fallbackFormUrl: "",
   adminPage: "admin-comercial-homologacao.html",
   onboardingPage: "onboarding-homologacao.html",
+  mySpacePage: "meu-espaco-homologacao.html",
   efiPaymentUrl: "",
   whatsappGroupUrl: "",
   environmentLabel: "HOMOLOGAÇÃO"
