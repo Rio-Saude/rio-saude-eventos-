@@ -1,3 +1,4 @@
+# Republicação manual após a vinculação da configuração do Cloudflare Pages.
 name: Homologação - frontend estático
 
 on:
