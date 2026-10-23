@@ -131,3 +131,17 @@
  .profile-actions{display:grid}
  .profile-actions .primary-btn{width:100%}
 }
+
+/* Touch-friendly PAR-Q controls and compact selected-race removal on mobile. */
+.parq-option{min-height:48px}
+.parq-option input[type="radio"],.parq-accept input[type="checkbox"]{
+  width:22px;height:22px;min-width:22px;min-height:22px;flex:0 0 22px;
+  accent-color:#316a96;cursor:pointer;margin:0
+}
+.parq-accept{min-height:52px}
+.parq-option:focus-within,.parq-accept:focus-within{outline:3px solid #a9d4ee;outline-offset:2px}
+#selected-race-list .race-selected-item>span{min-width:0;overflow-wrap:anywhere}
+#selected-race-list .race-selected-item .secondary-btn{
+  width:44px!important;min-width:44px;max-width:44px;min-height:44px;
+  flex:0 0 44px;padding:6px 0!important
+}
