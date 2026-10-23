@@ -47,3 +47,11 @@ test('PAR-Q and race remove buttons are mobile touch-friendly',()=>{
   assert.match(css,/#selected-race-list \.race-selected-item \.secondary-btn/);
   assert.match(css,/min-width:44px;max-width:44px;min-height:44px/);
 });
+
+test('old race suggestions appear as personal interests without an admin decision',()=>{
+  assert.match(races,/Older "Sugerir prova" submissions had no personal record/);
+  assert.match(races,/const imported=state\.goals\.slice\(\)/);
+  assert.match(races,/status:"interest"/);
+  assert.match(races,/await persistGoals\(imported\)/);
+  assert.match(races,/id,name,event_date,city,category,distance,status/);
+});
