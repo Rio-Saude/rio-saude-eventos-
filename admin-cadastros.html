@@ -3,106 +3,34 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Rio Saúde • Provas dos alunos</title>
+<title>Rio Saúde • Cadastros iniciais</title>
 <style>
-:root{color-scheme:dark;font-family:Inter,Arial,sans-serif}
-*{box-sizing:border-box}
-body{background:#07110d;color:#f9f9f7;margin:0}
-main{max-width:960px;margin:auto;padding:30px 18px 80px}
-header{display:flex;gap:18px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:36px}
-nav{display:flex;gap:12px;flex-wrap:wrap}
-a{color:#a8e0be}
-h1{font-size:clamp(28px,5vw,48px);letter-spacing:-.045em;margin:10px 0}
-p{line-height:1.5;color:#c7d8ce}
-button{background:#a8e0be;color:#07110d;border:0;padding:12px 18px;border-radius:24px;cursor:pointer;font-weight:bold}
-article{margin:16px 0;background:#0e1b15;border:1px solid #2d4537;border-radius:18px;padding:18px}
-article h2{margin:0 0 10px;font-size:19px}
-article p{margin:6px 0;font-size:14px}
-ul{list-style:none;padding:0;margin:0}
-li{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:9px 0;border-top:1px solid #253b2e}
-small{color:#bdcfc2}
-#status{min-height:2em}
+:root{color-scheme:dark;font-family:Inter,Arial,sans-serif}*{box-sizing:border-box}body{background:#07110d;color:#f9f9f7;margin:0}main{max-width:1120px;margin:auto;padding:30px 18px 80px}header,.toolbar,.actions,.meta{display:flex;gap:12px;flex-wrap:wrap;align-items:center}header{justify-content:space-between;margin-bottom:28px}nav{display:flex;gap:12px;flex-wrap:wrap}a{color:#a8e0be}h1{font-size:clamp(28px,5vw,48px);letter-spacing:-.045em;margin:10px 0}h2{margin:0;font-size:20px}p{line-height:1.5;color:#c7d8ce}button,input,select{font:inherit}button{background:#a8e0be;color:#07110d;border:0;padding:11px 16px;border-radius:24px;cursor:pointer;font-weight:bold}.secondary{background:transparent;color:#f9f9f7;border:1px solid #3c5647}.toolbar{margin:22px 0}.toolbar input,.toolbar select{background:#0e1b15;color:#f9f9f7;border:1px solid #3c5647;border-radius:12px;padding:11px}.toolbar input{min-width:min(100%,300px);flex:1}.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:18px 0}.summary div,article{background:#0e1b15;border:1px solid #2d4537;border-radius:18px;padding:18px}.summary strong{display:block;font-size:26px;color:#a8e0be}.summary span,small{color:#bdcfc2}#status{min-height:2em}.list{display:grid;gap:12px}.card-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.badges{display:flex;gap:7px;flex-wrap:wrap}.badge{display:inline-block;border-radius:999px;padding:5px 8px;background:rgba(168,224,190,.14);color:#bdeece;font-size:12px;font-weight:bold}.badge.alert{background:rgba(248,198,68,.16);color:#ffe49a}.details{display:none;margin-top:15px;padding-top:14px;border-top:1px solid #2d4537}.details.open{display:block}.details p{margin:7px 0}.empty{padding:22px;border:1px dashed #3c5647;border-radius:18px;color:#bdcfc2}@media(max-width:650px){.summary{grid-template-columns:1fr}.toolbar>*{width:100%}.toolbar button{width:auto}.card-top{flex-direction:column}}
 </style>
 </head>
 <body>
 <main>
-  <header>
-    <strong>RIO SAÚDE • ADMINISTRAÇÃO</strong>
-    <nav><a href="admin.html">Central de provas</a><a href="admin-parq.html">Situação do PAR-Q</a><a href="index.html">Ver site</a></nav>
-  </header>
-  <h1>Próximas provas dos alunos</h1>
-  <p>Lista privada com as provas informadas no primeiro acesso. As datas são exibidas somente aqui para a equipe autorizada.</p>
-  <button id="refresh" type="button">Atualizar lista</button>
-  <p id="status" role="status" aria-live="polite">Conferindo acesso...</p>
-  <section id="results"></section>
+  <header><div><strong>RIO SAÚDE • ADMINISTRAÇÃO</strong><h1>Cadastros iniciais</h1></div><nav><a href="admin.html">Central de provas</a><a href="admin-parq.html">Situação do PAR-Q</a><a href="index.html">Ver site</a></nav></header>
+  <p>Visão privada dos cadastros simplificados. A triagem só mostra o indicador de acompanhamento — nunca as respostas individuais.</p>
+  <div class="summary"><div><strong id="total">0</strong><span>cadastros</span></div><div><strong id="completed">0</strong><span>concluídos</span></div><div><strong id="health">0</strong><span>com acompanhamento de saúde</span></div></div>
+  <div class="toolbar"><input id="search" type="search" placeholder="Buscar por nome ou e-mail" autocomplete="off"><select id="status-filter"><option value="all">Todas as situações</option><option value="in_progress">Em andamento</option><option value="completed">Concluídos</option></select><button id="refresh" type="button" class="secondary">Atualizar</button><button id="export" type="button">Exportar CSV</button></div>
+  <p id="status" role="status" aria-live="polite">Conferindo acesso...</p><section id="results" class="list"></section>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.min.js"></script>
 <script src="race-config-20260930.js"></script>
 <script>
 (() => {
-  const config = window.RIO_SAUDE_CONFIG || {};
-  const status = document.querySelector('#status');
-  const results = document.querySelector('#results');
-  const btn = document.querySelector('#refresh');
-  if (!window.supabase || !config.supabaseUrl || !config.supabaseAnonKey) {
-    status.textContent = 'Configuração indisponível.';
-    return;
-  }
-  const db = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey);
-  async function load() {
-    results.replaceChildren();
-    btn.disabled = true;
-    status.textContent = 'Carregando...';
-    try {
-      const { data: userData, error: authError } = await db.auth.getUser();
-      if (authError || !userData?.user) {
-        status.textContent = 'Entre com seu e-mail autorizado pela Central de Provas e volte a esta página.';
-        return;
-      }
-      const {data:allowed,error:permissionError} = await db.rpc('is_admin');
-      if (permissionError || allowed !== true) {
-        status.textContent = 'Acesso restrito à equipe autorizada da Rio Saúde.';
-        return;
-      }
-      const {data,error} = await db.from('athlete_profiles')
-        .select('first_name,last_name,email,goal_events')
-        .order('last_name',{ascending:true}).limit(1000);
-      if (error) throw error;
-      let count = 0;
-      for (const athlete of data || []) {
-        const races = Array.isArray(athlete.goal_events) ? athlete.goal_events : [];
-        if (!races.length) continue;
-        count += races.length;
-        const card = document.createElement('article');
-        const heading = document.createElement('h2');
-        heading.textContent = [athlete.first_name,athlete.last_name].filter(Boolean).join(' ') ||
-          athlete.email || 'Atleta';
-        const list = document.createElement('ul');
-        for (const race of races) {
-          if (!race || typeof race.name !== 'string') continue;
-          const item = document.createElement('li');
-          const name = document.createElement('span');
-          name.textContent = race.name;
-          const date = document.createElement('small');
-          const rawDate = typeof race.event_date === 'string' ? race.event_date : '';
-          date.textContent = /^\d{4}-\d{2}-\d{2}$/.test(rawDate)
-            ? rawDate.split('-').reverse().join('/') : 'Data não informada';
-          item.append(name,date);
-          list.appendChild(item);
-        }
-        card.append(heading,list);
-        results.appendChild(card);
-      }
-      status.textContent = count ? count + ' provas cadastradas pelos alunos.' : 'Nenhuma prova informada no cadastro.';
-    } catch (err) {
-      console.error('Falha ao carregar provas dos alunos',err);
-      status.textContent = 'Não foi possível carregar as provas. Tente novamente.';
-    } finally {
-      btn.disabled = false;
-    }
-  }
-  btn.addEventListener('click',load);
-  load();
+  const config=window.RIO_SAUDE_CONFIG||{}, status=document.querySelector('#status'), results=document.querySelector('#results');
+  const search=document.querySelector('#search'), filter=document.querySelector('#status-filter'), refresh=document.querySelector('#refresh'), exportButton=document.querySelector('#export'); let registrations=[];
+  if(!window.supabase||!config.supabaseUrl||!config.supabaseAnonKey){status.textContent='Configuração indisponível.';return;}
+  const db=window.supabase.createClient(config.supabaseUrl,config.supabaseAnonKey), nameOf=row=>[row.first_name,row.last_name].filter(Boolean).join(' ')||'Nome não informado', situationOf=row=>row.completed_at?'completed':'in_progress';
+  const formatDate=value=>value?new Date(value).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'}):'—', racesOf=row=>(Array.isArray(row.goal_events)?row.goal_events:[]).filter(r=>r&&typeof r.name==='string').map(r=>r.name).join(' · ');
+  const escapeHtml=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[char]));
+  async function load(){results.replaceChildren();refresh.disabled=true;exportButton.disabled=true;status.textContent='Carregando...';try{const {data:userData,error:authError}=await db.auth.getUser();if(authError||!userData?.user){status.textContent='Entre com seu e-mail autorizado pela Central de Provas e volte a esta página.';return;}const {data:allowed,error:permissionError}=await db.rpc('is_admin');if(permissionError||allowed!==true){status.textContent='Acesso restrito à equipe autorizada da Rio Saúde.';return;}const [profilesResult,statesResult]=await Promise.all([db.from('athlete_profiles').select('user_id,first_name,last_name,email,whatsapp,modalities,base_preference,primary_goal,goal_events'),db.from('simplified_registration_states').select('user_id,completed_at,created_at,health_triage_positive').order('created_at',{ascending:false}).limit(1000)]);if(profilesResult.error)throw profilesResult.error;if(statesResult.error)throw statesResult.error;const profiles=new Map((profilesResult.data||[]).map(profile=>[profile.user_id,profile]));registrations=(statesResult.data||[]).map(state=>({...profiles.get(state.user_id),...state}));document.querySelector('#total').textContent=registrations.length;document.querySelector('#completed').textContent=registrations.filter(row=>row.completed_at).length;document.querySelector('#health').textContent=registrations.filter(row=>row.health_triage_positive).length;status.textContent=registrations.length?registrations.length+' cadastro(s) carregado(s).':'Nenhum cadastro simplificado ainda.';render();exportButton.disabled=false;}catch(error){console.error('Falha ao carregar cadastros',error);status.textContent='Não foi possível carregar os cadastros. Tente novamente.';}finally{refresh.disabled=false;}}
+  function visible(){const term=search.value.trim().toLocaleLowerCase('pt-BR'),wanted=filter.value;return registrations.filter(row=>{const matches=!term||[nameOf(row),row.email].join(' ').toLocaleLowerCase('pt-BR').includes(term);return matches&&(wanted==='all'||situationOf(row)===wanted);});}
+  function render(){const rows=visible();results.replaceChildren();if(!rows.length){results.innerHTML='<div class="empty">Nenhum cadastro corresponde aos filtros.</div>';return;}for(const row of rows){const article=document.createElement('article'),races=racesOf(row),modalities=Array.isArray(row.modalities)?row.modalities.join(', '):'';article.innerHTML='<div class="card-top"><div><h2>'+escapeHtml(nameOf(row))+'</h2><p>'+escapeHtml(row.email||'E-mail não informado')+(row.whatsapp?' · '+escapeHtml(row.whatsapp):'')+'</p></div><div class="badges"><span class="badge">'+(row.completed_at?'Concluído':'Em andamento')+'</span>'+(row.health_triage_positive?'<span class="badge alert">Acompanhamento de saúde</span>':'')+'</div></div><div class="meta"><small>Cadastrado: '+escapeHtml(formatDate(row.created_at))+'</small><small>Base: '+escapeHtml(row.base_preference||'Não informada')+'</small><small>Modalidades: '+escapeHtml(modalities||'Não informadas')+'</small></div><p><strong>Provas:</strong> '+escapeHtml(races||'Nenhuma prova informada')+'</p><div class="details"><p><strong>Objetivos:</strong> '+escapeHtml(row.primary_goal||'Não informados')+'</p><p><strong>Perfil esportivo:</strong> '+escapeHtml(modalities||'Modalidades não informadas')+' · Base '+escapeHtml(row.base_preference||'não informada')+'</p></div><div class="actions"><button type="button" class="secondary details-toggle">Ver perfil e objetivos</button></div>';article.querySelector('.details-toggle').addEventListener('click',event=>{const detail=article.querySelector('.details'),open=detail.classList.toggle('open');event.currentTarget.textContent=open?'Ocultar perfil e objetivos':'Ver perfil e objetivos';});results.appendChild(article);}}
+  function csvValue(value){let safe=String(value??'');if(/^[=+\-@\t\r]/.test(safe))safe="'"+safe;return '"'+safe.replace(/"/g,'""')+'"';}function exportCsv(){const rows=visible(),header=['Nome','Sobrenome','E-mail','WhatsApp','Data do cadastro','Situação','Modalidades','Base de preferência','Objetivos','Provas','Acompanhamento de saúde'],lines=[header.map(csvValue).join(',')];for(const row of rows)lines.push([row.first_name||'',row.last_name||'',row.email||'',row.whatsapp||'',row.created_at||'',row.completed_at?'Concluído':'Em andamento',Array.isArray(row.modalities)?row.modalities.join('; '):'',row.base_preference||'',row.primary_goal||'',racesOf(row),row.health_triage_positive?'Sim':'Não'].map(csvValue).join(','));const blob=new Blob(['\uFEFF'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download='cadastros-iniciais-rio-saude.csv';link.click();URL.revokeObjectURL(url);}
+  search.addEventListener('input',render);filter.addEventListener('change',render);refresh.addEventListener('click',load);exportButton.addEventListener('click',exportCsv);load();
 })();
 </script>
 </body>
