@@ -9,12 +9,28 @@
   const client = cfg.supabaseUrl && cfg.supabaseAnonKey && window.supabase
     ? window.supabase.createClient(cfg.supabaseUrl,cfg.supabaseAnonKey,{auth:{persistSession:true,autoRefreshToken:true}})
     : null;
-  const state = { user:null, events:[], windows:[], counts:new Map(), mine:new Map(), suggestions:[], year:null, category:"all", currentTab:"calendar", editing:null };
+  const state = { user:null, events:[], windows:[], counts:new Map(), mine:new Map(), goals:[], suggestions:[], year:null, category:"all", currentTab:"calendar", editing:null };
   const fmt = (date) => date ? new Date(date + "T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"short",year:"numeric"}) : "";
   const number = (n) => Number(n || 0).toLocaleString("pt-BR");
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   const safeUrl = (s) => { try { const u = new URL(s); return ["http:","https:"].includes(u.protocol)?u.href:""; } catch {return "";} };
-  const categoryOf = (e) => /triathlon/i.test(e.category||"") ? "tri" : /trail/i.test(e.category||"") ? "trail" : "run";
+  const categoryOf = (e) => /triathlon|triatlo|ironman/i.test(e.category||"") ? "tri" : /trail|montanha/i.test(e.category||"") ? "trail" : "run";
+  const raceKey = (name,date) => String(name||"").trim().normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/\s+/g," ")+"|"+(date||"");
+  const goalFor = event => state.goals.find(g=>raceKey(g.name,g.event_date)===raceKey(event.name,event.event_date))||null;
+  const goalStatus = g => g?.status==="interest" ? "interest" : "going";
+  const goalFuture = g => !g.event_date || g.event_date>=today();
+  function matchesFilter(event) {
+    if (state.category==="all") return true;
+    const sport=categoryOf(event);
+    if (["run","trail","tri"].includes(state.category)) return sport===state.category;
+    if (sport!=="run") return false;
+    const words=[event.category,event.name,event.distances,...(Array.isArray(event.distance_options)?event.distance_options:[])].filter(Boolean).join(" ").toLowerCase();
+    if (state.category==="run5") return /\b5\s*(?:km|k)\b/.test(words);
+    if (state.category==="run10") return /\b10\s*(?:km|k)\b/.test(words);
+    if (state.category==="half") return /meia\s*maratona|\b21(?:[,.]1)?\s*(?:km|k)\b/.test(words);
+    if (state.category==="marathon") return /\b42(?:[,.]2)?\s*(?:km|k)\b/.test(words) || (/\bmaratona\b/.test(words) && !/meia\s*maratona/.test([event.category,event.name].join(" ").toLowerCase()));
+    return false;
+  }
   const future = (e) => e.event_date >= today();
   const groupAvailable = (e) => ["checking","collecting","confirmed"].includes(e.group_status) &&
     (!e.group_deadline || e.group_deadline >= today());
@@ -32,7 +48,72 @@
     ["calendar","mine","suggest"].forEach(k => $("#race-"+k+"-panel").classList.toggle("hidden",k!==tab));
     if (tab==="mine") renderMine();
   }
-  function myEntry(eventId) { return state.mine.get(eventId) || null; }
+  function myEntry(eventId) {
+    const existing=state.mine.get(eventId);
+    if (existing) return existing;
+    const event=state.events.find(e=>e.id===eventId);
+    const goal=event&&goalFor(event);
+    return goal ? {status:goalStatus(goal),distance:goal.distance||null} : null;
+  }
+  async function persistGoals(goals) {
+    if (goals.length>15) throw new Error("Limite de 15 provas atingido.");
+    const payload={goal_events:goals,goal_event_name:goals[0]?.name||null,goal_event_date:goals[0]?.event_date||null};
+    const {data,error}=await client.from("athlete_profiles").update(payload)
+      .eq("user_id",state.user.id).select("goal_events").single();
+    if (error) throw error;
+    state.goals=Array.isArray(data.goal_events)?data.goal_events:goals;
+  }
+  function goalCard(goal) {
+    const card=document.createElement("article");
+    card.className="race-card";
+    const selected=goalStatus(goal);
+    const suggestion=state.suggestions.find(s=>raceKey(s.name,s.event_date)===raceKey(goal.name,goal.event_date));
+    const review=suggestion?.status==="approved"?"Incluída no calendário coletivo":
+      suggestion?.status==="pending"?"Em análise para o calendário coletivo":
+      suggestion?.status==="rejected"?"Fora do calendário coletivo":"Prova pessoal";
+    card.innerHTML='<div class="race-top"><span class="race-date">'+esc(goal.event_date?fmt(goal.event_date):"Data a definir")+
+      '</span><span class="race-category">'+esc(goal.category||"Prova pessoal")+'</span></div>'+
+      '<h3>'+esc(goal.name)+'</h3>'+
+      (goal.city?'<div class="race-meta">'+esc(goal.city)+'</div>':"")+
+      (goal.distance?'<div class="race-meta">Distância: '+esc(goal.distance)+'</div>':"")+
+      '<div class="race-status">Sua escolha: '+(selected==="going"?"Vou participar":"Tenho interesse")+'</div>'+
+      '<div class="race-meta">'+esc(review)+' · Esta prova já está salva para você.</div>'+
+      '<div class="race-actions"></div>';
+    const actions=card.querySelector(".race-actions");
+    for (const [status,label] of [["interest","Tenho interesse"],["going","Vou participar"]]) {
+      const button=document.createElement("button");button.type="button";button.textContent=label;
+      button.className=selected===status?"selected":"";
+      button.setAttribute("aria-pressed",String(selected===status));
+      button.addEventListener("click",()=>changeGoal(goal,status,button));actions.appendChild(button);
+    }
+    const remove=document.createElement("button");remove.type="button";remove.textContent="Remover";
+    remove.className="race-remove";remove.addEventListener("click",()=>removeGoal(goal,remove));actions.appendChild(remove);
+    return card;
+  }
+  async function changeGoal(goal,status,button) {
+    button.disabled=true;
+    try {
+      await persistGoals(state.goals.map(g=>raceKey(g.name,g.event_date)===raceKey(goal.name,goal.event_date)?{...g,status}:g));
+      renderMine();
+    } catch {button.disabled=false;alert("Não foi possível atualizar esta prova. Tente novamente.");}
+  }
+  async function removeGoal(goal,button) {
+    button.disabled=true;
+    try {
+      await persistGoals(state.goals.filter(g=>raceKey(g.name,g.event_date)!==raceKey(goal.name,goal.event_date)));
+      renderMine();
+    } catch {button.disabled=false;alert("Não foi possível remover esta prova. Tente novamente.");}
+  }
+  async function submitForCalendar(goal) {
+    if (!goal.event_date || state.events.some(e=>raceKey(e.name,e.event_date)===raceKey(goal.name,goal.event_date)) ||
+      state.suggestions.some(s=>raceKey(s.name,s.event_date)===raceKey(goal.name,goal.event_date))) return true;
+    const entry={user_id:state.user.id,name:goal.name,event_date:goal.event_date,city:goal.city||null,
+      category:goal.category||"Corrida",distance:goal.distance||null,notes:goal.notes||null,status:"pending"};
+    const {data,error}=await client.from("race_suggestions").insert(entry)
+      .select("id,name,event_date,city,status").single();
+    if (error) return false;
+    state.suggestions.unshift(data);renderSuggestions();return true;
+  }
   function windowLabel(w) {
     const now=today();
     const range=(w.start_date ? fmt(w.start_date) : "") + (w.start_date&&w.end_date ? " a " : "") + (w.end_date ? fmt(w.end_date) : "");
@@ -90,13 +171,25 @@
   }
   function renderCalendar() {
     const chosen=state.events.filter(e=>future(e) && String(e.event_date).slice(0,4)===String(state.year) &&
-      (state.category==="all" || categoryOf(e)===state.category));
+      matchesFilter(e));
     $("#race-calendar-summary").textContent=chosen.length+" provas encontradas · Atualizado com o calendário Rio Saúde";
     fillGrid($("#race-calendar-grid"),chosen,"Nenhuma prova nesta seleção.");
   }
   function renderMine() {
-    fillGrid($("#race-mine-grid"),state.events.filter(e=>future(e)&&state.mine.has(e.id)),
-      "Você ainda não marcou nenhuma prova. Abra o calendário para começar.");
+    const official=state.events.filter(e=>future(e)&&(state.mine.has(e.id)||goalFor(e)));
+    const personal=state.goals.filter(g=>g?.name&&goalFuture(g)&&
+      !state.events.some(e=>future(e)&&raceKey(e.name,e.event_date)===raceKey(g.name,g.event_date)));
+    const root=$("#race-mine-grid");root.replaceChildren();
+    const cards=[...official.map(e=>({date:e.event_date,node:createCard(e)})),
+      ...personal.map(g=>({date:g.event_date||"9999-12-31",node:goalCard(g)}))];
+    cards.sort((a,b)=>a.date.localeCompare(b.date)).forEach(item=>root.appendChild(item.node));
+    $("#race-mine-summary").textContent=cards.length+
+      (cards.length===1?" prova no seu perfil.":" provas no seu perfil.")+" Atualize ou remova seus objetivos quando quiser.";
+    if (!cards.length) {
+      const p=document.createElement("p");p.className="races-empty";
+      p.textContent="Nenhuma prova cadastrada. Escolha uma no calendário ou toque em Adicionar prova.";
+      root.appendChild(p);
+    }
   }
   function renderSuggestions() {
     const root=$("#race-suggestion-list");root.replaceChildren();
@@ -131,7 +224,7 @@
     add("","Ainda não defini");
     const options=Array.isArray(event.distance_options)?event.distance_options:[];
     options.filter(Boolean).forEach(x=>add(x,x));
-    const current=state.mine.get(event.id)?.distance||"";
+    const current=myEntry(event.id)?.distance||"";
     if (current && !options.includes(current)) add(current,current);
     if (event.allow_other_distance) add("__other__","Outra distância");
     select.value=current;
@@ -156,6 +249,9 @@
         event_id:state.editing.event.id,user_id:state.user.id,status:state.editing.status,distance:distance
       },{onConflict:"event_id,user_id"});
       if (error) throw error;
+      const goal=goalFor(state.editing.event);
+      if (goal) await persistGoals(state.goals.map(g=>raceKey(g.name,g.event_date)===raceKey(goal.name,goal.event_date)
+        ? {...g,status:state.editing.status,distance} : g));
       await refreshChoices();
       state.editing=null;dialog.close();
     } catch(err) {
@@ -168,37 +264,63 @@
     try {
       const {error}=await client.from("race_participations").delete().eq("event_id",event.id).eq("user_id",state.user.id);
       if (error) throw error;
+      const goal=goalFor(event);
+      if (goal) await persistGoals(state.goals.filter(g=>raceKey(g.name,g.event_date)!==raceKey(goal.name,goal.event_date)));
       await refreshChoices();
     } catch {button.disabled=false;alert("Não foi possível remover agora. Tente novamente.");}
   }
   async function sendSuggestion(e) {
     e.preventDefault();
-    const status=$("#race-suggest-status"),button=$("#suggest-submit");
+    const message=$("#race-suggest-status"),button=$("#suggest-submit");
     const name=$("#suggest-name").value.trim(),event_date=$("#suggest-date").value;
-    if (event_date < today()) {status.textContent="Escolha uma prova futura.";return;}
-    button.disabled=true;status.textContent="Enviando…";
+    if (name.length<3 || event_date<today()) {
+      message.textContent="Informe o nome e uma data futura.";return;
+    }
+    const status=$("#suggest-intent").value==="interest"?"interest":"going";
+    const distance=$("#suggest-distance").value.trim()||null;
+    const city=$("#suggest-city").value.trim()||null;
+    const category=$("#suggest-category").value||"Corrida";
+    button.disabled=true;message.textContent="Salvando sua prova…";
     try {
-      const entry={user_id:state.user.id,name,event_date,city:$("#suggest-city").value.trim()||null,
-        category:$("#suggest-category").value||null,distance:$("#suggest-distance").value.trim()||null,
-        notes:$("#suggest-notes").value.trim()||null,status:"pending"};
-      const {error}=await client.from("race_suggestions").insert(entry);
-      if (error) throw error;
-      const {data:rows,error:readError}=await client.from("race_suggestions")
-        .select("id,name,event_date,city,status").eq("user_id",state.user.id).order("created_at",{ascending:false});
-      if (readError) throw readError;
-      state.suggestions=rows||[];
+      const official=state.events.find(event=>raceKey(event.name,event.event_date)===raceKey(name,event_date));
+      let queued=true;
+      if (official) {
+        const {error}=await client.from("race_participations").upsert({
+          event_id:official.id,user_id:state.user.id,status,distance
+        },{onConflict:"event_id,user_id"});
+        if (error) throw error;
+        const goal=goalFor(official);
+        if (goal) await persistGoals(state.goals.map(g=>raceKey(g.name,g.event_date)===raceKey(name,event_date)?{...g,status,distance}:g));
+        await refreshChoices();
+      } else {
+        const entry={name,event_date,custom:true,status,distance,city,category,notes:$("#suggest-notes").value.trim()||null};
+        const key=raceKey(name,event_date);
+        const existing=state.goals.findIndex(g=>raceKey(g.name,g.event_date)===key);
+        if (existing<0 && state.goals.length>=15) {
+          message.textContent="Você já cadastrou 15 provas. Remova uma antes de adicionar outra.";return;
+        }
+        const next=state.goals.slice();
+        if (existing>=0) next[existing]={...next[existing],...entry};
+        else next.push(entry);
+        await persistGoals(next);
+        queued=await submitForCalendar(entry);
+      }
       $("#race-suggestion-form").reset();
-      status.textContent="Sugestão enviada! A equipe vai avaliar.";
-      renderSuggestions();
-    } catch {status.textContent="Não foi possível enviar agora. Tente novamente.";}
-    finally {button.disabled=false;}
+      $("#race-mine-feedback").textContent=queued
+        ? "Prova salva! Ela já está na sua lista. A inclusão no calendário coletivo é avaliada separadamente."
+        : "Sua prova foi salva! A sugestão para o calendário coletivo não pôde ser enviada agora.";
+      message.textContent="";
+      renderCalendar();renderMine();activate("mine");
+    } catch(err) {
+      message.textContent="Não foi possível salvar sua prova. Tente novamente.";
+    } finally {button.disabled=false;}
   }
   async function boot() {
     const {data:{user},error:authError}=await client.auth.getUser();
     if (authError||!user){location.replace(cfg.onboardingPage||"onboarding-homologacao.html");return;}
     state.user=user;
     const {data:profile,error:profileError}=await client.from("athlete_profiles")
-      .select("onboarding_completed_at").eq("user_id",user.id).maybeSingle();
+      .select("onboarding_completed_at,goal_events,goal_event_name,goal_event_date").eq("user_id",user.id).maybeSingle();
     if (profileError) throw profileError;
     if (!profile?.onboarding_completed_at){location.replace(cfg.onboardingPage||"onboarding-homologacao.html");return;}
     const [events,windows,mine,counts,suggestions]=await Promise.all([
@@ -213,6 +335,8 @@
     state.mine=new Map((mine.data||[]).map(r=>[r.event_id,r]));
     state.counts=new Map((counts.data||[]).map(r=>[r.event_id,r]));
     state.suggestions=suggestions.data||[];
+    state.goals=Array.isArray(profile.goal_events)&&profile.goal_events.length ? profile.goal_events
+      : (profile.goal_event_name ? [{name:profile.goal_event_name,event_date:profile.goal_event_date||null,custom:true}] : []);
     const years=[...new Set(state.events.filter(future).map(e=>e.event_date.slice(0,4)))].sort();
     state.year=years.includes(String(today().slice(0,4)))?today().slice(0,4):years[0];
     const select=$("#race-year");
@@ -220,9 +344,16 @@
     select.value=state.year||"";
     renderCalendar();renderMine();renderSuggestions();
     loading.classList.add("hidden");app.classList.remove("hidden");
+    // Personal onboarding races are immediately visible; collective publication remains moderated.
+    for (const goal of state.goals.filter(g=>g?.custom===true && goalFuture(g) && g.event_date)) {
+      if (await submitForCalendar(goal)) continue;
+      break; // Keep the page usable if the moderation queue is unavailable.
+    }
+    renderMine();
     client.rpc("is_admin").then(({data,error})=>{if(!error&&data===true)$("#race-admin-link").classList.remove("hidden");}).catch(()=>{});
   }
   document.querySelectorAll("[data-race-tab]").forEach(btn=>btn.addEventListener("click",()=>activate(btn.dataset.raceTab)));
+  $("#race-add-from-mine").addEventListener("click",()=>{activate("suggest");$("#suggest-name").focus();});
   $("#race-year").addEventListener("change",e=>{state.year=e.target.value;renderCalendar();});
   $("#race-category").addEventListener("change",e=>{state.category=e.target.value;renderCalendar();});
   $("#race-distance").addEventListener("change",e=>{
