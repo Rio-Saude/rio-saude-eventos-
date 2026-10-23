@@ -315,6 +315,22 @@
       message.textContent="Não foi possível salvar sua prova. Tente novamente.";
     } finally {button.disabled=false;}
   }
+  async function syncCalendarGoals() {
+    // An onboarding goal matching a public event should count without a second registration.
+    let synced=false;
+    for (const goal of state.goals.filter(g=>g?.name&&g.event_date&&goalFuture(g))) {
+      const event=state.events.find(e=>raceKey(e.name,e.event_date)===raceKey(goal.name,goal.event_date));
+      if (!event || state.mine.has(event.id)) continue;
+      const {error}=await client.from("race_participations").upsert({
+        event_id:event.id,user_id:state.user.id,status:goalStatus(goal),distance:goal.distance||null
+      },{onConflict:"event_id,user_id"});
+      if (!error) {
+        state.mine.set(event.id,{event_id:event.id,status:goalStatus(goal),distance:goal.distance||null});
+        synced=true;
+      }
+    }
+    if (synced) await refreshChoices();
+  }
   async function boot() {
     const {data:{user},error:authError}=await client.auth.getUser();
     if (authError||!user){location.replace(cfg.onboardingPage||"onboarding-homologacao.html");return;}
@@ -344,6 +360,7 @@
     select.value=state.year||"";
     renderCalendar();renderMine();renderSuggestions();
     loading.classList.add("hidden");app.classList.remove("hidden");
+    try { await syncCalendarGoals(); } catch (err) { console.warn("A sincronização com o calendário será tentada novamente.",err); }
     // Personal onboarding races are immediately visible; collective publication remains moderated.
     for (const goal of state.goals.filter(g=>g?.custom===true && goalFuture(g) && g.event_date)) {
       if (await submitForCalendar(goal)) continue;
