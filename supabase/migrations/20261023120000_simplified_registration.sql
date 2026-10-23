@@ -23,6 +23,7 @@ create index if not exists simplified_health_screenings_user_created_idx on publ
 alter table public.simplified_registration_states enable row level security;
 alter table public.simplified_health_screenings enable row level security;
 create policy "athlete manages own simplified registration state" on public.simplified_registration_states for all to authenticated using (user_id = (select auth.uid())) with check (user_id = (select auth.uid()));
+create policy "admins read simplified registration states" on public.simplified_registration_states for select to authenticated using (public.is_admin());
 create policy "athlete reads own simplified health triage" on public.simplified_health_screenings for select to authenticated using (user_id = (select auth.uid()));
 create policy "athlete inserts own simplified health triage" on public.simplified_health_screenings for insert to authenticated with check (user_id = (select auth.uid()));
 create policy "admins read simplified health triage" on public.simplified_health_screenings for select to authenticated using (public.is_admin());

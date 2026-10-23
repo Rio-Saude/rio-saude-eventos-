@@ -60,5 +60,17 @@ test('a positive health response creates the internal follow-up signal without f
   assert.equal(triage.answers.q2, true);
   assert.doesNotMatch(JSON.stringify(triage), /signed_name|declaration_accepted/);
   assert.match(migration, /admins read simplified health triage/);
-  assert.match(registrationsAdmin, /medical_review_recommended/);
+  assert.match(registrationsAdmin, /health_triage_positive/);
+});
+
+test('administrative registration list is private, includes incomplete registrations, and exports no health answers', () => {
+  assert.match(registrationsAdmin, /db\.rpc\('is_admin'\)/);
+  assert.match(registrationsAdmin, /simplified_registration_states/);
+  assert.match(registrationsAdmin, /athlete_profiles/);
+  assert.match(registrationsAdmin, /completed_at\?'completed':'in_progress'/);
+  assert.match(registrationsAdmin, /cadastros-iniciais-rio-saude\.csv/);
+  assert.match(registrationsAdmin, /Acompanhamento de saúde/);
+  assert.match(registrationsAdmin, /\^\[=\+\\-@\\t\\r\]/);
+  assert.doesNotMatch(registrationsAdmin, /\.select\('user_id,answers/);
+  assert.match(migration, /admins read simplified registration states/);
 });
