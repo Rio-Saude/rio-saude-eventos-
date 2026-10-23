@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#316a96">
   <title>HOMOLOGAÇÃO · Rio Saúde · Minhas provas</title>
-  <link rel="stylesheet" href="portal.css">
+  <link rel="stylesheet" href="portal.css?v=20261022-races">
   <style>
     .races-shell{max-width:1080px}.races-head{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;flex-wrap:wrap;margin:12px 0 24px}
     .races-head h1{font-size:clamp(36px,6vw,58px);letter-spacing:-.055em;line-height:1.05;margin:6px 0 12px}
@@ -26,7 +26,7 @@
     .race-actions button.selected{background:#316a96;color:#fff;border-color:#316a96}.race-actions .race-remove{border-color:#e1d9d5;color:#8d5b50}
     .race-status{font-size:12px;font-weight:700;color:#316a96}.races-empty{border:1px dashed #bed1de;background:#f7fafc;color:#627180;border-radius:12px;padding:25px;text-align:center;grid-column:1/-1}
     .race-suggest{max-width:690px}.race-suggest h2{margin-bottom:7px}.race-suggest>p{color:var(--muted);line-height:1.5}.race-suggest .grid{margin-top:20px}
-    .race-suggestions{margin-top:26px;display:grid;gap:10px}.race-suggestion{background:#f8fafb;border:1px solid #d9e5ed;border-radius:10px;padding:15px}
+    .race-add-shortcut{margin:0 0 18px;width:auto}.race-suggestions{margin-top:26px;display:grid;gap:10px}.race-suggestion{background:#f8fafb;border:1px solid #d9e5ed;border-radius:10px;padding:15px}
     .race-suggestion strong{font-size:15px}.race-suggestion small{display:block;margin-top:5px;color:#718190}.race-chip{display:inline-block;padding:5px 9px;border-radius:99px;background:#e7eff6;color:#245777;font-size:12px;font-weight:800;margin-top:8px}
     dialog.race-dialog{border:1px solid #c7d9e5;border-radius:18px;max-width:min(94vw,510px);width:100%;padding:28px;background:#fff;color:#1d2b37;box-shadow:0 18px 70px #102e4660}dialog.race-dialog::backdrop{background:#0924359e}
     .race-dialog h2{font-size:24px;margin:0 0 6px}.race-dialog .field{margin:18px 0}.race-dialog .actions{margin-top:20px}
@@ -51,14 +51,18 @@
       <nav class="races-tabs" aria-label="Navegação de provas">
         <button type="button" data-race-tab="calendar" aria-selected="true">Calendário</button>
         <button type="button" data-race-tab="mine" aria-selected="false">Minhas provas</button>
-        <button type="button" data-race-tab="suggest" aria-selected="false">Sugerir prova</button>
+        <button type="button" data-race-tab="suggest" aria-selected="false">Adicionar prova</button>
       </nav>
       <section id="race-calendar-panel">
         <div class="races-controls">
           <label class="field"><span>Temporada</span><select id="race-year"></select></label>
           <label class="field"><span>Modalidade</span><select id="race-category">
             <option value="all">Todas as modalidades</option>
-            <option value="run">Corrida</option>
+            <option value="run">Corrida (todas)</option>
+            <option value="run5">5 km</option>
+            <option value="run10">10 km</option>
+            <option value="half">Meia maratona</option>
+            <option value="marathon">Maratona</option>
             <option value="trail">Trail</option>
             <option value="tri">Triathlon</option>
           </select></label>
@@ -67,13 +71,15 @@
         <div id="race-calendar-grid" class="races-grid"></div>
       </section>
       <section id="race-mine-panel" class="hidden">
-        <div class="races-summary">Suas próximas provas e interesses, sempre atualizados.</div>
+        <div class="races-summary" id="race-mine-summary">Suas provas e interesses, sempre atualizados.</div>
+        <div class="status" id="race-mine-feedback" role="status"></div>
+        <button type="button" class="secondary-btn race-add-shortcut" id="race-add-from-mine">+ Adicionar outra prova</button>
         <div id="race-mine-grid" class="races-grid"></div>
       </section>
       <section id="race-suggest-panel" class="hidden">
         <div class="card race-suggest">
-          <h2>Sentiu falta de alguma prova?</h2>
-          <p>Envie uma sugestão. A equipe da Rio Saúde avalia antes de incluir no calendário.</p>
+          <h2>Adicione uma prova sua.</h2>
+          <p>Não encontrou sua prova no calendário? Cadastre aqui. Ela aparece imediatamente em <strong>Minhas provas</strong>; a equipe decide separadamente se entra no calendário coletivo.</p>
           <form id="race-suggestion-form">
             <div class="grid">
               <div class="field full"><label for="suggest-name">Nome da prova</label><input required maxlength="160" minlength="3" id="suggest-name" placeholder="Ex.: Maratona de Buenos Aires"></div>
@@ -81,9 +87,10 @@
               <div class="field"><label for="suggest-city">Cidade</label><input maxlength="120" id="suggest-city"></div>
               <div class="field"><label for="suggest-category">Modalidade</label><select id="suggest-category"><option value="">Selecione</option><option>Corrida</option><option>Meia Maratona</option><option>Maratona</option><option>Trail Run</option><option>Triathlon</option></select></div>
               <div class="field"><label for="suggest-distance">Distância (se souber)</label><input maxlength="80" id="suggest-distance" placeholder="Ex.: 21 km"></div>
+              <div class="field full"><label for="suggest-intent">Sua situação nessa prova</label><select id="suggest-intent" required><option value="going">Vou participar</option><option value="interest">Tenho interesse</option></select></div>
               <div class="field full"><label for="suggest-notes">Observação (opcional)</label><textarea maxlength="600" id="suggest-notes" rows="2"></textarea></div>
             </div>
-            <div class="actions"><button class="primary-btn" type="submit" id="suggest-submit">Enviar sugestão</button></div>
+            <div class="actions"><button class="primary-btn" type="submit" id="suggest-submit">Adicionar às minhas provas</button></div>
           </form>
           <div id="race-suggest-status" class="status" role="status"></div>
           <div id="race-suggestion-list" class="race-suggestions"></div>
@@ -104,6 +111,6 @@
   </main>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.min.js"></script>
   <script src="config-homologacao.js"></script>
-  <script src="minhas-provas.js"></script>
+  <script src="minhas-provas.js?v=20261022-races"></script>
 </body>
 </html>
