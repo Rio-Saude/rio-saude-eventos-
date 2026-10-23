@@ -35,6 +35,11 @@ small{color:#bdcfc2}
   <button id="refresh" type="button">Atualizar lista</button>
   <p id="status" role="status" aria-live="polite">Conferindo acesso...</p>
   <section id="results"></section>
+  <section aria-labelledby="health-triage-title">
+    <h2 id="health-triage-title">Triagem inicial com acompanhamento recomendado</h2>
+    <p>Lista restrita de cadastros que responderam positivamente à triagem inicial. Não exibe respostas nem substitui o PAR-Q formal.</p>
+    <section id="health-triage-results"></section>
+  </section>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.min.js"></script>
 <script src="race-config-20260930.js"></script>
@@ -43,6 +48,7 @@ small{color:#bdcfc2}
   const config = window.RIO_SAUDE_CONFIG || {};
   const status = document.querySelector('#status');
   const results = document.querySelector('#results');
+  const healthTriageResults = document.querySelector('#health-triage-results');
   const btn = document.querySelector('#refresh');
   if (!window.supabase || !config.supabaseUrl || !config.supabaseAnonKey) {
     status.textContent = 'Configuração indisponível.';
@@ -65,7 +71,7 @@ small{color:#bdcfc2}
         return;
       }
       const {data,error} = await db.from('athlete_profiles')
-        .select('first_name,last_name,email,goal_events')
+        .select('user_id,first_name,last_name,email,goal_events')
         .order('last_name',{ascending:true}).limit(1000);
       if (error) throw error;
       let count = 0;
@@ -93,6 +99,32 @@ small{color:#bdcfc2}
         card.append(heading,list);
         results.appendChild(card);
       }
+      const { data: triages, error: triageError } = await db
+        .from('simplified_health_screenings')
+        .select('user_id,medical_review_recommended,created_at')
+        .eq('medical_review_recommended', true)
+        .order('created_at', { ascending: false })
+        .limit(1000);
+      if (triageError) throw triageError;
+      const athleteByUserId = new Map((data || []).map(athlete => [athlete.user_id, athlete]));
+      const latestPositiveByUserId = new Map();
+      for (const triage of triages || []) {
+        if (!latestPositiveByUserId.has(triage.user_id)) latestPositiveByUserId.set(triage.user_id, triage);
+      }
+      healthTriageResults.replaceChildren();
+      for (const triage of latestPositiveByUserId.values()) {
+        const athlete = athleteByUserId.get(triage.user_id);
+        const card = document.createElement('article');
+        const heading = document.createElement('h2');
+        heading.textContent = athlete ? [athlete.first_name,athlete.last_name].filter(Boolean).join(' ') || athlete.email : 'Cadastro identificado';
+        const detail = document.createElement('p');
+        detail.textContent = 'Avaliação médica recomendada antes de iniciar ou aumentar treinos.';
+        const date = document.createElement('small');
+        date.textContent = 'Triagem registrada em ' + new Date(triage.created_at).toLocaleDateString('pt-BR');
+        card.append(heading, detail, date);
+        healthTriageResults.appendChild(card);
+      }
+      if (!latestPositiveByUserId.size) healthTriageResults.textContent = 'Nenhuma triagem inicial positiva no momento.';
       status.textContent = count ? count + ' provas cadastradas pelos alunos.' : 'Nenhuma prova informada no cadastro.';
     } catch (err) {
       console.error('Falha ao carregar provas dos alunos',err);

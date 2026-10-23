@@ -18,6 +18,7 @@ create table if not exists public.simplified_health_screenings (
 );
 
 comment on table public.simplified_health_screenings is 'Initial health triage only; not a signed PAR-Q or medical clearance.';
+comment on column public.simplified_health_screenings.medical_review_recommended is 'Internal follow-up flag for a positive initial triage; it is not a formal PAR-Q result.';
 create index if not exists simplified_health_screenings_user_created_idx on public.simplified_health_screenings(user_id, created_at desc);
 alter table public.simplified_registration_states enable row level security;
 alter table public.simplified_health_screenings enable row level security;
