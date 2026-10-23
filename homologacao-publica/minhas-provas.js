@@ -344,7 +344,7 @@
       client.from("event_entry_windows").select("event_name,label,kind,start_date,end_date,url,active").eq("active",true),
       client.from("race_participations").select("event_id,status,distance").eq("user_id",user.id),
       client.rpc("race_counts"),
-      client.from("race_suggestions").select("id,name,event_date,city,status").eq("user_id",user.id).order("created_at",{ascending:false})
+      client.from("race_suggestions").select("id,name,event_date,city,category,distance,status").eq("user_id",user.id).order("created_at",{ascending:false})
     ]);
     for (const r of [events,windows,mine,counts,suggestions]) if (r.error) throw r.error;
     state.events=events.data||[];state.windows=windows.data||[];
@@ -353,6 +353,19 @@
     state.suggestions=suggestions.data||[];
     state.goals=Array.isArray(profile.goal_events)&&profile.goal_events.length ? profile.goal_events
       : (profile.goal_event_name ? [{name:profile.goal_event_name,event_date:profile.goal_event_date||null,custom:true}] : []);
+    // Older "Sugerir prova" submissions had no personal record. Recover them as interests.
+    const imported=state.goals.slice();
+    for (const suggestion of state.suggestions) {
+      if (!suggestion?.name || !suggestion.event_date || suggestion.event_date<today() || imported.length>=15) continue;
+      if (imported.some(g=>raceKey(g.name,g.event_date)===raceKey(suggestion.name,suggestion.event_date))) continue;
+      if (state.events.some(e=>state.mine.has(e.id)&&raceKey(e.name,e.event_date)===raceKey(suggestion.name,suggestion.event_date))) continue;
+      imported.push({name:suggestion.name,event_date:suggestion.event_date,custom:true,status:"interest",
+        city:suggestion.city||null,category:suggestion.category||"Corrida",distance:suggestion.distance||null});
+    }
+    if (imported.length>state.goals.length) {
+      try { await persistGoals(imported); }
+      catch (err) { state.goals=imported;console.warn("Ainda não foi possível persistir as sugestões antigas.",err); }
+    }
     const years=[...new Set(state.events.filter(future).map(e=>e.event_date.slice(0,4)))].sort();
     state.year=years.includes(String(today().slice(0,4)))?today().slice(0,4):years[0];
     const select=$("#race-year");
