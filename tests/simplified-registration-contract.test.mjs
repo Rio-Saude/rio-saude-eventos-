@@ -6,6 +6,7 @@ import { healthScreeningPayload, profileUpdatePayload } from '../simplified-regi
 const page = await readFile(new URL('../simplified-registration.html', import.meta.url), 'utf8');
 const app = await readFile(new URL('../simplified-registration.js', import.meta.url), 'utf8');
 const migration = await readFile(new URL('../supabase/migrations/20261023120000_simplified_registration.sql', import.meta.url), 'utf8');
+const grantsMigration = await readFile(new URL('../supabase/migrations/20261023130000_lock_down_simplified_registration_grants.sql', import.meta.url), 'utf8');
 const registrationsAdmin = await readFile(new URL('../admin-cadastros.html', import.meta.url), 'utf8');
 
 class TestFormData {
@@ -73,4 +74,7 @@ test('administrative registration list is private, includes incomplete registrat
   assert.match(registrationsAdmin, /\^\[=\+\\-@\\t\\r\]/);
   assert.doesNotMatch(registrationsAdmin, /\.select\('user_id,answers/);
   assert.match(migration, /admins read simplified registration states/);
+  assert.match(grantsMigration, /revoke all privileges.*public, anon, authenticated/);
+  assert.match(grantsMigration, /grant select, insert, update.*simplified_registration_states/);
+  assert.match(grantsMigration, /grant select, insert.*simplified_health_screenings/);
 });
