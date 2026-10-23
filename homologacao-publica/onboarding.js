@@ -416,7 +416,12 @@
       ? [{name:profile.goal_event_name, event_date:profile.goal_event_date || null, custom:true}] : [];
     pendingRaceEntries = (Array.isArray(profile.goal_events) && profile.goal_events.length ? profile.goal_events : oldRace)
       .filter(entry => entry && typeof entry.name === 'string').slice(0,15).map(entry=>({
-        name:entry.name, event_date:entry.event_date || null, custom:entry.custom !== false
+        name:entry.name, event_date:entry.event_date || null, custom:entry.custom !== false,
+        ...(entry.status === 'interest' || entry.status === 'going' ? {status:entry.status} : {}),
+        ...(entry.distance ? {distance:entry.distance} : {}),
+        ...(entry.category ? {category:entry.category} : {}),
+        ...(entry.city ? {city:entry.city} : {}),
+        ...(entry.notes ? {notes:entry.notes} : {})
       }));
     const hasRace = pendingRaceEntries.length > 0;
     const selected = new Set(Array.isArray(profile.modalities) ? profile.modalities : []);
