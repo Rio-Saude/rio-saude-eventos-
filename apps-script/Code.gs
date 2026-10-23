@@ -7,7 +7,7 @@
  * aprovada para o cadastro inicial. Nunca apontar para a planilha histórica
  * compartilhada publicamente.
  */
-const SHEET_ID = 'CONFIGURAR_PLANILHA_PRIVADA_ANTES_DE_TESTAR';
+const SHEET_ID = '1MmK-VEP9S8hULIK9rszzRKlMTk--hoitsE2NJrB2piU';
 const TAB_NAME = 'Respostas cadastro inicial';
 const VERSION = 'cadastro_inicial_v1_20261023';
 const HEADERS = [
