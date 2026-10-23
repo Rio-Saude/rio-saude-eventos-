@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Rio Saúde | Cadastro inicial</title>
+  <style>
+    :root{--ink:#1d2b37;--blue:#316a96;--bg:#f8fafb;--line:#dce5ec;--muted:#627180}
+    *{box-sizing:border-box}body{margin:0;color:var(--ink);background:#e7edf1;font:14px/1.55 Inter,system-ui,-apple-system,Segoe UI,sans-serif}
+    .page{max-width:600px;min-height:100vh;margin:auto;background:var(--bg);padding:25px 22px 46px}
+    header{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-bottom:20px;border-bottom:1px solid var(--line)}
+    .brand{font-size:20px;font-weight:850;letter-spacing:-.05em;color:var(--blue)}
+    .brand small{display:block;font-size:9px;letter-spacing:.18em;color:#628199}
+    header span{font-size:11px;color:var(--muted)}
+    .hero{margin:38px 0 30px}.eyebrow{font-size:11px;color:var(--blue);font-weight:800;letter-spacing:.09em;text-transform:uppercase}
+    h1{font-size:clamp(32px,7vw,47px);letter-spacing:-.065em;line-height:1.07;margin:10px 0 13px}
+    h2{font-size:24px;letter-spacing:-.05em;line-height:1.2;margin:0 0 9px}
+    p{color:var(--muted);margin:0 0 16px}.steps{display:flex;gap:8px;margin:0 0 24px}
+    .steps span{height:5px;flex:1;border-radius:6px;background:#d8e5ee}.steps span.active{background:var(--blue)}
+    .step{display:none}.step.active{display:block}
+    .fields{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+    label.field{display:grid;gap:6px;color:#41586a;font-weight:650;font-size:12px}
+    .full{grid-column:1/-1}
+    input:not([type=checkbox]):not([type=radio]),select,textarea{width:100%;padding:12px 13px;border:1px solid #bfceda;border-radius:7px;background:#fff;color:var(--ink);font:inherit;min-width:0}
+    textarea{min-height:88px;resize:vertical}
+    input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+    fieldset{border:0;padding:0;margin:0;min-width:0}legend{font-weight:700;color:#38546a;margin:0 0 8px}
+    .choices{display:flex;flex-wrap:wrap;gap:8px}.choice{display:inline-flex;align-items:center;gap:7px;border:1px solid #cedde6;background:#fff;border-radius:7px;padding:10px 12px;cursor:pointer}
+    .choice:has(input:checked){background:#e1eff8;border-color:var(--blue)}input[type=radio],input[type=checkbox]{accent-color:var(--blue)}
+    .question{border-bottom:1px solid var(--line);padding:17px 0}.question legend{font-size:13px;line-height:1.55}
+    .question .choices{gap:10px}.question .choice{min-width:100px;justify-content:center}
+    .note{margin:14px 0;padding:13px;background:#e8f2f9;border-left:3px solid var(--blue);color:#38556b;border-radius:4px;font-size:12px}
+    .checkline{display:flex;align-items:flex-start;gap:10px;color:#41586a;line-height:1.55;font-size:12px;margin:18px 0;cursor:pointer}
+    .actions{display:flex;justify-content:space-between;gap:12px;margin-top:26px}
+    button{border:0;cursor:pointer;font:inherit;font-weight:760;border-radius:8px;padding:12px 19px;min-height:46px}
+    .next{background:var(--blue);color:#fff;margin-left:auto}.back{background:#e6edf2;color:#34536a}button:disabled{opacity:.55;cursor:wait}
+    .status{margin-top:15px;color:#285677;min-height:24px}.status.error{color:#a42626}
+    .success{border:1px solid #afcfbf;background:#eaf5ee;border-radius:10px;padding:19px;margin:20px 0}
+    .success h2{color:#256449}.success p{color:#415d4b}.warning{background:#fff3de;border-left:3px solid #cb862c;padding:14px;border-radius:5px;color:#765022}
+    [hidden]{display:none!important}
+    @media(max-width:530px){body{background:var(--bg)}.page{padding:21px 18px 44px}.fields{grid-template-columns:1fr}.full{grid-column:auto}.actions{flex-wrap:wrap}.choice{font-size:12px}}
+  </style>
+</head>
+<body>
+<main class="page">
+  <header><div class="brand">RIO SAÚDE<small>CONSULTORIA ESPORTIVA</small></div><span>Cadastro inicial</span></header>
+  <section class="hero"><div class="eyebrow">Vamos conhecer você</div><h1>Conta um pouco sobre você.</h1><p>São três etapas rápidas: seus dados, seu momento no esporte e uma triagem de saúde. Sem cobrança e sem criar uma conta.</p></section>
+  <div class="steps" aria-label="Etapas"><span class="active"></span><span></span><span></span></div>
+  <input type="hidden" id="nonce" value="<?= nonce ?>">
+  <form id="personal" class="step active">
+    <div class="eyebrow">01 / 03 · Dados pessoais</div><h2>Começando pelo básico.</h2>
+    <div class="fields">
+      <label class="field">Nome<input name="first_name" autocomplete="given-name" maxlength="100" required></label>
+      <label class="field">Sobrenome<input name="last_name" autocomplete="family-name" maxlength="100" required></label>
+      <label class="field full">E-mail<input name="email" type="email" autocomplete="email" maxlength="180" required></label>
+      <label class="field">WhatsApp<input name="whatsapp" type="tel" autocomplete="tel" maxlength="40" minlength="8" required></label>
+      <label class="field">Data de nascimento<input name="birth_date" type="date" required></label>
+      <label class="field full">Cidade<input name="city" autocomplete="address-level2" maxlength="100" required></label>
+    </div>
+    <div class="actions"><button type="submit" class="next">Continuar ↗</button></div>
+  </form>
+  <form id="sport" class="step">
+    <div class="eyebrow">02 / 03 · Perfil esportivo</div><h2>Seu momento no esporte.</h2>
+    <div class="fields">
+      <fieldset class="full"><legend>Modalidades de interesse</legend><div class="choices">
+        <label class="choice"><input name="modalities" type="checkbox" value="corrida">Corrida</label>
+        <label class="choice"><input name="modalities" type="checkbox" value="triathlon">Triathlon</label>
+        <label class="choice"><input name="modalities" type="checkbox" value="trail">Trail</label>
+        <label class="choice"><input name="modalities" type="checkbox" value="natacao">Natação</label>
+        <label class="choice"><input name="modalities" type="checkbox" value="ciclismo">Ciclismo</label>
+      </div></fieldset>
+      <label class="field">Experiência<select name="running_experience" required><option value="">Selecione</option><option>Nunca treinei</option><option>Menos de 6 meses</option><option>6 meses a 1 ano</option><option>1 a 2 anos</option><option>2 anos ou mais</option></select></label>
+      <label class="field">Nível atual<select name="current_level"><option value="">Selecione</option><option value="iniciante">Iniciante</option><option value="intermediario">Intermediário</option><option value="avancado">Avançado</option></select></label>
+      <label class="field">Dias que treina hoje<input name="training_days_current" maxlength="50" placeholder="Ex.: 3 dias"></label>
+      <label class="field">Dias disponíveis<select name="training_days_available" required><option value="">Selecione</option><option>1–2 dias</option><option>3 dias</option><option>4 dias ou mais</option></select></label>
+      <label class="field full">Base de preferência<select name="base_preference" required><option value="">Selecione</option><option>Lagoa</option><option>Barra</option><option>Aterro</option><option>Online</option></select></label>
+      <fieldset class="full"><legend>Já teve alguma lesão relacionada aos treinos?</legend><div class="choices">
+        <label class="choice"><input type="radio" name="injury" value="yes" required>Sim</label>
+        <label class="choice"><input type="radio" name="injury" value="no" required>Não</label>
+      </div></fieldset>
+      <label class="field full">Se sim, conte brevemente<input name="training_injury_details" maxlength="1800"></label>
+      <label class="field full">Qual seu principal objetivo?<textarea name="primary_goal" maxlength="2000"></textarea></label>
+      <label class="field full">Tem alguma prova em mente? (opcional)<textarea name="goal_events" maxlength="2000" placeholder="Pode escrever os nomes das provas"></textarea></label>
+    </div>
+    <div class="actions"><button class="back" id="back1" type="button">Voltar</button><button type="submit" class="next">Continuar ↗</button></div>
+  </form>
+  <form id="health" class="step">
+    <div class="eyebrow">03 / 03 · Saúde e segurança</div><h2>Triagem inicial.</h2>
+    <p>Responda Sim ou Não às dez perguntas abaixo. Essas informações ajudam nossa equipe a orientar seus próximos passos.</p>
+    <div id="questionList"></div>
+    <div class="note">Esta é uma triagem inicial. O cadastro não substitui avaliação médica nem conclui o onboarding formal.</div>
+    <div id="guardian" hidden>
+      <div class="note">Como o atleta é menor de 18 anos, a autorização do responsável é necessária.</div>
+      <label class="field">Nome completo do responsável<input name="guardian_name" maxlength="160"></label>
+      <label class="checkline"><input type="checkbox" name="guardian_authorization"> Sou o responsável legal e autorizo o envio deste cadastro.</label>
+    </div>
+    <label class="checkline"><input type="checkbox" name="confirm_truth" required> Confirmo que as informações e respostas são verdadeiras e autorizo seu uso pela equipe Rio Saúde para contato e avaliação inicial.</label>
+    <div class="actions"><button class="back" id="back2" type="button">Voltar</button><button type="submit" class="next" id="send">Enviar cadastro ↗</button></div>
+    <p class="status" id="status" role="status" aria-live="polite"></p>
+  </form>
+  <section id="complete" class="step" aria-live="polite">
+    <div class="eyebrow">Cadastro concluído</div>
+    <div class="success"><h2>Recebemos suas informações.</h2><p>Obrigado! Nossa equipe vai analisar seu cadastro e entrar em contato para orientar os próximos passos.</p></div>
+    <p id="medicalNotice" class="warning" hidden>Como houve pelo menos uma resposta “Sim” na triagem, procure avaliação médica antes de iniciar ou aumentar seus treinos. Nossa equipe também receberá essa sinalização.</p>
+  </section>
+</main>
+<script>
+(function(){
+  'use strict';
+  const QUESTIONS = [
+    'Algum médico já disse que você possui algum problema de coração ou pressão arterial, e que somente deveria realizar atividade física supervisionado por profissionais de saúde?',
+    'Você sente dores no peito quando pratica atividade física?',
+    'No último mês, você sentiu dores no peito ao praticar atividade física?',
+    'Você apresenta algum desequilíbrio devido à tontura e/ou perda momentânea da consciência?',
+    'Você possui algum problema ósseo ou articular, que pode ser afetado ou agravado pela atividade física?',
+    'Você toma atualmente algum tipo de medicação de uso contínuo?',
+    'Você realiza algum tipo de tratamento médico para pressão arterial ou problemas cardíacos?',
+    'Você realiza algum tratamento médico contínuo, que possa ser afetado ou prejudicado com a atividade física?',
+    'Você já se submeteu a algum tipo de cirurgia, que comprometa de alguma forma a atividade física?',
+    'Sabe de alguma outra razão pela qual a atividade física possa eventualmente comprometer sua saúde?'
+  ];
+  const forms = ['personal','sport','health'];
+  let step = 0, saving = false;
+  const escapeHTML = value => String(value).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  document.getElementById('questionList').innerHTML = QUESTIONS.map((q,i)=>
+    '<fieldset class="question"><legend>'+(i+1)+'. '+escapeHTML(q)+'</legend><div class="choices">'+
+    '<label class="choice"><input type="radio" name="q'+(i+1)+'" value="yes" required>Sim</label>'+
+    '<label class="choice"><input type="radio" name="q'+(i+1)+'" value="no" required>Não</label></div></fieldset>'
+  ).join('');
+  const show = n => {
+    step=n;
+    document.querySelectorAll('.step').forEach((el,i)=>el.classList.toggle('active',
+      n===3 ? el.id==='complete' : el.id===forms[n]));
+    document.querySelectorAll('.steps span').forEach((el,i)=>el.classList.toggle('active',i<=Math.min(n,2)));
+    window.scrollTo({top:0,behavior:'instant'});
+  };
+  const age = iso => {
+    const t=new Date(), [y,m,d]=iso.split('-').map(Number);
+    return t.getFullYear()-y-((t.getMonth()+1<m || (t.getMonth()+1===m&&t.getDate()<d))?1:0);
+  };
+  const updateMinor=()=>{
+    const years=age(document.querySelector('[name=birth_date]').value);
+    const minor=years<18, group=document.getElementById('guardian');
+    group.hidden=!minor;
+    group.querySelector('[name=guardian_name]').required=minor;
+    group.querySelector('[name=guardian_authorization]').required=minor;
+  };
+  document.getElementById('personal').onsubmit=e=>{
+    e.preventDefault(); if(!e.currentTarget.reportValidity()) return; updateMinor(); show(1);
+  };
+  document.getElementById('sport').onsubmit=e=>{
+    e.preventDefault();
+    if(!e.currentTarget.reportValidity())return;
+    if(!e.currentTarget.querySelector('[name=modalities]:checked')){
+      alert('Escolha pelo menos uma modalidade.');return;
+    }
+    show(2);
+  };
+  document.getElementById('back1').onclick=()=>show(0);
+  document.getElementById('back2').onclick=()=>show(1);
+  document.getElementById('health').onsubmit=e=>{
+    e.preventDefault();if(saving||!e.currentTarget.reportValidity())return;
+    const data={nonce:document.getElementById('nonce').value};
+    for(const formId of forms){
+      const fd=new FormData(document.getElementById(formId));
+      for(const [key,val] of fd.entries()) if(key!=='modalities') data[key]=val;
+    }
+    data.modalities=Array.from(document.querySelectorAll('[name=modalities]:checked')).map(x=>x.value);
+    data.guardian_authorization=!!document.querySelector('[name=guardian_authorization]:checked');
+    data.confirm_truth=!!document.querySelector('[name=confirm_truth]:checked');
+    const status=document.getElementById('status'), btn=document.getElementById('send');
+    saving=true;btn.disabled=true;status.textContent='Salvando suas respostas...';status.className='status';
+    google.script.run.withSuccessHandler(result=>{
+      saving=false;btn.disabled=false;
+      if(!result||result.ok!==true){status.textContent='Não foi possível confirmar o envio.';status.className='status error';return;}
+      document.getElementById('medicalNotice').hidden=!result.medicalReviewRecommended;
+      show(3);
+    }).withFailureHandler(error=>{
+      saving=false;btn.disabled=false;status.className='status error';
+      status.textContent=error&&error.message?error.message:'Não foi possível salvar. Tente novamente.';
+    }).salvarCadastro(data);
+  };
+})();
+</script>
+</body>
+</html>
