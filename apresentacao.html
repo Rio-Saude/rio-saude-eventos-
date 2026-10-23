@@ -193,6 +193,30 @@ h2{font-family:Inter,ui-sans-serif,system-ui,Arial,sans-serif;font-size:clamp(33
 .term-option-annual .term-option-name small{color:#1D719D}
 .term-option.active .term-option-amount{color:#1D557B}
 @media(max-width:365px){.term-option{padding:12px 9px}.term-option-amount{font-size:11px}.term-option-name{font-size:11px}}
+
+/* V6 visual — fotografias reais, sem alterar os componentes comerciais. */
+.presentation-photo{margin:24px 0 28px}
+.presentation-photo img{display:block;width:100%;height:auto;border-radius:8px}
+.hero-photo{margin:0 0 20px}
+.hero-photo img{aspect-ratio:4/3;object-fit:cover;object-position:50% 69%}
+.hero .hero-title{margin-top:18px;margin-bottom:20px}
+.hero .hero-actions{margin-top:22px}
+.legacy .presentation-photo{margin:0 0 26px}
+#modalidades>.presentation-photo{margin-bottom:24px}
+.experience>.presentation-photo{margin-top:0}
+@media(min-width:900px){
+ .hero{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);column-gap:36px;align-items:start}
+ .hero>.tiny,.hero>.hero-title,.hero>.lead,.hero>.hero-actions{grid-column:1}
+ .hero>.tiny{grid-row:1}
+ .hero>.hero-title{grid-row:2;font-size:clamp(48px,4.2vw,58px)}
+ .hero>.lead{grid-row:3}
+ .hero>.hero-actions{grid-row:4;grid-template-columns:1fr;margin-top:0}
+ .hero>.hero-photo{grid-column:2;grid-row:1/5;margin:0;align-self:center}
+ .hero-photo img{aspect-ratio:auto;object-fit:contain}
+ .legacy .presentation-photo{max-width:800px}
+ #modalidades>.presentation-photo{max-width:620px}
+ .experience>.presentation-photo{max-width:620px}
+}
 </style>
 </head>
 <body>
@@ -202,6 +226,7 @@ h2{font-family:Inter,ui-sans-serif,system-ui,Arial,sans-serif;font-size:clamp(33
 <section class="hero">
 <div class="tiny"><strong>DESDE 2005</strong> · RIO DE JANEIRO</div>
 <h1 class="hero-title">Corrida e triathlon com <span class="light">acompanhamento de perto.</span></h1>
+<figure class="presentation-photo hero-photo"><img src="assets/apresentacao/rio-saude-hero.webp" width="1280" height="1920" alt="Alunas da Rio Saúde correndo juntas ao ar livre com a camisa da assessoria." fetchpriority="high" decoding="async"/></figure>
 <p class="lead">Planejamento individual, professores presentes, análise da evolução e uma comunidade que gosta de treinar junto.</p>
 <div class="ctarow hero-actions"><a class="hero-action hero-action-primary" href="#modalidades">Conheça nossos treinos <span aria-hidden="true">↗</span></a><a class="hero-action hero-action-secondary" href="#planos">Ver planos <span aria-hidden="true">↗</span></a><a class="hero-action hero-action-tertiary" href="https://wa.me/5521999410202?text=Ol%C3%A1%21%20Vi%20a%20apresenta%C3%A7%C3%A3o%20da%20Rio%20Sa%C3%BAde%20e%20tenho%20interesse%20em%20conhecer%20melhor." rel="noopener noreferrer" target="_blank">Fale com nossa equipe <span aria-hidden="true">↗</span></a></div>
 </section>
@@ -210,6 +235,7 @@ h2{font-family:Inter,ui-sans-serif,system-ui,Arial,sans-serif;font-size:clamp(33
 <div class="section-header"><span class="section-lbl">NOSSA HISTÓRIA · DESDE 2005</span><span class="section-num">01 / 06</span></div>
 
 <h2>Uma trajetória construída em cada treino.</h2>
+<figure class="presentation-photo"><img src="assets/apresentacao/rio-saude-comunidade.webp" width="2200" height="1467" alt="Grupo de alunos da Rio Saúde reunido ao ar livre, com montanhas ao fundo e a tenda da assessoria." loading="lazy" decoding="async"/></figure>
 <p>Há mais de 20 anos, a Rio Saúde acompanha corredores e triatletas de diferentes níveis. Nessa trajetória, tivemos alunos em <strong>mundiais de triathlon, maratonas abaixo de 3 horas e com índices para Boston.</strong> Muitos começaram a correr com a gente.</p>
 <p>Acreditamos no <strong>planejamento, no acompanhamento próximo e na constância.</strong> Por isso, fazemos questão de um ambiente saudável, onde as pessoas gostem de estar e tenham vontade de treinar.</p>
 <a class="legacy-link" href="#experiencia">Conheça a experiência Rio Saúde <span>↘</span></a>
@@ -218,6 +244,7 @@ h2{font-family:Inter,ui-sans-serif,system-ui,Arial,sans-serif;font-size:clamp(33
 <div class="section-header"><span class="section-lbl">O QUE FAZEMOS</span><span class="section-num">02 / 06</span></div>
 <h2>Nossas<br/>modalidades.</h2>
 <p class="desc">Cada pessoa tem uma rotina e um objetivo. Conheça as opções de treinamento da Rio Saúde.</p>
+<figure class="presentation-photo"><img src="assets/apresentacao/rio-saude-tenda.webp" width="1800" height="1200" alt="Alunos e equipe reunidos sob a tenda azul da Rio Saúde em um ponto de encontro dos treinos." loading="lazy" decoding="async"/></figure>
 <div class="acc">
 <article class="acc-item"><button aria-controls="acc-corrida" aria-expanded="true" class="acc-toggle" data-acc="corrida"><span class="acc-index">01</span><span class="acc-copy"><span class="acc-title">Corrida</span><span class="acc-sub">Do início à próxima maratona</span></span><span class="acc-arrow">+</span></button><div class="acc-body" id="acc-corrida"><p>Planejamento individual pelo TrainingPeaks, com análise da evolução e testes periódicos. Nos treinos presenciais, nossos professores organizam os pelotões, orientam os intervalos e ajustam as sessões quando necessário.</p><button aria-controls="more-corrida" aria-expanded="false" class="subtoggle">Horários e locais <span>+</span></button><div class="subbody" hidden="" id="more-corrida"><div class="minihead">Lagoa Rodrigo de Freitas</div><table class="schedule"><tr><td>Segunda / quarta</td><td>6h–8h30</td></tr><tr><td>Terça / quinta</td><td>6h–10h · 17h30–19h30</td></tr><tr><td>Sexta / sábado</td><td>6h–10h</td></tr></table><div class="minihead">Barra e Aterro</div><table class="schedule"><tr><td>Terça / quinta</td><td>6h–8h30</td></tr></table><p class="smallnote">Na Lagoa, 10h é o encerramento habitual.</p></div><p style="margin:13px 0 0"><a class="textlink pricejump" data-plan="corrida" href="#planos">Ver planos de corrida ↗</a></p></div></article>
 <article class="acc-item"><button aria-controls="acc-tri" aria-expanded="false" class="acc-toggle" data-acc="tri"><span class="acc-index">02</span><span class="acc-copy"><span class="acc-title">Triathlon</span><span class="acc-sub">Natação · ciclismo · corrida</span></span><span class="acc-arrow">+</span></button><div class="acc-body" hidden="" id="acc-tri"><p>Natação, ciclismo e corrida integrados em um planejamento individual, com análise de ritmo, potência, frequência cardíaca e testes periódicos. O treinador acompanha a evolução e a preparação para provas.</p><button aria-controls="more-tri" aria-expanded="false" class="subtoggle">Treinos da semana <span>+</span></button><div class="subbody" hidden="" id="more-tri"><div class="minihead">Ciclismo</div><table class="schedule"><tr><td>Terça · Lagoa → APCC</td><td>4h10 / 4h30</td></tr><tr><td>Quarta · Sport Lab indoor</td><td>A combinar com o treinador</td></tr><tr><td>Sexta · Vista Chinesa</td><td>6h</td></tr><tr><td>Sábado · longo da semana</td><td>5h</td></tr></table><div class="minihead">Natação · parceria Denise</div><p class="smallnote">Terça e quinta no Aterro; quarta e sexta no mar em Copacabana. Cobrança separada. Wellhub e TotalPass aceitos no Aterro conforme condições da parceira.</p><p class="smallnote">A corrida segue as bases e o planejamento integrado da assessoria.</p></div><p style="margin:13px 0 0"><a class="textlink pricejump" data-plan="tri" href="#planos">Ver plano de triathlon ↗</a></p></div></article>
@@ -251,6 +278,7 @@ h2{font-family:Inter,ui-sans-serif,system-ui,Arial,sans-serif;font-size:clamp(33
 <div class="section-header"><span class="section-lbl">A EXPERIÊNCIA RIO SAÚDE</span><span class="section-num">04 / 06</span></div>
 <h2>Mais do que um treino.</h2>
 <p class="experience-lead">Cada aluno tem seu planejamento, seus objetivos e seu ritmo. Mas ninguém precisa treinar sozinho.</p>
+<figure class="presentation-photo"><img src="assets/apresentacao/rio-saude-acolhimento.webp" width="1800" height="1200" alt="Duas participantes se abraçam junto ao grupo sob a tenda da Rio Saúde." loading="lazy" decoding="async"/></figure>
 <div class="experience-stack">
 <div class="exp-item"><div class="exp-mark">01</div><div><h3>Nos treinos</h3><p>Nossos professores acompanham os alunos, organizam pelotões por ritmos semelhantes, orientam os intervalos e ajustam o treino quando necessário.</p></div></div>
 <div class="exp-item"><div class="exp-mark">02</div><div><h3>Nas provas</h3><p>Ao longo do ano, acompanhamos nossos alunos desde a preparação até o dia da prova. Em eventos selecionados, temos professores e estrutura de apoio no local — um ponto de encontro antes e depois da competição.</p></div></div>
