@@ -34,6 +34,69 @@
   const params=new URLSearchParams(location.search),selected=params.get('modalidade');
   if(typeof choosePlan==='function'&&['corrida','tri','lab','online'].includes(selected))choosePlan(selected);
   document.querySelectorAll('[data-plan-target]').forEach(a=>a.addEventListener('click',()=>{if(typeof choosePlan==='function')choosePlan(a.dataset.planTarget)}));
+  // V9: selecionar a modalidade revela cards na mesma página, reutilizando os dados oficiais.
+  const modalityButtons=[...document.querySelectorAll('.modality-card[data-modality]')];
+  const modalityDetail=document.querySelector('#modality-detail');
+  if(modalityButtons.length&&modalityDetail&&window.RioSaude){
+    const track=modalityDetail.querySelector('#modality-detail-track');
+    const more=modalityDetail.querySelector('#modality-detail-more');
+    const plans=modalityDetail.querySelector('#modality-detail-plans');
+    const pages={corrida:'apresentacao-corrida.html',tri:'apresentacao-triathlon.html',lab:'apresentacao-sport-lab.html',online:'apresentacao-online.html'};
+    const planKeys={corrida:'corrida',tri:'tri',lab:'lab',online:'online'};
+    const element=(tag,cls,value)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(value)e.textContent=value;return e};
+    let active='';
+    const fill=(key)=>{
+      const data=window.RioSaude[key];
+      if(!data)return;
+      modalityDetail.querySelector('#modality-detail-title').textContent=data.title;
+      modalityDetail.querySelector('#modality-detail-intro').textContent=data.description;
+      more.href=pages[key];
+      plans.dataset.planTarget=planKeys[key];
+      track.replaceChildren();
+      data.groups.forEach(group=>{
+        const items=group.reuse?window.RioSaude[group.reuse].groups[0].items:(group.items||[]);
+        if(!items.length&&group.intro){
+          const card=element('article','modality-detail-card');
+          card.append(element('span','eyebrow',group.title),element('h4','',group.title),element('p','',group.intro));
+          track.append(card);
+        }
+        items.forEach(item=>{
+          const card=element('article','modality-detail-card');
+          card.append(element('span','eyebrow',group.title),element('h4','',item.name));
+          card.append(element('p','modality-card-days',item.days||''));
+          const times=Array.isArray(item.times)?item.times.join(' · '):(item.times||'');
+          if(times)card.append(element('p','modality-card-time',times));
+          if(item.meeting)card.append(element('p','modality-card-meeting','Ponto de encontro: '+item.meeting));
+          track.append(card);
+        });
+      });
+      if(!track.children.length){
+        const card=element('article','modality-detail-card');
+        card.append(element('span','eyebrow','COMO FUNCIONA'),element('h4','',data.intro),element('p','',data.description));
+        track.append(card);
+      }
+      modalityDetail.querySelector('.modality-scroll-controls').hidden=track.children.length<=1;
+      track.scrollTo({left:0,behavior:'instant'});
+    };
+    modalityButtons.forEach(button=>button.addEventListener('click',()=>{
+      const key=button.dataset.modality;
+      if(active===key){
+        active='';modalityDetail.hidden=true;
+        modalityButtons.forEach(b=>{b.classList.remove('is-active');b.setAttribute('aria-expanded','false')});
+        return;
+      }
+      active=key;fill(key);modalityDetail.hidden=false;
+      modalityButtons.forEach(b=>{const selected=b.dataset.modality===key;b.classList.toggle('is-active',selected);b.setAttribute('aria-expanded',String(selected))});
+      if(matchMedia('(max-width:800px)').matches)requestAnimationFrame(()=>modalityDetail.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'instant':'smooth',block:'start'}));
+    }));
+    modalityDetail.querySelectorAll('[data-modality-scroll]').forEach(button=>button.addEventListener('click',()=>{
+      const direction=Number(button.dataset.modalityScroll);
+      const card=track.firstElementChild;
+      if(card)track.scrollBy({left:direction*(card.getBoundingClientRect().width+14),behavior:'smooth'});
+    }));
+    plans.addEventListener('click',()=>{if(typeof choosePlan==='function'&&active)choosePlan(planKeys[active])});
+  }
+
   const host=document.querySelector('[data-locations]');
   if(host&&window.RioSaude){
     const data=window.RioSaude[host.dataset.locations];
