@@ -22,3 +22,78 @@
 .carousel-dots button::after{content:'';display:block;height:6px;border-radius:10px;background:#c3d0ca}
 .carousel-dots button[aria-current=true]::after{background:#142b32}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{transition:none!important;animation:none!important}.pill:hover{transform:none}}
+
+
+/* V9: seletores de modalidade com revelação de cards na página. */
+.modality-instruction{font-size:13px;line-height:1.6;color:#526b70;margin:14px 0 0}
+.modality-card{font:inherit;color:#142b32;text-align:left;cursor:pointer;appearance:none;width:100%;transition:background .2s,border-color .2s,transform .2s;min-height:280px}
+.modality-card .modality-name{font-weight:850;font-size:29px;line-height:1.12;letter-spacing:-.05em;margin:20px 0 12px}
+.modality-card .modality-summary{font-size:13px;line-height:1.7;color:#536a6c;flex:1}
+.modality-card .modality-action{display:flex;justify-content:space-between;gap:12px;align-items:center;font-size:12px;font-weight:850;border-bottom:1px solid currentColor;align-self:flex-start;padding-bottom:3px;margin-top:17px}
+.modality-card .modality-action>span{font-size:16px}
+.modality-card:hover{transform:translateY(-2px)}
+.modality-card.is-active{background:#102b32;border-color:#102b32;color:#fff}
+.modality-card.is-active .eyebrow,.modality-card.is-active .modality-action{color:#d9f36c}
+.modality-card.is-active .modality-summary{color:#d1dfd8}
+.modality-card:focus-visible{outline:3px solid #6d9ea0;outline-offset:3px}
+.modality-detail{margin-top:25px;background:#e2ebe5;border:1px solid #c5d7cd;border-radius:14px;padding:26px;scroll-margin-top:90px}
+.modality-detail-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:22px}
+.modality-detail-head h3{font-size:clamp(29px,4vw,44px);line-height:1.05;letter-spacing:-.05em;margin:9px 0}
+.modality-detail-head p:not(.eyebrow){color:#50676a;font-size:13px;line-height:1.7;max-width:760px;margin:0}
+.modality-scroll-controls{display:flex;gap:8px;flex-shrink:0}
+.modality-scroll-controls button{width:40px;height:40px;border-radius:50%;border:1px solid #a5bbb1;background:transparent;color:#17333b;cursor:pointer;font-size:20px}
+.modality-detail-track{display:flex;gap:14px;overflow-x:auto;overscroll-behavior-inline:contain;scroll-snap-type:x mandatory;scrollbar-width:thin;padding-bottom:12px}
+.modality-detail-card{flex:0 0 min(345px,80vw);background:#f9fbf8;border:1px solid #cbd8d0;border-radius:11px;padding:24px 22px;scroll-snap-align:start;min-width:0}
+.modality-detail-card .eyebrow{font-size:9px;line-height:1.5;color:#507075}
+.modality-detail-card h4{font-size:23px;line-height:1.1;letter-spacing:-.04em;margin:16px 0}
+.modality-detail-card p{font-size:12px;line-height:1.65;color:#526a6e;margin:0 0 11px}
+.modality-detail-card .modality-card-days{font-weight:850;color:#173a40}
+.modality-detail-card .modality-card-time{color:#274a4c}
+.modality-detail-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+.modality-detail-actions a{display:inline-flex;align-items:center;justify-content:center;text-align:center;border-radius:40px;padding:13px 19px;font-size:12px;font-weight:850;text-decoration:none;color:#12303a;border:1px solid #789b8d}
+.modality-detail-actions a:last-child{background:#102b32;color:#fff;border-color:#102b32}
+.modality-detail[hidden],.modality-scroll-controls[hidden]{display:none!important}
+
+/* V9: comparação isolada da área de preços, sem tabela lateral no celular. */
+.comparison-section{background:#f4f6f1;padding-block:64px}
+.comparison-section .display-title{font-size:clamp(38px,5vw,62px);margin:12px 0}
+.comparison-section-intro{font-size:13px;line-height:1.7;color:#526b70;max-width:650px;margin:12px 0 24px}
+.comparison-section .v9-comparison{border:1px solid #c6d8cc;background:#fff;border-radius:12px;overflow:hidden}
+.comparison-section .v9-comparison summary{cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:12px;background:#102b32;color:white;font-weight:850;font-size:14px;line-height:1.5;padding:19px 24px;list-style:none}
+.comparison-section .v9-comparison summary::-webkit-details-marker{display:none}
+.comparison-section .v9-comparison summary span{font-size:22px;color:#d9f36c}
+.comparison-section .v9-comparison[open] summary span{transform:rotate(45deg)}
+.comparison-section .comparison-block{margin:0;background:#fff;border:0;padding:20px}
+.comparison-section .comparison-table thead th{background:#193e48}
+.comparison-section .comparison-scroll{width:100%}
+.comparison-section .comparison-mobile{display:none}
+@media(max-width:800px){
+  .modality-card{min-height:270px;padding:21px 17px}
+  .modality-card .modality-name{font-size:26px}
+  .modality-card .modality-summary{font-size:12px}
+  .modality-detail{padding:21px 16px;scroll-margin-top:78px}
+  .modality-detail-head{align-items:flex-start}
+  .modality-detail-head h3{font-size:33px}
+  .modality-scroll-controls{align-self:flex-end}
+  .modality-scroll-controls button{width:35px;height:35px}
+  .modality-detail-card{flex-basis:84%;padding:21px 18px}
+  .comparison-section{padding-block:48px}
+  .comparison-section .v9-comparison summary{padding:18px}
+  .comparison-section .comparison-block{padding:18px 15px}
+  .comparison-section .comparison-scroll,.comparison-section .comparison-hint{display:none}
+  .comparison-section .comparison-mobile{display:block}
+  .comparison-mobile label{display:grid;gap:9px;font-size:12px;font-weight:800;color:#254750}
+  .comparison-mobile select{width:100%;background:#f7faf6;color:#17323b;font:inherit;padding:13px;border:1px solid #abc2b6;border-radius:8px}
+  .comparison-mobile-list{margin:18px 0 0}
+  .comparison-mobile-item{display:grid;grid-template-columns:minmax(0,1fr) minmax(78px,30%);gap:15px;align-items:start;padding:13px 0;border-bottom:1px solid #dbe5dc}
+  .comparison-mobile-item dt{font-size:12px;font-weight:650;line-height:1.5;color:#294c51}
+  .comparison-mobile-item dd{font-size:12px;line-height:1.5;text-align:right;margin:0;font-weight:800;color:#365962}
+  .comparison-mobile-item dd.included{color:#207856}
+  .comparison-mobile-item dd.not-included{color:#75898d}
+}
+@media(max-width:380px){
+  .modality-card{min-height:205px}
+  .modality-card .modality-name{font-size:27px}
+  .modality-detail-head{display:block}
+  .modality-scroll-controls{justify-content:flex-end;margin-top:12px}
+}
