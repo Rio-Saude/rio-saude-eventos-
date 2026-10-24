@@ -44,6 +44,9 @@
     const pages={corrida:'apresentacao-corrida.html',tri:'apresentacao-triathlon.html',lab:'apresentacao-sport-lab.html',online:'apresentacao-online.html'};
     const planKeys={corrida:'corrida',tri:'tri',lab:'lab',online:'online'};
     const element=(tag,cls,value)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(value)e.textContent=value;return e};
+    const controls=modalityDetail.querySelector('.modality-scroll-controls');
+    const updateControls=()=>{controls.hidden=track.scrollWidth<=track.clientWidth+1};
+    new ResizeObserver(updateControls).observe(track);
     let active='';
     const fill=(key)=>{
       const data=window.RioSaude[key];
@@ -75,7 +78,7 @@
         card.append(element('span','eyebrow','COMO FUNCIONA'),element('h4','',data.intro),element('p','',data.description));
         track.append(card);
       }
-      modalityDetail.querySelector('.modality-scroll-controls').hidden=track.children.length<=1;
+      updateControls();
       track.scrollTo({left:0,behavior:'instant'});
     };
     modalityButtons.forEach(button=>button.addEventListener('click',()=>{
@@ -85,14 +88,14 @@
         modalityButtons.forEach(b=>{b.classList.remove('is-active');b.setAttribute('aria-expanded','false')});
         return;
       }
-      active=key;fill(key);modalityDetail.hidden=false;
+      active=key;modalityDetail.hidden=false;fill(key);
       modalityButtons.forEach(b=>{const selected=b.dataset.modality===key;b.classList.toggle('is-active',selected);b.setAttribute('aria-expanded',String(selected))});
       if(matchMedia('(max-width:800px)').matches)requestAnimationFrame(()=>modalityDetail.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'instant':'smooth',block:'start'}));
     }));
     modalityDetail.querySelectorAll('[data-modality-scroll]').forEach(button=>button.addEventListener('click',()=>{
       const direction=Number(button.dataset.modalityScroll);
       const card=track.firstElementChild;
-      if(card)track.scrollBy({left:direction*(card.getBoundingClientRect().width+14),behavior:'smooth'});
+      if(card)track.scrollBy({left:direction*(card.getBoundingClientRect().width+14),behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'instant':'smooth'});
     }));
     plans.addEventListener('click',()=>{if(typeof choosePlan==='function'&&active)choosePlan(planKeys[active])});
   }
