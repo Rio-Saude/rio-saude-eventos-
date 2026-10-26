@@ -103,3 +103,90 @@
 .concept-copy .concept-link:hover,.concept-copy .concept-link:focus-visible{text-decoration-color:currentColor}
 .concepts .carousel-tools{display:none}
 @media(max-width:800px){.concepts .carousel-tools{display:flex}}
+
+/* V10 — selecionar formato e esporte antes de ver horários e valores. */
+.v10-training{padding-block:70px}
+.training-heading{max-width:800px}
+.training-heading>p:last-child{font-size:14px;line-height:1.75;color:#536b70;max-width:650px;margin:20px 0 0}
+.training-mode-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:28px}
+.training-mode{display:flex;flex-direction:column;gap:8px;min-width:0;min-height:143px;text-align:left;cursor:pointer;border-radius:12px;border:1px solid #bfd0c8;background:#f7faf7;color:#122c34;padding:23px;font:inherit}
+.training-mode .eyebrow{font-size:10px;letter-spacing:.12em;color:#5c7574}
+.training-mode strong{font-size:clamp(23px,2.6vw,31px);line-height:1.1;letter-spacing:-.045em}
+.training-mode small{font-size:13px;line-height:1.5;color:#566c70}
+.training-mode.active{border-color:#102f36;background:#112e35;color:#fff;box-shadow:0 0 0 2px #112e3530}
+.training-mode.active .eyebrow{color:#d9f36c}
+.training-mode.active small{color:#c5d5d2}
+.training-mode:focus-visible,.training-sport-choices button:focus-visible,.price-choice button:focus-visible{outline:3px solid #668b8d;outline-offset:3px}
+.training-choice-label,.price-choice-label{font-size:11px;letter-spacing:.13em;text-transform:uppercase;font-weight:850;color:#5a7678;margin:25px 0 11px}
+.training-sport-choices,.price-choice-row{display:flex;flex-wrap:wrap;gap:10px}
+.training-sport-choices button,.price-choice-row button{border:1px solid #bdcec8;border-radius:99px;background:#fff;color:#17363e;padding:13px 24px;font:inherit;font-size:14px;font-weight:800;cursor:pointer}
+.training-sport-choices button.active,.price-choice-row button.active{background:#d9f36c;border-color:#d9f36c;color:#102930}
+.training-summary{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);min-height:355px;background:#e1ebe4;border:1px solid #c8d9ce;border-radius:15px;overflow:hidden;margin-top:28px}
+.training-photo{position:relative;min-width:0;min-height:310px;overflow:hidden;background:#18363b}
+.training-photo img{display:block;width:100%;height:100%;object-fit:cover}
+.training-photo:after{content:'';position:absolute;inset:40% 0 0;background:linear-gradient(transparent,#071f2abf);pointer-events:none}
+.training-photo-caption{position:absolute;z-index:1;bottom:25px;left:26px;right:24px;color:#fff;font-size:clamp(27px,3.4vw,46px);font-weight:850;line-height:1.05;letter-spacing:-.055em}
+.training-copy{padding:36px clamp(24px,4vw,46px);display:flex;flex-direction:column;align-items:flex-start;justify-content:center}
+.training-copy>.eyebrow{font-size:10px;letter-spacing:.13em;color:#527174}
+.training-copy h3{font-size:clamp(36px,4vw,54px);letter-spacing:-.055em;line-height:1.03;margin:14px 0}
+.training-copy>p:not(.eyebrow){font-size:14px;line-height:1.8;color:#50696d;max-width:510px;margin:0 0 22px}
+.training-benefits{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:26px}
+.training-benefits>span{font-size:11px;color:#21434a;border:1px solid #b5cdbf;border-radius:50px;padding:8px 10px}
+.training-actions{display:flex;flex-wrap:wrap;gap:9px}
+.training-actions>a{font-size:12px;font-weight:850;padding:13px 18px;border:1px solid #13343b;border-radius:50px;text-decoration:none}
+.training-primary{background:#13343b;color:white}
+.training-secondary{background:transparent;color:#13343b}
+.training-schedules{margin:22px 0 0;border-top:1px solid #d0ded5}
+.training-schedules[hidden],.plan-card[hidden]{display:none!important}
+.training-schedule-head{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:10px;padding:24px 0 10px}
+.training-schedule-head h3{font-size:25px;line-height:1.2;letter-spacing:-.04em;margin:0}
+.training-schedule-head p{font-size:12px;color:#627b7b;margin:0}
+.training-schedule-group{border-bottom:1px solid #d3ded8}
+.training-schedule-group summary{padding:18px 3px;cursor:pointer;font-size:16px;font-weight:800;color:#163a41;line-height:1.45}
+.training-schedule-group summary::marker{color:#597a76}
+.training-schedule-body{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:0 0 22px}
+.training-schedule-note{grid-column:1/-1;font-size:12px;color:#536d6d;margin:0;line-height:1.6}
+.training-place{background:#f7faf7;border:1px solid #d1ded8;border-radius:10px;padding:20px}
+.training-place h4{font-size:18px;line-height:1.15;letter-spacing:-.035em;margin:0 0 12px}
+.training-place p{font-size:12px;line-height:1.7;color:#547073;margin:7px 0}
+.training-place p.training-place-meeting{color:#28545b}
+.training-map{display:inline-block;margin-top:7px;font-size:12px;font-weight:800;border-bottom:1px solid currentColor}
+.training-lab{display:flex;justify-content:space-between;align-items:center;gap:20px;margin-top:34px;padding:24px 28px;border-radius:12px;background:#12303a;color:#fff}
+.training-lab .eyebrow{font-size:9px;color:#d9f36c}
+.training-lab h3{font-size:25px;margin:8px 0;letter-spacing:-.04em}
+.training-lab p:not(.eyebrow){font-size:12px;line-height:1.6;color:#d1dfda;max-width:580px;margin:0}
+.training-lab-actions{display:flex;flex-wrap:wrap;gap:10px;flex-shrink:0}
+.training-lab-actions a{border:1px solid #afc8bc;border-radius:50px;font-size:12px;padding:12px 15px;font-weight:800;color:#fff}
+.training-lab-actions a:last-child{color:#d9f36c;border-color:#d9f36c}
+.price-choice{background:#e5eee6;border:1px solid #d0dfd4;border-radius:12px;padding:20px 24px;margin:28px 0 24px}
+.price-choice .price-choice-label:first-child{margin-top:0}
+.price-choice-label{margin:18px 0 10px}
+.price-lab-link{background:transparent;border:0;padding:12px 0 0;font-size:12px;font-weight:800;color:#315d5f;text-decoration:underline;cursor:pointer}
+.price-lab-link.active{color:#112d35;text-decoration-thickness:2px}
+@media(max-width:800px){
+ .v10-training{padding-block:50px}
+ .training-mode-choices{gap:9px}
+ .training-mode{min-height:132px;padding:17px 14px}
+ .training-mode strong{font-size:21px}
+ .training-mode small{font-size:11px}
+ .training-mode .eyebrow{font-size:9px}
+ .training-summary{display:flex;flex-direction:column}
+ .training-photo{height:225px;min-height:225px}
+ .training-photo-caption{font-size:34px;bottom:20px;left:22px}
+ .training-copy{padding:25px 22px 28px}
+ .training-copy h3{font-size:38px}
+ .training-copy>p:not(.eyebrow){font-size:13px}
+ .training-schedule-body{grid-template-columns:1fr}
+ .training-schedule-head{display:block}
+ .training-schedule-head h3{font-size:23px;margin-bottom:6px}
+ .training-lab{align-items:flex-start;flex-direction:column;padding:23px}
+ .training-lab-actions{width:100%}
+ .price-choice{padding:18px 16px}
+ .price-choice-row button{padding:12px 17px;font-size:12px}
+}
+@media(max-width:380px){
+ .training-mode strong{font-size:19px}
+ .training-mode small{font-size:10px}
+ .training-sport-choices button{padding:12px 17px;font-size:12px}
+ .training-actions>a{width:100%;text-align:center}
+}
