@@ -15,7 +15,7 @@
     const loop=box.dataset.carousel==='concepts';
     const mobile=matchMedia('(max-width:800px)');
     const reduced=matchMedia('(prefers-reduced-motion: reduce)');
-    let active=0,timer,rebasing=false,before=[],after=[];
+    let active=0,timer,rebasing=false,touching=false,before=[],after=[];
     if(loop){
       const clone=original=>{
         const card=original.cloneNode(true);
@@ -46,7 +46,7 @@
       });
     };
     const settle=()=>{
-      if(!mobile.matches||rebasing)return;
+      if(!mobile.matches||rebasing||touching)return;
       const all=[...track.children];
       const nearest=all.reduce((a,b)=>Math.abs(offset(a)-track.scrollLeft)<=Math.abs(offset(b)-track.scrollLeft)?a:b);
       const position=all.indexOf(nearest);
@@ -66,6 +66,11 @@
     };
     box.querySelectorAll('[data-step]').forEach(b=>b.addEventListener('click',()=>go(active+Number(b.dataset.step))));
     dots.forEach((b,i)=>b.addEventListener('click',()=>go(i)));
+    // A pause during a swipe is not the end of the gesture.
+    track.addEventListener('touchstart',()=>{touching=true;clearTimeout(timer)},{passive:true});
+    const release=()=>{touching=false;clearTimeout(timer);timer=setTimeout(settle,150)};
+    track.addEventListener('touchend',release,{passive:true});
+    track.addEventListener('touchcancel',release,{passive:true});
     track.addEventListener('scroll',()=>{
       if(!mobile.matches||rebasing)return;
       clearTimeout(timer);timer=setTimeout(settle,150);
@@ -106,6 +111,7 @@
       return node;
     };
     const photo=training.querySelector('#training-photo');
+    let scenicFailed=false;
     const caption=training.querySelector('#training-photo-caption');
     const schedules=training.querySelector('#training-schedules');
     const label=training.querySelector('#training-context');
@@ -154,6 +160,7 @@
           const when=el('p','',item.days+(timing?' · '+timing:''));
           row.append(when);
           if(item.meeting)row.append(el('p','training-place-meeting','Ponto: '+item.meeting));
+          if(item.note)row.append(el('p','training-place-note',item.note));
           if(item.map){
             const link=el('a','training-map','Como chegar ↗');
             link.href='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(item.map);
@@ -194,8 +201,9 @@
       title.textContent=name+(online?' online':' presencial');
       description.textContent=copy[state.mode][state.sport];
       benefits.replaceChildren(...perks[state.mode][state.sport].map(v=>el('span','',v)));
-      photo.src=online?scenic:'assets/apresentacao-v7/corrida.webp';
-      photo.alt=online?'Corredor em uma trilha de montanhas verdes':'Atletas da Rio Saúde treinando corrida no Rio de Janeiro';
+      const image=online?(scenicFailed?'assets/apresentacao-v7/atitude.webp':scenic):'assets/apresentacao-v7/corrida.webp';
+      if(photo.getAttribute('src')!==image)photo.src=image;
+      photo.alt=online?(scenicFailed?'Atleta da Rio Saúde durante uma corrida':'Corredor em uma trilha de montanhas verdes'):'Atletas da Rio Saúde treinando corrida no Rio de Janeiro';
       caption.textContent=online?'Treine onde quiser.':'Treine junto. Evolua do seu jeito.';
       document.querySelectorAll('[data-training-mode]').forEach(button=>{
         const chosen=button.dataset.trainingMode===state.mode;
@@ -211,16 +219,24 @@
     };
     const render=()=>{renderTraining();renderPrices()};
     photo.addEventListener('error',()=>{
-      if(photo.src.startsWith('https://images.unsplash.com/'))
+      if(photo.src.startsWith('https://images.unsplash.com/')){
+        scenicFailed=true;
         photo.src='assets/apresentacao-v7/atitude.webp';
+        photo.alt='Atleta da Rio Saúde durante uma corrida';
+      }
     });
+    const updateSelection=(button,update)=>{
+      const keepPosition=button.hasAttribute('data-price-mode')||button.hasAttribute('data-price-sport');
+      const top=button.getBoundingClientRect().top;
+      update();state.lab=false;render();
+      // Safari does not anchor the viewport when schedules above prices change height.
+      if(keepPosition)window.scrollBy({top:button.getBoundingClientRect().top-top,behavior:'instant'});
+    };
     document.querySelectorAll('[data-training-mode],[data-price-mode]').forEach(button=>button.addEventListener('click',()=>{
-      state.mode=button.dataset.trainingMode||button.dataset.priceMode;
-      state.lab=false;render();
+      updateSelection(button,()=>{state.mode=button.dataset.trainingMode||button.dataset.priceMode});
     }));
     document.querySelectorAll('[data-training-sport],[data-price-sport]').forEach(button=>button.addEventListener('click',()=>{
-      state.sport=button.dataset.trainingSport||button.dataset.priceSport;
-      state.lab=false;render();
+      updateSelection(button,()=>{state.sport=button.dataset.trainingSport||button.dataset.priceSport});
     }));
     document.querySelectorAll('[data-price-lab],[data-show-lab]').forEach(button=>button.addEventListener('click',()=>{
       state.lab=true;renderPrices();
