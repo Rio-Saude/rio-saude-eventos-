@@ -40,7 +40,39 @@
     .success h2{color:#256449}.success p{color:#415d4b}.warning{background:#fff3de;border-left:3px solid #cb862c;padding:14px;border-radius:5px;color:#765022}
     [hidden]{display:none!important}
     @media(max-width:530px){body{background:var(--bg)}.page{padding:21px 18px 44px}.fields{grid-template-columns:1fr}.full{grid-column:auto}.actions{flex-wrap:wrap}.choice{font-size:12px}}
-  </style>
+  
+    /* V9: identidade visual alinhada à apresentação pública. Sem alterar o formulário. */
+    :root{--ink:#173039;--blue:#235261;--bg:#f6f7f3;--line:#cfddd5;--muted:#5f7578;--lime:#d9f36c}
+    body{background:#10252c}
+    .page{background:var(--bg)}
+    header{background:#10252c;color:#fff;border:0;margin:-25px -22px 0;padding:24px 22px 19px}
+    .brand,.brand small,header span{color:#fff}
+    .brand small{color:#bad0ca}
+    header span{color:#bad0ca}
+    .hero{background:#10252c;color:#fff;margin:0 -22px 27px;padding:29px 22px 34px}
+    .hero h1{color:#fff;overflow-wrap:break-word}
+    .hero p{color:#d2e0dc;margin-bottom:0;line-height:1.7}
+    .hero .eyebrow{color:var(--lime)}
+    .steps span{background:#d4dfd9}
+    .steps span.active{background:#6e8f73}
+    .eyebrow{color:#2c6670}
+    label.field,legend,.checkline{color:#24474d}
+    input:not([type=checkbox]):not([type=radio]),select,textarea{border-color:#b8cbc1;background:#fff}
+    .choice{border-color:#bed2c6}
+    .choice:has(input:checked){background:#ebf5d5;border-color:#708d57}
+    .note{background:#e4efeb;border-left-color:#285462;color:#31545a}
+    .next{background:var(--lime);color:#142c32;border-radius:40px}
+    .back{background:#e2eae4;color:#20434a;border-radius:40px}
+    .status{color:#235261}
+    .success{background:#edf6e6;border-color:#b4cf96}
+    @media(max-width:530px){
+      body{background:var(--bg)}
+      .page{padding:21px 18px 44px}
+      header{margin:-21px -18px 0;padding:23px 18px 18px}
+      .hero{margin:0 -18px 25px;padding:25px 18px 31px}
+      .hero h1{font-size:clamp(32px,8vw,42px)}
+    }
+</style>
 </head>
 <body>
 <main class="page">
