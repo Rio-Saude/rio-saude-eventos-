@@ -15,7 +15,7 @@
     const loop=box.dataset.carousel==='concepts';
     const mobile=matchMedia('(max-width:800px)');
     const reduced=matchMedia('(prefers-reduced-motion: reduce)');
-    let active=0,timer,rebasing=false,before=[],after=[];
+    let active=0,timer,rebasing=false,touching=false,before=[],after=[];
     if(loop){
       const clone=original=>{
         const card=original.cloneNode(true);
@@ -46,7 +46,7 @@
       });
     };
     const settle=()=>{
-      if(!mobile.matches||rebasing)return;
+      if(!mobile.matches||rebasing||touching)return;
       const all=[...track.children];
       const nearest=all.reduce((a,b)=>Math.abs(offset(a)-track.scrollLeft)<=Math.abs(offset(b)-track.scrollLeft)?a:b);
       const position=all.indexOf(nearest);
@@ -66,6 +66,11 @@
     };
     box.querySelectorAll('[data-step]').forEach(b=>b.addEventListener('click',()=>go(active+Number(b.dataset.step))));
     dots.forEach((b,i)=>b.addEventListener('click',()=>go(i)));
+    // A pause during a swipe is not the end of the gesture.
+    track.addEventListener('touchstart',()=>{touching=true;clearTimeout(timer)},{passive:true});
+    const release=()=>{touching=false;clearTimeout(timer);timer=setTimeout(settle,150)};
+    track.addEventListener('touchend',release,{passive:true});
+    track.addEventListener('touchcancel',release,{passive:true});
     track.addEventListener('scroll',()=>{
       if(!mobile.matches||rebasing)return;
       clearTimeout(timer);timer=setTimeout(settle,150);
@@ -89,70 +94,154 @@
   const params=new URLSearchParams(location.search),selected=params.get('modalidade');
   if(typeof choosePlan==='function'&&['corrida','tri','lab','online'].includes(selected))choosePlan(selected);
   document.querySelectorAll('[data-plan-target]').forEach(a=>a.addEventListener('click',()=>{if(typeof choosePlan==='function')choosePlan(a.dataset.planTarget)}));
-  // V9: selecionar a modalidade revela cards na mesma página, reutilizando os dados oficiais.
-  const modalityButtons=[...document.querySelectorAll('.modality-card[data-modality]')];
-  const modalityDetail=document.querySelector('#modality-detail');
-  if(modalityButtons.length&&modalityDetail&&window.RioSaude){
-    const track=modalityDetail.querySelector('#modality-detail-track');
-    const more=modalityDetail.querySelector('#modality-detail-more');
-    const plans=modalityDetail.querySelector('#modality-detail-plans');
-    const pages={corrida:'apresentacao-corrida.html',tri:'apresentacao-triathlon.html',lab:'apresentacao-sport-lab.html',online:'apresentacao-online.html'};
-    const planKeys={corrida:'corrida',tri:'tri',lab:'lab',online:'online'};
-    const element=(tag,cls,value)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(value)e.textContent=value;return e};
-    const controls=modalityDetail.querySelector('.modality-scroll-controls');
-    const updateControls=()=>{controls.hidden=track.scrollWidth<=track.clientWidth+1};
-    new ResizeObserver(updateControls).observe(track);
-    let active='';
-    const fill=(key)=>{
-      const data=window.RioSaude[key];
-      if(!data)return;
-      modalityDetail.querySelector('#modality-detail-title').textContent=data.title;
-      modalityDetail.querySelector('#modality-detail-intro').textContent=data.description;
-      more.href=pages[key];
-      plans.dataset.planTarget=planKeys[key];
-      track.replaceChildren();
-      data.groups.forEach(group=>{
-        const items=group.reuse?window.RioSaude[group.reuse].groups[0].items:(group.items||[]);
-        if(!items.length&&group.intro){
-          const card=element('article','modality-detail-card');
-          card.append(element('span','eyebrow',group.title),element('h4','',group.title),element('p','',group.intro));
-          track.append(card);
-        }
-        items.forEach(item=>{
-          const card=element('article','modality-detail-card');
-          card.append(element('span','eyebrow',group.title),element('h4','',item.name));
-          card.append(element('p','modality-card-days',item.days||''));
-          const times=Array.isArray(item.times)?item.times.join(' · '):(item.times||'');
-          if(times)card.append(element('p','modality-card-time',times));
-          if(item.meeting)card.append(element('p','modality-card-meeting','Ponto de encontro: '+item.meeting));
-          track.append(card);
-        });
-      });
-      if(!track.children.length){
-        const card=element('article','modality-detail-card');
-        card.append(element('span','eyebrow','COMO FUNCIONA'),element('h4','',data.intro),element('p','',data.description));
-        track.append(card);
-      }
-      updateControls();
-      track.scrollTo({left:0,behavior:'instant'});
+  // V10: duas decisões simples — formato e esporte — para modalidades e preços.
+  const training=document.querySelector('#modalidades');
+  const prices=document.querySelector('#planos');
+  if(training&&prices&&window.RioSaude){
+    const scenic="https://images.unsplash.com/photo-1610066370580-f698d2ccfb69?auto=format&fit=crop&w=1200&q=78";
+    const state={
+      mode:selected==='online'?'online':'presencial',
+      sport:selected==='tri'?'tri':'corrida',
+      lab:selected==='lab'
     };
-    modalityButtons.forEach(button=>button.addEventListener('click',()=>{
-      const key=button.dataset.modality;
-      if(active===key){
-        active='';modalityDetail.hidden=true;
-        modalityButtons.forEach(b=>{b.classList.remove('is-active');b.setAttribute('aria-expanded','false')});
-        return;
+    const el=(tag,cls,value)=>{
+      const node=document.createElement(tag);
+      if(cls)node.className=cls;
+      if(value!==undefined)node.textContent=value;
+      return node;
+    };
+    const photo=training.querySelector('#training-photo');
+    let scenicFailed=false;
+    const caption=training.querySelector('#training-photo-caption');
+    const schedules=training.querySelector('#training-schedules');
+    const label=training.querySelector('#training-context');
+    const title=training.querySelector('#training-title');
+    const description=training.querySelector('#training-description');
+    const benefits=training.querySelector('#training-benefits');
+    const sportLabel={corrida:'Corrida',tri:'Triathlon'};
+    const copy={
+      presencial:{
+        corrida:'Planilha individual, professores presentes e treinos em grupo na Lagoa, no Aterro e na Barra. Escolha a base que cabe na sua rotina.',
+        tri:'Natação, ciclismo e corrida organizados em um planejamento individual. Treinos de corrida e ciclismo com a equipe; natação com Denise tem contratação separada.'
+      },
+      online:{
+        corrida:'Planejamento individual de corrida pelo TrainingPeaks, revisão semanal e contato com o treinador. Você treina onde estiver, sem precisar morar no Rio.',
+        tri:'Natação, ciclismo e corrida em um planejamento integrado, com análise da evolução, revisão semanal e contato com o treinador — de qualquer cidade.'
       }
-      active=key;modalityDetail.hidden=false;fill(key);
-      modalityButtons.forEach(b=>{const selected=b.dataset.modality===key;b.classList.toggle('is-active',selected);b.setAttribute('aria-expanded',String(selected))});
-      if(matchMedia('(max-width:800px)').matches)requestAnimationFrame(()=>modalityDetail.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'instant':'smooth',block:'start'}));
+    };
+    const perks={
+      presencial:{corrida:['Planilha individual','Treinos com professores','Lagoa · Aterro · Barra'],tri:['Três modalidades','Ciclismo e corrida em grupo','Natação parceira à parte']},
+      online:{corrida:['TrainingPeaks','Revisão semanal','Contato com treinador'],tri:['Três modalidades','Revisão semanal','Contato com treinador']}
+    };
+    const buildSchedules=()=>{
+      schedules.replaceChildren();
+      const show=state.mode==='presencial'&&!state.lab;
+      schedules.hidden=!show;
+      if(!show)return;
+      const source=window.RioSaude[state.sport];
+      const groups=state.sport==='tri'
+        ?[source.groups[1],source.groups[0],source.groups[2],source.groups[3]]
+        :source.groups;
+      const heading=el('div','training-schedule-head');
+      heading.append(el('h3','',state.sport==='tri'?'Encontros e horários':'Onde treinamos'),el('p','', 'Abra uma atividade para consultar dias, horários e pontos de encontro.'));
+      schedules.append(heading);
+      groups.forEach((group,i)=>{
+        if(!group)return;
+        const details=el('details','training-schedule-group');
+        details.open=i===0;
+        const summary=el('summary','',group.title);
+        const body=el('div','training-schedule-body');
+        if(group.intro)body.append(el('p','training-schedule-note',group.intro));
+        const items=group.reuse?window.RioSaude[group.reuse].groups[0].items:(group.items||[]);
+        items.forEach(item=>{
+          const row=el('article','training-place');
+          row.append(el('h4','',item.name));
+          const timing=Array.isArray(item.times)?item.times.join(' · '):(item.times||'');
+          const when=el('p','',item.days+(timing?' · '+timing:''));
+          row.append(when);
+          if(item.meeting)row.append(el('p','training-place-meeting','Ponto: '+item.meeting));
+          if(item.note)row.append(el('p','training-place-note',item.note));
+          if(item.map){
+            const link=el('a','training-map','Como chegar ↗');
+            link.href='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(item.map);
+            link.target='_blank';link.rel='noopener noreferrer';row.append(link);
+          }
+          body.append(row);
+        });
+        details.append(summary,body);
+        schedules.append(details);
+      });
+    };
+    const renderPrices=()=>{
+      document.querySelectorAll('[data-price-mode]').forEach(button=>{
+        const chosen=!state.lab&&button.dataset.priceMode===state.mode;
+        button.classList.toggle('active',chosen);
+        button.setAttribute('aria-pressed',String(chosen));
+      });
+      document.querySelectorAll('[data-price-sport]').forEach(button=>{
+        const chosen=!state.lab&&button.dataset.priceSport===state.sport;
+        button.classList.toggle('active',chosen);
+        button.setAttribute('aria-pressed',String(chosen));
+      });
+      const labButton=document.querySelector('[data-price-lab]');
+      if(labButton){
+        labButton.classList.toggle('active',state.lab);
+        labButton.setAttribute('aria-pressed',String(state.lab));
+      }
+      const plan=state.lab?'lab':state.mode==='online'?'online':state.sport;
+      document.querySelectorAll('[data-online-sport]').forEach(card=>{
+        card.hidden=state.mode==='online'&&!state.lab&&card.dataset.onlineSport!==state.sport;
+      });
+      if(typeof choosePlan==='function')choosePlan(plan);
+    };
+    const renderTraining=()=>{
+      const online=state.mode==='online';
+      const name=sportLabel[state.sport];
+      label.textContent=online?'ONLINE · TODO O BRASIL':'PRESENCIAL · RIO DE JANEIRO';
+      title.textContent=name+(online?' online':' presencial');
+      description.textContent=copy[state.mode][state.sport];
+      benefits.replaceChildren(...perks[state.mode][state.sport].map(v=>el('span','',v)));
+      const image=online?(scenicFailed?'assets/apresentacao-v7/atitude.webp':scenic):'assets/apresentacao-v7/corrida.webp';
+      if(photo.getAttribute('src')!==image)photo.src=image;
+      photo.alt=online?(scenicFailed?'Atleta da Rio Saúde durante uma corrida':'Corredor em uma trilha de montanhas verdes'):'Atletas da Rio Saúde treinando corrida no Rio de Janeiro';
+      caption.textContent=online?'Treine onde quiser.':'Treine junto. Evolua do seu jeito.';
+      document.querySelectorAll('[data-training-mode]').forEach(button=>{
+        const chosen=button.dataset.trainingMode===state.mode;
+        button.classList.toggle('active',chosen);
+        button.setAttribute('aria-pressed',String(chosen));
+      });
+      document.querySelectorAll('[data-training-sport]').forEach(button=>{
+        const chosen=button.dataset.trainingSport===state.sport;
+        button.classList.toggle('active',chosen);
+        button.setAttribute('aria-pressed',String(chosen));
+      });
+      buildSchedules();
+    };
+    const render=()=>{renderTraining();renderPrices()};
+    photo.addEventListener('error',()=>{
+      if(photo.src.startsWith('https://images.unsplash.com/')){
+        scenicFailed=true;
+        photo.src='assets/apresentacao-v7/atitude.webp';
+        photo.alt='Atleta da Rio Saúde durante uma corrida';
+      }
+    });
+    const updateSelection=(button,update)=>{
+      const keepPosition=button.hasAttribute('data-price-mode')||button.hasAttribute('data-price-sport');
+      const top=button.getBoundingClientRect().top;
+      update();state.lab=false;render();
+      // Safari does not anchor the viewport when schedules above prices change height.
+      if(keepPosition)window.scrollBy({top:button.getBoundingClientRect().top-top,behavior:'instant'});
+    };
+    document.querySelectorAll('[data-training-mode],[data-price-mode]').forEach(button=>button.addEventListener('click',()=>{
+      updateSelection(button,()=>{state.mode=button.dataset.trainingMode||button.dataset.priceMode});
     }));
-    modalityDetail.querySelectorAll('[data-modality-scroll]').forEach(button=>button.addEventListener('click',()=>{
-      const direction=Number(button.dataset.modalityScroll);
-      const card=track.firstElementChild;
-      if(card)track.scrollBy({left:direction*(card.getBoundingClientRect().width+14),behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'instant':'smooth'});
+    document.querySelectorAll('[data-training-sport],[data-price-sport]').forEach(button=>button.addEventListener('click',()=>{
+      updateSelection(button,()=>{state.sport=button.dataset.trainingSport||button.dataset.priceSport});
     }));
-    plans.addEventListener('click',()=>{if(typeof choosePlan==='function'&&active)choosePlan(planKeys[active])});
+    document.querySelectorAll('[data-price-lab],[data-show-lab]').forEach(button=>button.addEventListener('click',()=>{
+      state.lab=true;renderPrices();
+    }));
+    render();
   }
 
   const host=document.querySelector('[data-locations]');
