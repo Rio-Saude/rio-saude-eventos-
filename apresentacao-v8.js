@@ -9,27 +9,82 @@
     nav.addEventListener('click',e=>{if(e.target===nav){const r=nav.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)close()}});
     nav.querySelectorAll('a').forEach(a=>a.addEventListener('click',close));
   }
-  const dialog=document.querySelector('#info-dialog');
-  if(dialog){
-    const content={performance:['PERFORMANCE','Treinar com propósito.','Planejamento individual, análise de evolução e testes periódicos. O treinador acompanha as métricas e ajusta o caminho até o seu próximo objetivo.'],individualidade:['INDIVIDUALIDADE','Seu treino faz sentido para você.','Objetivos, rotina e histórico orientam o planejamento. A revisão dos treinos ajuda a ajustar as sessões ao momento de cada atleta.'],comunidade:['COMUNIDADE','O treino termina. A conexão continua.','Treinos coletivos, encontros e experiências compartilhadas. Em provas selecionadas, a equipe organiza apoio; viagens e eventos aproximam quem divide o caminho.']};
-    document.querySelectorAll('[data-story]').forEach(b=>b.addEventListener('click',()=>{const [tag,title,text]=content[b.dataset.story];document.querySelector('#dialog-tag').textContent=tag;document.querySelector('#dialog-title').textContent=title;document.querySelector('#dialog-text').textContent=text;dialog.showModal()}));
-    document.querySelector('#dialog-close').addEventListener('click',()=>dialog.close());
-    dialog.addEventListener('click',e=>{if(e.target===dialog){const r=dialog.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)dialog.close()}});
-  }
+  // V9.2: cópias simétricas, sem reset ao mudar a altura do Safari.
   document.querySelectorAll('[data-carousel]').forEach(box=>{
-    const track=box.querySelector('.carousel-track'),real=[...track.children],loop=box.dataset.carousel==='concepts',mobile=matchMedia('(max-width:800px)');
-    let active=0,timer;
-    if(loop){for(const [original,where] of [[real.at(-1),'start'],[real[0],'end']]){const clone=original.cloneNode(true);clone.classList.add('loop-clone');clone.setAttribute('aria-hidden','true');clone.inert=true;clone.querySelectorAll('[id]').forEach(e=>e.removeAttribute('id'));where==='start'?track.prepend(clone):track.append(clone)}}
+    const track=box.querySelector('.carousel-track'),real=[...track.children];
+    const loop=box.dataset.carousel==='concepts';
+    const mobile=matchMedia('(max-width:800px)');
+    const reduced=matchMedia('(prefers-reduced-motion: reduce)');
+    let active=0,timer,rebasing=false,before=[],after=[];
+    if(loop){
+      const clone=original=>{
+        const card=original.cloneNode(true);
+        card.classList.add('loop-clone');
+        card.setAttribute('aria-hidden','true');
+        card.inert=true;
+        card.querySelectorAll('[id]').forEach(e=>e.removeAttribute('id'));
+        return card;
+      };
+      before=real.map(clone);after=real.map(clone);
+      track.prepend(...before);track.append(...after);
+    }
     const dots=[...box.querySelectorAll('[data-dot]')];
-    const mark=()=>{dots.forEach((b,i)=>b.setAttribute('aria-current',String(i===active)));const status=box.querySelector('[data-carousel-status]');if(status)status.textContent=`${String(active+1).padStart(2,'0')} / ${String(real.length).padStart(2,'0')}`};
-    const offset=e=>e.offsetLeft-track.offsetLeft;
-    const go=(n,behavior='smooth')=>{active=loop?(n+real.length)%real.length:Math.max(0,Math.min(real.length-1,n));if(mobile.matches)track.scrollTo({left:offset(real[active]),behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'instant':behavior});mark()};
-    box.querySelectorAll('[data-step]').forEach(b=>b.addEventListener('click',()=>go(active+Number(b.dataset.step))));dots.forEach((b,i)=>b.addEventListener('click',()=>go(i)));
-    const settle=()=>{if(!mobile.matches)return;const all=[...track.children];let nearest=all.reduce((a,b)=>Math.abs(offset(a)-track.scrollLeft)<Math.abs(offset(b)-track.scrollLeft)?a:b);if(nearest.classList.contains('loop-clone')){active=nearest===all[0]?real.length-1:0;track.scrollTo({left:offset(real[active]),behavior:'instant'})}else active=real.indexOf(nearest);mark()};
-    track.addEventListener('scroll',()=>{clearTimeout(timer);timer=setTimeout(settle,180)},{passive:true});
-    track.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='ArrowLeft'){e.preventDefault();go(active+(e.key==='ArrowRight'?1:-1))}});
-    const reset=()=>{if(mobile.matches)go(active,'instant');else track.scrollTo({left:0,behavior:'instant'})};
-    mobile.addEventListener('change',reset);window.addEventListener('resize',reset);requestAnimationFrame(reset);mark();
+    const mark=()=>{
+      dots.forEach((b,i)=>b.setAttribute('aria-current',String(i===active)));
+      const status=box.querySelector('[data-carousel-status]');
+      if(status)status.textContent=`${String(active+1).padStart(2,'0')} / ${String(real.length).padStart(2,'0')}`;
+    };
+    const offset=card=>card.offsetLeft-track.offsetLeft;
+    const recenter=index=>{
+      rebasing=true;
+      const previous=track.style.scrollSnapType;
+      track.style.scrollSnapType='none';
+      track.scrollTo({left:offset(real[index]),behavior:'instant'});
+      requestAnimationFrame(()=>{
+        track.style.scrollSnapType=previous;
+        rebasing=false;
+      });
+    };
+    const settle=()=>{
+      if(!mobile.matches||rebasing)return;
+      const all=[...track.children];
+      const nearest=all.reduce((a,b)=>Math.abs(offset(a)-track.scrollLeft)<=Math.abs(offset(b)-track.scrollLeft)?a:b);
+      const position=all.indexOf(nearest);
+      active=loop?(position-real.length+real.length*3)%real.length:real.indexOf(nearest);
+      if(loop&&(position<real.length||position>=2*real.length))recenter(active);
+      mark();
+    };
+    const go=(n,behavior='smooth')=>{
+      const next=loop?(n+real.length)%real.length:Math.max(0,Math.min(real.length-1,n));
+      if(mobile.matches){
+        let destination=real[next];
+        if(loop&&active===0&&n===-1)destination=before[real.length-1];
+        if(loop&&active===real.length-1&&n===real.length)destination=after[0];
+        track.scrollTo({left:offset(destination),behavior:reduced.matches?'instant':behavior});
+      }
+      active=next;mark();
+    };
+    box.querySelectorAll('[data-step]').forEach(b=>b.addEventListener('click',()=>go(active+Number(b.dataset.step))));
+    dots.forEach((b,i)=>b.addEventListener('click',()=>go(i)));
+    track.addEventListener('scroll',()=>{
+      if(!mobile.matches||rebasing)return;
+      clearTimeout(timer);timer=setTimeout(settle,150);
+    },{passive:true});
+    track.addEventListener('scrollend',()=>{clearTimeout(timer);settle()});
+    track.addEventListener('keydown',e=>{
+      if(e.key==='ArrowRight'||e.key==='ArrowLeft'){
+        e.preventDefault();go(active+(e.key==='ArrowRight'?1:-1));
+      }
+    });
+    const reset=()=>{
+      clearTimeout(timer);
+      if(mobile.matches)recenter(active);
+      else track.scrollTo({left:0,behavior:'instant'});
+      mark();
+    };
+    mobile.addEventListener('change',reset);
+    if(mobile.matches)recenter(0);
+    mark();
   });
   const params=new URLSearchParams(location.search),selected=params.get('modalidade');
   if(typeof choosePlan==='function'&&['corrida','tri','lab','online'].includes(selected))choosePlan(selected);
