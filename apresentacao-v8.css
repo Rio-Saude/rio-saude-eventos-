@@ -97,3 +97,9 @@
   .modality-detail-head{display:block}
   .modality-scroll-controls{justify-content:flex-end;margin-top:12px}
 }
+
+/* V9.2: conceitos sem setas, com destino direto às modalidades. */
+.concept-copy .concept-link{display:inline-flex;align-items:center;gap:8px;color:#d9f36c;padding:10px 0;font-weight:800;font-size:12px;text-decoration:underline;text-decoration-color:transparent;text-underline-offset:3px}
+.concept-copy .concept-link:hover,.concept-copy .concept-link:focus-visible{text-decoration-color:currentColor}
+.concepts .carousel-tools{display:none}
+@media(max-width:800px){.concepts .carousel-tools{display:flex}}
